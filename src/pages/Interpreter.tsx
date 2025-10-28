@@ -5,10 +5,10 @@
  * Il permet d'écrire, éditer, exécuter, sauvegarder et charger des algorithmes.
  */
 
-import React, { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { save, open } from '@tauri-apps/plugin-dialog';
-import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs';
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
+import React, { useState } from "react";
 import Editor from 'react-simple-code-editor';
 
 /**
@@ -217,253 +217,253 @@ Fin`);
     }
   };
 
-  /**
-   * Charge un exemple prédéfini dans l'éditeur
-   * @param exampleName - Nom de l'exemple à charger
-   */
-  const loadExample = (exampleName: string) => {
-    // Catalogue d'exemples prédéfinis
-    const examples: { [key: string]: { code: string; input: string } } = {
-      hello: {
-        code: `Algorithme Bonjour
-Variables nom : Chaine
+  //   /**
+  //    * Charge un exemple prédéfini dans l'éditeur
+  //    * @param exampleName - Nom de l'exemple à charger
+  //    */
+  //   const loadExample = (exampleName: string) => {
+  //     // Catalogue d'exemples prédéfinis
+  //     const examples: { [key: string]: { code: string; input: string } } = {
+  //       hello: {
+  //         code: `Algorithme Bonjour
+  // Variables nom : Chaine
 
-Debut
-  Ecrire("Comment vous appelez-vous?\n")
-  Lire(nom)
-  Ecrire("Bonjour ", nom, "!\n")
-Fin`,
-        input: "Alice",
-      },
-      factorial: {
-        code: `Algorithme Factorielle
-Variables n, i, fact : Entier
+  // Debut
+  //   Ecrire("Comment vous appelez-vous?\n")
+  //   Lire(nom)
+  //   Ecrire("Bonjour ", nom, "!\n")
+  // Fin`,
+  //         input: "Alice",
+  //       },
+  //       factorial: {
+  //         code: `Algorithme Factorielle
+  // Variables n, i, fact : Entier
 
-Debut
-  Ecrire("Entrez un nombre:\n")
-  Lire(n)
-  fact <- 1
-  Pour i De 1 A n Faire
-    fact <- fact * i
-  FinPour
-  Ecrire("Factorielle de ", n, " = ", fact, "\n")
-Fin`,
-        input: "5",
-      },
-      fibonacci: {
-        code: `Algorithme Fibonacci
-Variables n, i, a, b, temp : Entier
+  // Debut
+  //   Ecrire("Entrez un nombre:\n")
+  //   Lire(n)
+  //   fact <- 1
+  //   Pour i De 1 A n Faire
+  //     fact <- fact * i
+  //   FinPour
+  //   Ecrire("Factorielle de ", n, " = ", fact, "\n")
+  // Fin`,
+  //         input: "5",
+  //       },
+  //       fibonacci: {
+  //         code: `Algorithme Fibonacci
+  // Variables n, i, a, b, temp : Entier
 
-Debut
-  Ecrire("Combien de termes?\n")
-  Lire(n)
-  a <- 0
-  b <- 1
-  Ecrire("Suite de Fibonacci:\n")
-  Ecrire(a, "\n")
-  Ecrire(b, "\n")
-  Pour i De 3 A n Faire
-    temp <- a + b
-    Ecrire(temp, "\n")
-    a <- b
-    b <- temp
-  FinPour
-Fin`,
-        input: "10",
-      },
-      prime: {
-        code: `Algorithme NombrePremier
-Variables n, i, estPremier : Entier
+  // Debut
+  //   Ecrire("Combien de termes?\n")
+  //   Lire(n)
+  //   a <- 0
+  //   b <- 1
+  //   Ecrire("Suite de Fibonacci:\n")
+  //   Ecrire(a, "\n")
+  //   Ecrire(b, "\n")
+  //   Pour i De 3 A n Faire
+  //     temp <- a + b
+  //     Ecrire(temp, "\n")
+  //     a <- b
+  //     b <- temp
+  //   FinPour
+  // Fin`,
+  //         input: "10",
+  //       },
+  //       prime: {
+  //         code: `Algorithme NombrePremier
+  // Variables n, i, estPremier : Entier
 
-Debut
-  Ecrire("Entrez un nombre:\n")
-  Lire(n)
-  estPremier <- 1
+  // Debut
+  //   Ecrire("Entrez un nombre:\n")
+  //   Lire(n)
+  //   estPremier <- 1
 
-  Si n < 2 Alors
-    estPremier <- 0
-  Sinon
-    Pour i De 2 A n - 1 Faire
-      Si n % i = 0 Alors
-        estPremier <- 0
-      FinSi
-    FinPour
-  FinSi
+  //   Si n < 2 Alors
+  //     estPremier <- 0
+  //   Sinon
+  //     Pour i De 2 A n - 1 Faire
+  //       Si n % i = 0 Alors
+  //         estPremier <- 0
+  //       FinSi
+  //     FinPour
+  //   FinSi
 
-  Si estPremier = 1 Alors
-    Ecrire(n, " est premier\n")
-  Sinon
-    Ecrire(n, " n'est pas premier\n")
-  FinSi
-Fin`,
-        input: "17",
-      },
-      array1d: {
-        code: `Algorithme TableauNotes
-Variables
-  notes : Tableau[5] de Reel
-  i : Entier
-  somme, moyenne : Reel
+  //   Si estPremier = 1 Alors
+  //     Ecrire(n, " est premier\n")
+  //   Sinon
+  //     Ecrire(n, " n'est pas premier\n")
+  //   FinSi
+  // Fin`,
+  //         input: "17",
+  //       },
+  //       array1d: {
+  //         code: `Algorithme TableauNotes
+  // Variables
+  //   notes : Tableau[5] de Reel
+  //   i : Entier
+  //   somme, moyenne : Reel
 
-Debut
-  Ecrire("Entrez 5 notes:\n")
+  // Debut
+  //   Ecrire("Entrez 5 notes:\n")
 
-  Pour i De 0 A 4 Faire
-    Lire(notes[i])
-  FinPour
+  //   Pour i De 0 A 4 Faire
+  //     Lire(notes[i])
+  //   FinPour
 
-  somme <- 0
-  Pour i De 0 A 4 Faire
-    somme <- somme + notes[i]
-  FinPour
+  //   somme <- 0
+  //   Pour i De 0 A 4 Faire
+  //     somme <- somme + notes[i]
+  //   FinPour
 
-  moyenne <- somme / 5
-  Ecrire("Moyenne: ", moyenne, "\n")
-Fin`,
-        input: "15\n12\n18\n14\n16",
-      },
-      array2d: {
-        code: `Algorithme Matrice
-Variables
-  matrice : Tableau[3, 3] de Entier
-  i, j, somme : Entier
+  //   moyenne <- somme / 5
+  //   Ecrire("Moyenne: ", moyenne, "\n")
+  // Fin`,
+  //         input: "15\n12\n18\n14\n16",
+  //       },
+  //       array2d: {
+  //         code: `Algorithme Matrice
+  // Variables
+  //   matrice : Tableau[3, 3] de Entier
+  //   i, j, somme : Entier
 
-Debut
-  Ecrire("Remplissage matrice 3x3\n")
+  // Debut
+  //   Ecrire("Remplissage matrice 3x3\n")
 
-  Pour i De 0 A 2 Faire
-    Pour j De 0 A 2 Faire
-      matrice[i, j] <- i * 3 + j + 1
-    FinPour
-  FinPour
+  //   Pour i De 0 A 2 Faire
+  //     Pour j De 0 A 2 Faire
+  //       matrice[i, j] <- i * 3 + j + 1
+  //     FinPour
+  //   FinPour
 
-  Ecrire("Matrice:\n")
-  Pour i De 0 A 2 Faire
-    Pour j De 0 A 2 Faire
-      Ecrire(matrice[i, j], " ")
-    FinPour
-    Ecrire("\n")
-  FinPour
+  //   Ecrire("Matrice:\n")
+  //   Pour i De 0 A 2 Faire
+  //     Pour j De 0 A 2 Faire
+  //       Ecrire(matrice[i, j], " ")
+  //     FinPour
+  //     Ecrire("\n")
+  //   FinPour
 
-  somme <- 0
-  Pour i De 0 A 2 Faire
-    Pour j De 0 A 2 Faire
-      somme <- somme + matrice[i, j]
-    FinPour
-  FinPour
+  //   somme <- 0
+  //   Pour i De 0 A 2 Faire
+  //     Pour j De 0 A 2 Faire
+  //       somme <- somme + matrice[i, j]
+  //     FinPour
+  //   FinPour
 
-  Ecrire("Somme totale: ", somme, "\n")
-Fin`,
-        input: "",
-      },
-      functionSquare: {
-        code: `Algorithme AvecFonction
+  //   Ecrire("Somme totale: ", somme, "\n")
+  // Fin`,
+  //         input: "",
+  //       },
+  //       functionSquare: {
+  //         code: `Algorithme AvecFonction
 
-Fonction Carre(n : Entier) : Entier
-Variables resultat : Entier
-Debut
-  resultat <- n * n
-  Retourner resultat
-Fin
+  // Fonction Carre(n : Entier) : Entier
+  // Variables resultat : Entier
+  // Debut
+  //   resultat <- n * n
+  //   Retourner resultat
+  // Fin
 
-Variables x, y : Entier
+  // Variables x, y : Entier
 
-Debut
-  Ecrire("Entrez un nombre:\n")
-  Lire(x)
-  y <- Carre(x)
-  Ecrire("Le carré de ", x, " est ", y, "\n")
-  Ecrire("Le carré de 5 est ", Carre(5), "\n")
-Fin`,
-        input: "7",
-      },
-      procedureGreet: {
-        code: `Algorithme AvecProcedure
+  // Debut
+  //   Ecrire("Entrez un nombre:\n")
+  //   Lire(x)
+  //   y <- Carre(x)
+  //   Ecrire("Le carré de ", x, " est ", y, "\n")
+  //   Ecrire("Le carré de 5 est ", Carre(5), "\n")
+  // Fin`,
+  //         input: "7",
+  //       },
+  //       procedureGreet: {
+  //         code: `Algorithme AvecProcedure
 
-Procedure Saluer(nom : Chaine, fois : Entier)
-Variables i : Entier
-Debut
-  Pour i De 1 A fois Faire
-    Ecrire("Bonjour ", nom, "!\n")
-  FinPour
-Fin
+  // Procedure Saluer(nom : Chaine, fois : Entier)
+  // Variables i : Entier
+  // Debut
+  //   Pour i De 1 A fois Faire
+  //     Ecrire("Bonjour ", nom, "!\n")
+  //   FinPour
+  // Fin
 
-Variables
-  prenom : Chaine
-  nombre : Entier
+  // Variables
+  //   prenom : Chaine
+  //   nombre : Entier
 
-Debut
-  Ecrire("Votre prénom:\n")
-  Lire(prenom)
-  Ecrire("Nombre de salutations:\n")
-  Lire(nombre)
-  Saluer(prenom, nombre)
-  Ecrire("Terminé!\n")
-Fin`,
-        input: "Alice\n3",
-      },
-      matchDay: {
-        code: `Algorithme JourSemaine
-Variables jour : Entier
+  // Debut
+  //   Ecrire("Votre prénom:\n")
+  //   Lire(prenom)
+  //   Ecrire("Nombre de salutations:\n")
+  //   Lire(nombre)
+  //   Saluer(prenom, nombre)
+  //   Ecrire("Terminé!\n")
+  // Fin`,
+  //         input: "Alice\n3",
+  //       },
+  //       matchDay: {
+  //         code: `Algorithme JourSemaine
+  // Variables jour : Entier
 
-Debut
-  Ecrire("Entrez un numéro (1-7):\n")
-  Lire(jour)
+  // Debut
+  //   Ecrire("Entrez un numéro (1-7):\n")
+  //   Lire(jour)
 
-  Selon jour
-    Cas 1:
-      Ecrire("Lundi\n")
-    Cas 2:
-      Ecrire("Mardi\n")
-    Cas 3:
-      Ecrire("Mercredi\n")
-    Cas 4:
-      Ecrire("Jeudi\n")
-    Cas 5:
-      Ecrire("Vendredi\n")
-    Cas 6, 7:
-      Ecrire("Week-end!\n")
-    Defaut:
-      Ecrire("Jour invalide\n")
-  FinSelon
-Fin`,
-        input: "3",
-      },
-      matchGrade: {
-        code: `Algorithme MentionExamen
-Variables note : Entier
+  //   Selon jour
+  //     Cas 1:
+  //       Ecrire("Lundi\n")
+  //     Cas 2:
+  //       Ecrire("Mardi\n")
+  //     Cas 3:
+  //       Ecrire("Mercredi\n")
+  //     Cas 4:
+  //       Ecrire("Jeudi\n")
+  //     Cas 5:
+  //       Ecrire("Vendredi\n")
+  //     Cas 6, 7:
+  //       Ecrire("Week-end!\n")
+  //     Defaut:
+  //       Ecrire("Jour invalide\n")
+  //   FinSelon
+  // Fin`,
+  //         input: "3",
+  //       },
+  //       matchGrade: {
+  //         code: `Algorithme MentionExamen
+  // Variables note : Entier
 
-Debut
-  Ecrire("Entrez votre note /20:\n")
-  Lire(note)
+  // Debut
+  //   Ecrire("Entrez votre note /20:\n")
+  //   Lire(note)
 
-  Selon note
-    Cas 18, 19, 20:
-      Ecrire("Mention: Excellent\n")
-    Cas 16, 17:
-      Ecrire("Mention: Très Bien\n")
-    Cas 14, 15:
-      Ecrire("Mention: Bien\n")
-    Cas 12, 13:
-      Ecrire("Mention: Assez Bien\n")
-    Cas 10, 11:
-      Ecrire("Mention: Passable\n")
-    Defaut:
-      Ecrire("Mention: Insuffisant\n")
-  FinSelon
-Fin`,
-        input: "16",
-      },
-    };
+  //   Selon note
+  //     Cas 18, 19, 20:
+  //       Ecrire("Mention: Excellent\n")
+  //     Cas 16, 17:
+  //       Ecrire("Mention: Très Bien\n")
+  //     Cas 14, 15:
+  //       Ecrire("Mention: Bien\n")
+  //     Cas 12, 13:
+  //       Ecrire("Mention: Assez Bien\n")
+  //     Cas 10, 11:
+  //       Ecrire("Mention: Passable\n")
+  //     Defaut:
+  //       Ecrire("Mention: Insuffisant\n")
+  //   FinSelon
+  // Fin`,
+  //         input: "16",
+  //       },
+  //     };
 
-    const example = examples[exampleName];
-    if (example) {
-      setCode(example.code);
-      setInput(example.input);
-      setOutput([]);
-      setError(null);
-    }
-  };
+  //     const example = examples[exampleName];
+  //     if (example) {
+  //       setCode(example.code);
+  //       setInput(example.input);
+  //       setOutput([]);
+  //       setError(null);
+  //     }
+  //   };
 
   /**
    * Sauvegarde le code actuel dans un fichier .algo
@@ -523,7 +523,7 @@ Fin`,
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Examples Bar */}
-      <div className="border-b border-gray-200 bg-gray-50">
+      {/* <div className="border-b border-gray-200 bg-gray-50">
         <div className="max-w-7xl mx-auto px-8 py-6">
           <div className="flex flex-wrap gap-3">
             <button
@@ -588,7 +588,7 @@ Fin`,
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-white">
@@ -646,7 +646,7 @@ Fin`,
                   <span className="text-xs text-gray-500">Une valeur par ligne</span>
                 </div>
                 <textarea
-                  className="w-full bg-white text-gray-900 font-mono text-sm p-5 outline-none resize-none min-h-[160px] border-0 focus:ring-2 focus:ring-inset focus:ring-gray-900"
+                  className="w-full bg-white text-gray-900 font-mono text-sm p-5 outline-none resize-none min-h-40 border-0 focus:ring-2 focus:ring-inset focus:ring-gray-900"
                   value={input}
                   onChange={handleInputChange}
                   placeholder="Valeurs d'entrée..."
