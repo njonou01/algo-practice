@@ -315,10 +315,107 @@ function Guide() {
             </div>
           </section>
 
+          {/* Structures */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
+              9. Structures/Enregistrements
+            </h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              Les structures (aussi appelées enregistrements) permettent de regrouper plusieurs données
+              de types différents sous un seul nom. C'est idéal pour représenter des entités complexes
+              comme des personnes, des points géométriques, etc.
+            </p>
+
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Déclaration d'une structure</h3>
+              <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-4">
+                <div className="text-gray-700">
+                  <div><span className="text-indigo-600 font-semibold">Structure</span> Point</div>
+                  <div className="ml-4">x : Entier</div>
+                  <div className="ml-4">y : Entier</div>
+                  <div><span className="text-indigo-600 font-semibold">FinStructure</span></div>
+                  <div className="mt-4"><span className="text-indigo-600 font-semibold">Structure</span> Personne</div>
+                  <div className="ml-4">nom : Chaine</div>
+                  <div className="ml-4">age : Entier</div>
+                  <div className="ml-4">taille : Reel</div>
+                  <div><span className="text-indigo-600 font-semibold">FinStructure</span></div>
+                </div>
+              </div>
+              <p className="text-gray-700 leading-relaxed text-sm mb-2">
+                <strong>Note :</strong> Les structures doivent être déclarées <strong>avant</strong> les variables.
+                Vous pouvez aussi utiliser <code className="bg-gray-100 px-2 py-1">Enregistrement</code> / <code className="bg-gray-100 px-2 py-1">FinEnregistrement</code> à la place de Structure / FinStructure.
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Utilisation des structures</h3>
+              <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-4">
+                <div className="text-gray-700">
+                  <div className="mb-2 text-gray-500">// Déclarer des variables de type structure</div>
+                  <div><span className="text-indigo-600">Variables</span></div>
+                  <div className="ml-4">p1, p2 : Point</div>
+                  <div className="ml-4">etudiant : Personne</div>
+                  <div className="mt-4 mb-2 text-gray-500">// Accéder et modifier les champs</div>
+                  <div>p1.x <span className="text-pink-600">←</span> 10</div>
+                  <div>p1.y <span className="text-pink-600">←</span> 20</div>
+                  <div className="mt-2">etudiant.nom <span className="text-pink-600">←</span> "Alice"</div>
+                  <div>etudiant.age <span className="text-pink-600">←</span> 20</div>
+                  <div>etudiant.taille <span className="text-pink-600">←</span> 1.65</div>
+                  <div className="mt-4 mb-2 text-gray-500">// Lire des valeurs dans les champs</div>
+                  <div>Lire(p2.x, p2.y)</div>
+                  <div>Lire(etudiant.nom)</div>
+                  <div className="mt-4 mb-2 text-gray-500">// Utiliser les champs dans des expressions</div>
+                  <div>distance <span className="text-pink-600">←</span> p1.x + p2.x</div>
+                  <div>Ecrire("Age: ", etudiant.age, "\n")</div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">Exemple complet avec structures</h3>
+              <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm">
+                <div className="text-gray-700">
+                  <div><span className="text-indigo-600 font-semibold">Algorithme</span> GestionEtudiants</div>
+                  <div className="mt-2"><span className="text-indigo-600 font-semibold">Structure</span> Etudiant</div>
+                  <div className="ml-4">nom : Chaine</div>
+                  <div className="ml-4">moyenne : Reel</div>
+                  <div><span className="text-indigo-600 font-semibold">FinStructure</span></div>
+                  <div className="mt-2"><span className="text-indigo-600 font-semibold">Variables</span></div>
+                  <div className="ml-4">e1, e2 : Etudiant</div>
+                  <div className="ml-4">meilleur : Chaine</div>
+                  <div className="mt-2"><span className="text-indigo-600 font-semibold">Debut</span></div>
+                  <div className="ml-4">Ecrire("Nom étudiant 1:\n")</div>
+                  <div className="ml-4">Lire(e1.nom)</div>
+                  <div className="ml-4">Ecrire("Moyenne:\n")</div>
+                  <div className="ml-4">Lire(e1.moyenne)</div>
+                  <div className="ml-4 mt-2">Ecrire("Nom étudiant 2:\n")</div>
+                  <div className="ml-4">Lire(e2.nom)</div>
+                  <div className="ml-4">Ecrire("Moyenne:\n")</div>
+                  <div className="ml-4">Lire(e2.moyenne)</div>
+                  <div className="ml-4 mt-2"><span className="text-indigo-600">Si</span> e1.moyenne &gt; e2.moyenne <span className="text-indigo-600">Alors</span></div>
+                  <div className="ml-8">meilleur <span className="text-pink-600">←</span> e1.nom</div>
+                  <div className="ml-4"><span className="text-indigo-600">Sinon</span></div>
+                  <div className="ml-8">meilleur <span className="text-pink-600">←</span> e2.nom</div>
+                  <div className="ml-4"><span className="text-indigo-600">FinSi</span></div>
+                  <div className="ml-4 mt-2">Ecrire("Meilleure moyenne: ", meilleur, "\n")</div>
+                  <div><span className="text-indigo-600 font-semibold">Fin</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 bg-blue-50 border border-blue-200 p-4">
+              <p className="text-sm text-blue-900">
+                <strong>Possibilités avancées :</strong> Les structures peuvent contenir d'autres structures,
+                être utilisées dans des tableaux (<code className="bg-gray-100 px-2 py-1">Tableau[10] de Personne</code>),
+                et être passées en paramètres de fonctions.
+              </p>
+            </div>
+          </section>
+
           {/* Fonctions et Procédures */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              9. Fonctions et Procédures
+              10. Fonctions et Procédures
             </h2>
             <p className="text-gray-700 leading-relaxed mb-6">
               Les fonctions et procédures permettent de décomposer un programme en sous-programmes réutilisables.
@@ -422,7 +519,7 @@ function Guide() {
           {/* Opérateurs */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              10. Opérateurs
+              11. Opérateurs
             </h2>
 
             <div className="mb-6">
@@ -503,7 +600,7 @@ function Guide() {
           {/* Exemple complet */}
           <section>
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              11. Exemple complet
+              12. Exemple complet
             </h2>
             <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm">
               <div className="text-gray-700">

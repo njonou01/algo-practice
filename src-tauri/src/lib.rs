@@ -6,9 +6,9 @@
 //! 2. **Analyse syntaxique** (parser) - Construction de l'arbre syntaxique
 //! 3. **Interprétation** (interpreter) - Exécution de l'algorithme
 
-mod lexer;
-mod parser;
-mod interpreter;
+pub mod lexer;
+pub mod parser;
+pub mod interpreter;
 
 use lexer::Lexer;
 use parser::Parser;

@@ -27,8 +27,22 @@ pub enum Type {
     /// Ex: Tableau[10] → (Entier, vec![10])
     /// Ex: Tableau[5,3] → (Entier, vec![5,3])
     Tableau(Box<Type>, Vec<usize>),
+    /// Type structure/enregistrement (nom de la structure)
+    /// Ex: Personne, Etudiant
+    Structure(String),
     /// Type vide pour les procédures sans retour
     Void,
+}
+
+/// Définition d'une structure/enregistrement
+///
+/// Permet de créer des types composites regroupant plusieurs champs.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StructDefinition {
+    /// Nom de la structure
+    pub name: String,
+    /// Liste des champs avec leurs types
+    pub fields: Vec<Variable>,
 }
 
 /// Déclaration de variable
@@ -109,6 +123,11 @@ pub enum Expression {
         /// Indices (1 pour tableau 1D, 2 pour tableau 2D)
         indices: Vec<Expression>,
     },
+    /// Accès à un champ de structure (ex: personne.nom, etudiant.age)
+    FieldAccess {
+        object: Box<Expression>,
+        field: String,
+    },
 }
 
 /// Opérateurs binaires du langage
@@ -143,7 +162,7 @@ pub enum UnaryOperator {
 /// Cible d'affectation (LValue)
 ///
 /// Représente où peut être assignée une valeur :
-/// soit une variable simple, soit un élément de tableau.
+/// soit une variable simple, soit un élément de tableau, soit un champ de structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum LValue {
     /// Variable simple (ex: x)
@@ -152,6 +171,11 @@ pub enum LValue {
     ArrayElement {
         name: String,
         indices: Vec<Expression>,
+    },
+    /// Champ de structure (ex: personne.nom, etudiant.notes[0])
+    FieldAccess {
+        object: Box<LValue>,
+        field: String,
     },
 }
 
@@ -171,6 +195,12 @@ pub enum Statement {
         var_name: String,
         /// Indices (1 pour 1D, 2 pour 2D)
         indices: Vec<Expression>,
+        value: Expression,
+    },
+    /// Affectation généralisée (variable, tableau, champ)
+    /// Ex: x <- 5, tab[i] <- 10, personne.nom <- "Alice"
+    GeneralAssignment {
+        target: LValue,
         value: Expression,
     },
     /// Lecture d'entrée (ex: Lire(x, tab[i]))
@@ -235,11 +265,13 @@ pub struct MatchCase {
 /// Algorithme complet
 ///
 /// Structure racine représentant un algorithme entier avec ses
-/// fonctions, variables globales et instructions principales.
+/// structures, fonctions, variables globales et instructions principales.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Algorithm {
     /// Nom de l'algorithme
     pub name: String,
+    /// Définitions de structures
+    pub structs: Vec<StructDefinition>,
     /// Fonctions et procédures définies
     pub functions: Vec<Function>,
     /// Variables globales
@@ -339,6 +371,13 @@ impl Parser {
 
         self.skip_newlines();
 
+        // Parse struct definitions
+        let mut structs = Vec::new();
+        while *self.current_token() == Token::Enregistrement {
+            structs.push(self.parse_struct()?);
+            self.skip_newlines();
+        }
+
         // Parse functions/procedures
         let mut functions = Vec::new();
         while matches!(self.current_token(), Token::Fonction | Token::Procedure) {
@@ -383,6 +422,7 @@ impl Parser {
 
         Ok(Algorithm {
             name,
+            structs,
             functions,
             variables,
             statements,
@@ -551,17 +591,60 @@ impl Parser {
         })
     }
 
+    fn parse_struct(&mut self) -> Result<StructDefinition, String> {
+        // Structure NomStructure
+        self.expect(Token::Enregistrement)?;
+        self.skip_newlines();
+
+        let name = if let Token::Identifiant(n) = self.current_token().clone() {
+            self.advance();
+            n
+        } else {
+            return Err("Nom de structure attendu".to_string());
+        };
+
+        self.skip_newlines();
+
+        // Parse les champs (comme des variables)
+        let fields = self.parse_variables()?;
+
+        self.skip_newlines();
+        self.expect(Token::FinEnregistrement)?;
+
+        Ok(StructDefinition { name, fields })
+    }
+
     fn parse_type(&mut self) -> Result<Type, String> {
         let type_token = self.current_token().clone();
-        self.advance();
 
         match type_token {
-            Token::Entier => Ok(Type::Entier),
-            Token::Reel => Ok(Type::Reel),
-            Token::Caractere => Ok(Type::Caractere),
-            Token::Chaine => Ok(Type::Chaine),
-            Token::Booleen => Ok(Type::Booleen),
+            Token::Entier => {
+                self.advance();
+                Ok(Type::Entier)
+            }
+            Token::Reel => {
+                self.advance();
+                Ok(Type::Reel)
+            }
+            Token::Caractere => {
+                self.advance();
+                Ok(Type::Caractere)
+            }
+            Token::Chaine => {
+                self.advance();
+                Ok(Type::Chaine)
+            }
+            Token::Booleen => {
+                self.advance();
+                Ok(Type::Booleen)
+            }
+            Token::Identifiant(struct_name) => {
+                // C'est un type structure personnalisé
+                self.advance();
+                Ok(Type::Structure(struct_name))
+            }
             Token::Tableau => {
+                self.advance();
                 self.skip_newlines();
                 self.expect(Token::CrochetOuv)?;
 
@@ -661,6 +744,37 @@ impl Parser {
                         indices,
                         value,
                     })
+                }
+                // Check for field access assignment
+                else if *self.current_token() == Token::Point {
+                    // Parse field access chain
+                    let mut lvalue = LValue::Variable(name);
+                    while *self.current_token() == Token::Point {
+                        self.advance();
+                        self.skip_newlines();
+
+                        let field = if let Token::Identifiant(field_name) = self.current_token().clone() {
+                            self.advance();
+                            field_name
+                        } else {
+                            return Err("Nom de champ attendu après '.'".to_string());
+                        };
+
+                        lvalue = LValue::FieldAccess {
+                            object: Box::new(lvalue),
+                            field,
+                        };
+                        self.skip_newlines();
+                    }
+
+                    // Now expect assignment
+                    self.expect(Token::Assignment)?;
+                    self.skip_newlines();
+                    let value = self.parse_expression()?;
+                    Ok(Statement::GeneralAssignment {
+                        target: lvalue,
+                        value,
+                    })
                 } else {
                     // Regular assignment
                     self.expect(Token::Assignment)?;
@@ -705,6 +819,27 @@ impl Parser {
                         self.skip_newlines();
 
                         targets.push(LValue::ArrayElement { name, indices });
+                    } else if *self.current_token() == Token::Point {
+                        // Accès aux champs d'une structure
+                        let mut lvalue = LValue::Variable(name);
+                        while *self.current_token() == Token::Point {
+                            self.advance();
+                            self.skip_newlines();
+
+                            let field = if let Token::Identifiant(field_name) = self.current_token().clone() {
+                                self.advance();
+                                field_name
+                            } else {
+                                return Err("Nom de champ attendu après '.'".to_string());
+                            };
+
+                            lvalue = LValue::FieldAccess {
+                                object: Box::new(lvalue),
+                                field,
+                            };
+                            self.skip_newlines();
+                        }
+                        targets.push(lvalue);
                     } else {
                         targets.push(LValue::Variable(name));
                     }
@@ -737,6 +872,27 @@ impl Parser {
                                 self.skip_newlines();
 
                                 targets.push(LValue::ArrayElement { name, indices });
+                            } else if *self.current_token() == Token::Point {
+                                // Accès aux champs d'une structure
+                                let mut lvalue = LValue::Variable(name);
+                                while *self.current_token() == Token::Point {
+                                    self.advance();
+                                    self.skip_newlines();
+
+                                    let field = if let Token::Identifiant(field_name) = self.current_token().clone() {
+                                        self.advance();
+                                        field_name
+                                    } else {
+                                        return Err("Nom de champ attendu après '.'".to_string());
+                                    };
+
+                                    lvalue = LValue::FieldAccess {
+                                        object: Box::new(lvalue),
+                                        field,
+                                    };
+                                    self.skip_newlines();
+                                }
+                                targets.push(lvalue);
                             } else {
                                 targets.push(LValue::Variable(name));
                             }
@@ -1184,12 +1340,20 @@ impl Parser {
                     }
 
                     self.expect(Token::CrochetFerm)?;
-                    Ok(Expression::ArrayAccess {
+
+                    let mut expr = Expression::ArrayAccess {
                         name,
                         indices,
-                    })
+                    };
+
+                    // Support chaînage d'accès aux champs (ex: tab[i].champ)
+                    expr = self.parse_field_access(expr)?;
+                    Ok(expr)
                 } else {
-                    Ok(Expression::Variable(name))
+                    let mut expr = Expression::Variable(name);
+                    // Support accès aux champs (ex: personne.nom)
+                    expr = self.parse_field_access(expr)?;
+                    Ok(expr)
                 }
             }
             Token::ParentheseOuv => {
@@ -1203,5 +1367,32 @@ impl Parser {
                 self.current_token()
             )),
         }
+    }
+
+    /// Parse les accès aux champs (opérateur point)
+    /// Gère le chaînage : personne.nom, personne.adresse.ville, etc.
+    fn parse_field_access(&mut self, mut expr: Expression) -> Result<Expression, String> {
+        self.skip_newlines();
+
+        while *self.current_token() == Token::Point {
+            self.advance();
+            self.skip_newlines();
+
+            let field_name = if let Token::Identifiant(name) = self.current_token().clone() {
+                self.advance();
+                name
+            } else {
+                return Err("Nom de champ attendu après '.'".to_string());
+            };
+
+            expr = Expression::FieldAccess {
+                object: Box::new(expr),
+                field: field_name,
+            };
+
+            self.skip_newlines();
+        }
+
+        Ok(expr)
     }
 }

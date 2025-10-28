@@ -1,0 +1,30 @@
+Algorithme TestStructure
+
+Structure Point
+  x : Entier
+  y : Entier
+FinStructure
+
+Variables
+  p1, p2 : Point
+  somme : Entier
+
+Debut
+  // Test lecture des champs
+  Ecrire("Point 1 - x:\n")
+  Lire(p1.x)
+  Ecrire("Point 1 - y:\n")
+  Lire(p1.y)
+
+  // Test affectation
+  p2.x <- 10
+  p2.y <- 20
+
+  // Test affichage
+  Ecrire("Point 1: (", p1.x, ", ", p1.y, ")\n")
+  Ecrire("Point 2: (", p2.x, ", ", p2.y, ")\n")
+
+  // Test calcul avec champs
+  somme <- p1.x + p2.x
+  Ecrire("Somme des x: ", somme, "\n")
+Fin

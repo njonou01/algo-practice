@@ -1,0 +1,24 @@
+
+
+    fn parse_struct(&mut self) -> Result<StructDefinition, String> {
+        // Structure NomStructure
+        self.expect(Token::Enregistrement)?;
+        self.skip_newlines();
+
+        let name = if let Token::Identifiant(n) = self.current_token().clone() {
+            self.advance();
+            n
+        } else {
+            return Err("Nom de structure attendu".to_string());
+        };
+
+        self.skip_newlines();
+
+        // Parse les champs (comme des variables)
+        let fields = self.parse_variables()?;
+
+        self.skip_newlines();
+        self.expect(Token::FinEnregistrement)?;
+
+        Ok(StructDefinition { name, fields })
+    }

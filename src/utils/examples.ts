@@ -363,6 +363,59 @@ Debut
   Ecrire("\\n")
 Fin`,
     input: ['42', '17', '88', '5', '31']
+  },
+  {
+    id: 'structures',
+    name: 'Structures/Enregistrements',
+    description: 'Types de données composites avec champs',
+    difficulty: 'advanced',
+    category: 'Structures',
+    code: `Algorithme GestionEtudiants
+
+Structure Etudiant
+  nom : Chaine
+  age : Entier
+  moyenne : Reel
+FinStructure
+
+Variables
+  etudiant1, etudiant2 : Etudiant
+  meilleur : Chaine
+
+Debut
+  // Initialisation du premier étudiant
+  Ecrire("Premier étudiant\\n")
+  Ecrire("Nom:\\n")
+  Lire(etudiant1.nom)
+  Ecrire("Age:\\n")
+  Lire(etudiant1.age)
+  Ecrire("Moyenne:\\n")
+  Lire(etudiant1.moyenne)
+
+  // Initialisation du deuxième étudiant
+  Ecrire("\\nDeuxième étudiant\\n")
+  Ecrire("Nom:\\n")
+  Lire(etudiant2.nom)
+  Ecrire("Age:\\n")
+  Lire(etudiant2.age)
+  Ecrire("Moyenne:\\n")
+  Lire(etudiant2.moyenne)
+
+  // Affichage des informations
+  Ecrire("\\nInformations:\\n")
+  Ecrire("Etudiant 1: ", etudiant1.nom, ", ", etudiant1.age, " ans, moyenne: ", etudiant1.moyenne, "\\n")
+  Ecrire("Etudiant 2: ", etudiant2.nom, ", ", etudiant2.age, " ans, moyenne: ", etudiant2.moyenne, "\\n")
+
+  // Comparaison
+  Si etudiant1.moyenne > etudiant2.moyenne Alors
+    meilleur <- etudiant1.nom
+  Sinon
+    meilleur <- etudiant2.nom
+  FinSi
+
+  Ecrire("\\nMeilleure moyenne: ", meilleur, "\\n")
+Fin`,
+    input: ['Alice', '20', '15.5', 'Bob', '22', '14.2']
   }
 ];
 

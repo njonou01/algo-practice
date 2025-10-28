@@ -38,6 +38,7 @@ function highlightSyntax(code: string) {
     'TantQue', 'FinTantQue', 'Repeter', 'Jusqua',
     'Selon', 'Cas', 'Defaut', 'FinSelon',
     'Fonction', 'Procedure', 'Retourner',
+    'Structure', 'Enregistrement', 'FinStructure', 'FinEnregistrement',
     'Lire', 'Ecrire', 'ET', 'OU', 'NON'
   ];
 
@@ -115,12 +116,20 @@ function highlightSyntax(code: string) {
     }
     if (matched) continue;
 
-    // Vérifier les nombres
+    // Vérifier les nombres (mais pas dans les identifiants)
     const numberMatch = highlighted.substring(currentPos).match(/^(\d+\.?\d*)/);
     if (numberMatch) {
-      tokens.push({ type: 'number', value: numberMatch[1] });
-      currentPos += numberMatch[1].length;
-      continue;
+      // Vérifier que ce n'est pas dans un identifiant
+      const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
+      const nextChar = highlighted[currentPos + numberMatch[1].length] || '';
+      const isPrevAlpha = /[a-zA-Z_éèêàâùûôîïç]/.test(prevChar);
+      const isNextAlpha = /[a-zA-Z_éèêàâùûôîïç]/.test(nextChar);
+
+      if (!isPrevAlpha && !isNextAlpha) {
+        tokens.push({ type: 'number', value: numberMatch[1] });
+        currentPos += numberMatch[1].length;
+        continue;
+      }
     }
 
     // Vérifier la flèche d'affectation

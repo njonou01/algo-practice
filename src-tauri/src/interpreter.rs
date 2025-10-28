@@ -4,7 +4,7 @@
 //! Il gère l'évaluation des expressions, l'exécution des instructions,
 //! les variables, les tableaux et les appels de fonctions/procédures.
 
-use crate::parser::{Algorithm, BinaryOperator, Expression, Function, LValue, Statement, Type, UnaryOperator};
+use crate::parser::{Algorithm, BinaryOperator, Expression, Function, LValue, Statement, StructDefinition, Type, UnaryOperator};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -24,6 +24,8 @@ pub enum Value {
     Booleen(bool),
     /// Tableau (stocké linéairement, même pour 2D)
     Tableau(Vec<Value>),
+    /// Structure/Enregistrement (nom du type, champs)
+    Struct(String, HashMap<String, Value>),
     /// Valeur nulle (pour procédures)
     Null,
 }
@@ -39,6 +41,13 @@ impl Value {
             Value::Tableau(arr) => {
                 let elements: Vec<String> = arr.iter().map(|v| v.to_string()).collect();
                 format!("[{}]", elements.join(", "))
+            }
+            Value::Struct(type_name, fields) => {
+                let fields_str: Vec<String> = fields
+                    .iter()
+                    .map(|(k, v)| format!("{}: {}", k, v.to_string()))
+                    .collect();
+                format!("{}{{ {} }}", type_name, fields_str.join(", "))
             }
             Value::Null => "null".to_string(),
         }
@@ -88,36 +97,6 @@ impl Value {
         }
     }
 
-    /// Retourne la valeur par défaut pour un type donné
-    ///
-    /// Utilisé pour initialiser les variables déclarées.
-    /// Les tableaux sont créés avec la taille totale calculée.
-    ///
-    /// # Arguments
-    ///
-    /// * `var_type` - Type dont on veut la valeur par défaut
-    pub fn get_default_value(var_type: &Type) -> Value {
-        match var_type {
-            Type::Entier => Value::Entier(0),
-            Type::Reel => Value::Reel(0.0),
-            Type::Caractere => Value::Chaine(String::new()),
-            Type::Chaine => Value::Chaine(String::new()),
-            Type::Booleen => Value::Booleen(false),
-            Type::Tableau(elem_type, dimensions) => {
-                let default_elem = Value::get_default_value(elem_type);
-
-                // Calculer la taille totale (produit de toutes les dimensions)
-                let total_size: usize = if dimensions.is_empty() {
-                    0
-                } else {
-                    dimensions.iter().product()
-                };
-
-                Value::Tableau(vec![default_elem; total_size])
-            }
-            Type::Void => Value::Null,
-        }
-    }
 }
 
 /// Interpréteur d'algorithmes
@@ -125,6 +104,8 @@ impl Value {
 /// Maintient l'état d'exécution : variables, tableaux, fonctions, entrées/sorties.
 /// Gère la portée des variables lors des appels de fonctions.
 pub struct Interpreter {
+    /// Définitions des structures/enregistrements
+    struct_defs: HashMap<String, StructDefinition>,
     /// Table des fonctions et procédures définies
     functions: HashMap<String, Function>,
     /// Variables globales et locales courantes
@@ -153,6 +134,7 @@ impl Interpreter {
     /// * `input_values` - Valeurs fournies pour Lire()
     pub fn new(input_values: Vec<String>) -> Self {
         Interpreter {
+            struct_defs: HashMap::new(),
             functions: HashMap::new(),
             variables: HashMap::new(),
             array_dimensions: HashMap::new(),
@@ -165,13 +147,58 @@ impl Interpreter {
         }
     }
 
+    /// Retourne la valeur par défaut pour un type donné
+    ///
+    /// Utilise les définitions de structures pour initialiser correctement les champs
+    ///
+    /// # Arguments
+    ///
+    /// * `var_type` - Type dont on veut la valeur par défaut
+    fn get_default_value_for_type(&self, var_type: &Type) -> Result<Value, String> {
+        match var_type {
+            Type::Entier => Ok(Value::Entier(0)),
+            Type::Reel => Ok(Value::Reel(0.0)),
+            Type::Caractere => Ok(Value::Chaine(String::new())),
+            Type::Chaine => Ok(Value::Chaine(String::new())),
+            Type::Booleen => Ok(Value::Booleen(false)),
+            Type::Tableau(elem_type, dimensions) => {
+                let default_elem = self.get_default_value_for_type(elem_type)?;
+
+                // Calculer la taille totale (produit de toutes les dimensions)
+                let total_size: usize = if dimensions.is_empty() {
+                    0
+                } else {
+                    dimensions.iter().product()
+                };
+
+                Ok(Value::Tableau(vec![default_elem; total_size]))
+            }
+            Type::Structure(type_name) => {
+                // Récupérer la définition de la structure
+                let struct_def = self.struct_defs.get(type_name)
+                    .ok_or_else(|| format!("Structure '{}' non définie", type_name))?;
+
+                // Initialiser tous les champs avec leurs valeurs par défaut
+                let mut fields = HashMap::new();
+                for field in &struct_def.fields {
+                    let default_value = self.get_default_value_for_type(&field.var_type)?;
+                    fields.insert(field.name.clone(), default_value);
+                }
+
+                Ok(Value::Struct(type_name.clone(), fields))
+            }
+            Type::Void => Ok(Value::Null),
+        }
+    }
+
     /// Exécute un algorithme complet
     ///
     /// Point d'entrée principal de l'interpréteur.
-    /// 1. Enregistre les fonctions/procédures
-    /// 2. Initialise les variables globales
-    /// 3. Exécute les instructions du corps principal
-    /// 4. Retourne les lignes de sortie générées
+    /// 1. Enregistre les définitions de structures
+    /// 2. Enregistre les fonctions/procédures
+    /// 3. Initialise les variables globales
+    /// 4. Exécute les instructions du corps principal
+    /// 5. Retourne les lignes de sortie générées
     ///
     /// # Arguments
     ///
@@ -182,6 +209,11 @@ impl Interpreter {
     /// * `Ok(Vec<String>)` - Lignes de sortie si succès
     /// * `Err(String)` - Message d'erreur d'exécution
     pub fn run(&mut self, algorithm: Algorithm) -> Result<Vec<String>, String> {
+        // Enregistrer toutes les définitions de structures
+        for struct_def in &algorithm.structs {
+            self.struct_defs.insert(struct_def.name.clone(), struct_def.clone());
+        }
+
         // Enregistrer toutes les fonctions et procédures
         for func in &algorithm.functions {
             self.functions.insert(func.name.clone(), func.clone());
@@ -189,7 +221,7 @@ impl Interpreter {
 
         // Initialiser les variables globales avec leurs valeurs par défaut
         for var in &algorithm.variables {
-            let default_value = Value::get_default_value(&var.var_type);
+            let default_value = self.get_default_value_for_type(&var.var_type)?;
             self.variables.insert(var.name.clone(), default_value);
 
             // Stocker les dimensions pour les tableaux (utile pour indexation 2D)
@@ -209,6 +241,99 @@ impl Interpreter {
         }
 
         Ok(self.output.clone())
+    }
+
+    /// Assigne une valeur à une LValue (variable, élément de tableau ou champ de structure)
+    ///
+    /// # Arguments
+    ///
+    /// * `lvalue` - Emplacement mémoire où assigner
+    /// * `value` - Valeur à assigner
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(())` si succès
+    /// * `Err(String)` si erreur d'affectation
+    fn assign_to_lvalue(&mut self, lvalue: &LValue, value: Value) -> Result<(), String> {
+        match lvalue {
+            LValue::Variable(var_name) => {
+                self.variables.insert(var_name.clone(), value);
+                Ok(())
+            }
+            LValue::ArrayElement { name, indices } => {
+                let flat_index = self.calculate_flat_index(name, indices)?;
+                if let Some(Value::Tableau(arr)) = self.variables.get_mut(name) {
+                    if flat_index < arr.len() {
+                        arr[flat_index] = value;
+                        Ok(())
+                    } else {
+                        Err(format!(
+                            "Index {} hors limites pour le tableau '{}'",
+                            flat_index, name
+                        ))
+                    }
+                } else {
+                    Err(format!("'{}' n'est pas un tableau", name))
+                }
+            }
+            LValue::FieldAccess { object, field } => {
+                // Pour l'accès aux champs, on doit récursivement atteindre l'objet
+                // et modifier le champ dans la structure
+                self.assign_to_field(object, field, value)
+            }
+        }
+    }
+
+    /// Assigne une valeur à un champ de structure (récursivement si nécessaire)
+    ///
+    /// # Arguments
+    ///
+    /// * `object` - LValue représentant l'objet contenant le champ
+    /// * `field` - Nom du champ
+    /// * `value` - Valeur à assigner
+    fn assign_to_field(&mut self, object: &LValue, field: &str, value: Value) -> Result<(), String> {
+        match object {
+            LValue::Variable(var_name) => {
+                // Accès direct : var.field
+                if let Some(Value::Struct(type_name, fields)) = self.variables.get_mut(var_name) {
+                    if fields.contains_key(field) {
+                        fields.insert(field.to_string(), value);
+                        Ok(())
+                    } else {
+                        Err(format!("Champ '{}' introuvable dans la structure '{}'", field, type_name))
+                    }
+                } else {
+                    Err(format!("'{}' n'est pas une structure", var_name))
+                }
+            }
+            LValue::FieldAccess { object: nested_object, field: nested_field } => {
+                // Accès imbriqué : obj.field1.field2
+                // On doit d'abord obtenir la valeur de obj.field1, puis modifier field2
+                // Cette implémentation suppose un niveau d'imbrication
+                match nested_object.as_ref() {
+                    LValue::Variable(var_name) => {
+                        if let Some(Value::Struct(_, outer_fields)) = self.variables.get_mut(var_name) {
+                            if let Some(Value::Struct(inner_type, inner_fields)) = outer_fields.get_mut(nested_field) {
+                                if inner_fields.contains_key(field) {
+                                    inner_fields.insert(field.to_string(), value);
+                                    Ok(())
+                                } else {
+                                    Err(format!("Champ '{}' introuvable dans la structure '{}'", field, inner_type))
+                                }
+                            } else {
+                                Err(format!("'{}' n'est pas une structure", nested_field))
+                            }
+                        } else {
+                            Err(format!("'{}' n'est pas une structure", var_name))
+                        }
+                    }
+                    _ => Err("Accès aux champs imbriqués trop profonds non supporté".to_string())
+                }
+            }
+            LValue::ArrayElement { .. } => {
+                Err("Accès aux champs dans les éléments de tableau non encore supporté".to_string())
+            }
+        }
     }
 
     /// Exécute une instruction
@@ -278,27 +403,8 @@ impl Interpreter {
                         Value::Chaine(input_str)
                     };
 
-                    // Assigner la valeur selon le type de lvalue
-                    match target {
-                        LValue::Variable(var_name) => {
-                            self.variables.insert(var_name.clone(), value);
-                        }
-                        LValue::ArrayElement { name, indices } => {
-                            let flat_index = self.calculate_flat_index(name, indices)?;
-                            if let Some(Value::Tableau(arr)) = self.variables.get_mut(name) {
-                                if flat_index < arr.len() {
-                                    arr[flat_index] = value;
-                                } else {
-                                    return Err(format!(
-                                        "Index {} hors limites pour le tableau '{}'",
-                                        flat_index, name
-                                    ));
-                                }
-                            } else {
-                                return Err(format!("'{}' n'est pas un tableau", name));
-                            }
-                        }
-                    }
+                    // Assigner la valeur en utilisant la méthode générique
+                    self.assign_to_lvalue(target, value)?;
                 }
                 Ok(())
             }
@@ -308,7 +414,7 @@ impl Interpreter {
                     let value = self.evaluate_expression(expr)?;
                     output_parts.push(value.to_string());
                 }
-                let text = output_parts.join(" ");
+                let text = output_parts.join("");
 
                 // Traiter le texte caractère par caractère pour gérer \n
                 for ch in text.chars() {
@@ -459,6 +565,11 @@ impl Interpreter {
 
                 Ok(())
             }
+            Statement::GeneralAssignment { target, value } => {
+                // Affectation générale : supporte variables, tableaux et champs de structures
+                let val = self.evaluate_expression(value)?;
+                self.assign_to_lvalue(target, val)
+            }
         }
     }
 
@@ -518,6 +629,17 @@ impl Interpreter {
 
                 let result = self.call_function(name, arg_values)?;
                 result.ok_or_else(|| format!("La procédure '{}' ne retourne pas de valeur", name))
+            }
+            Expression::FieldAccess { object, field } => {
+                let obj_value = self.evaluate_expression(object)?;
+                match obj_value {
+                    Value::Struct(_, fields) => {
+                        fields.get(field)
+                            .cloned()
+                            .ok_or_else(|| format!("Champ '{}' introuvable dans la structure", field))
+                    }
+                    _ => Err(format!("Tentative d'accès à un champ sur une non-structure"))
+                }
             }
         }
     }
@@ -724,7 +846,7 @@ impl Interpreter {
 
         // Initialiser les variables locales
         for var in &function.variables {
-            let default_value = Value::get_default_value(&var.var_type);
+            let default_value = self.get_default_value_for_type(&var.var_type)?;
             self.variables.insert(var.name.clone(), default_value);
 
             // Stocker les dimensions pour les tableaux
