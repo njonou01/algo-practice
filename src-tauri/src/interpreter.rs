@@ -323,6 +323,53 @@ impl Interpreter {
                 let _ = self.call_function(name, args)?;
                 Ok(())
             }
+            Statement::Match {
+                expression,
+                cases,
+                default_case,
+            } => {
+                // Evaluate the expression to match
+                let match_value = self.evaluate_expression(expression)?;
+
+                // Try each case
+                let mut matched = false;
+                for case in cases {
+                    // Check if match_value equals any of the case values
+                    for case_value_expr in &case.values {
+                        let case_value = self.evaluate_expression(case_value_expr)?;
+
+                        // Compare values
+                        if self.values_equal(&match_value, &case_value) {
+                            // Execute statements for this case
+                            for stmt in &case.statements {
+                                self.execute_statement(stmt)?;
+                                if self.has_returned {
+                                    return Ok(());
+                                }
+                            }
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if matched {
+                        break;
+                    }
+                }
+
+                // If no case matched, execute default case if exists
+                if !matched {
+                    if let Some(default_stmts) = default_case {
+                        for stmt in default_stmts {
+                            self.execute_statement(stmt)?;
+                            if self.has_returned {
+                                return Ok(());
+                            }
+                        }
+                    }
+                }
+
+                Ok(())
+            }
         }
     }
 
@@ -642,6 +689,18 @@ impl Interpreter {
                 "Comparaison invalide entre {:?} et {:?}",
                 left, right
             )),
+        }
+    }
+
+    fn values_equal(&self, left: &Value, right: &Value) -> bool {
+        match (left, right) {
+            (Value::Entier(a), Value::Entier(b)) => a == b,
+            (Value::Reel(a), Value::Reel(b)) => (a - b).abs() < f64::EPSILON,
+            (Value::Entier(a), Value::Reel(b)) => (*a as f64 - b).abs() < f64::EPSILON,
+            (Value::Reel(a), Value::Entier(b)) => (a - *b as f64).abs() < f64::EPSILON,
+            (Value::Chaine(a), Value::Chaine(b)) => a == b,
+            (Value::Booleen(a), Value::Booleen(b)) => a == b,
+            _ => false,
         }
     }
 }

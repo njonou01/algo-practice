@@ -192,10 +192,69 @@ function Guide() {
             </div>
           </section>
 
+          {/* Structure Selon */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
+              7. Structure Selon/Cas
+            </h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              La structure <code className="bg-gray-100 px-2 py-1 text-indigo-600">Selon</code> permet de tester une valeur
+              contre plusieurs cas possibles. C'est l'équivalent du <code className="bg-gray-100 px-2 py-1">switch/case</code> dans d'autres langages.
+            </p>
+
+            <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-4">
+              <div className="text-gray-700">
+                <div><span className="text-indigo-600">Selon</span> variable</div>
+                <div className="ml-4"><span className="text-indigo-600">Cas</span> valeur1:</div>
+                <div className="ml-8 text-gray-500">// Instructions pour valeur1</div>
+                <div className="ml-4"><span className="text-indigo-600">Cas</span> valeur2, valeur3:</div>
+                <div className="ml-8 text-gray-500">// Instructions pour valeur2 ou valeur3</div>
+                <div className="ml-4"><span className="text-indigo-600">Defaut</span>:</div>
+                <div className="ml-8 text-gray-500">// Instructions si aucun cas ne correspond</div>
+                <div><span className="text-indigo-600">FinSelon</span></div>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Caractéristiques</h3>
+              <ul className="list-disc list-inside text-gray-700 space-y-2">
+                <li>Chaque cas peut contenir <strong>plusieurs valeurs</strong> séparées par des virgules</li>
+                <li>Le bloc <code className="bg-gray-100 px-2 py-1 text-indigo-600">Defaut</code> est optionnel</li>
+                <li>Seul le premier cas correspondant est exécuté (pas de <em>fall-through</em>)</li>
+                <li>Chaque cas doit se terminer par <code className="bg-gray-100 px-2 py-1">:</code></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">Exemple : Jour de la semaine</h3>
+              <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm">
+                <div className="text-gray-700">
+                  <div><span className="text-indigo-600">Variables</span> jour : Entier</div>
+                  <div className="mt-2"><span className="text-indigo-600">Debut</span></div>
+                  <div className="ml-4">Ecrire("Entrez un numéro (1-7):\n")</div>
+                  <div className="ml-4">Lire(jour)</div>
+                  <div className="ml-4 mt-2"><span className="text-indigo-600">Selon</span> jour</div>
+                  <div className="ml-8"><span className="text-indigo-600">Cas</span> 1:</div>
+                  <div className="ml-12">Ecrire("Lundi\n")</div>
+                  <div className="ml-8"><span className="text-indigo-600">Cas</span> 2:</div>
+                  <div className="ml-12">Ecrire("Mardi\n")</div>
+                  <div className="ml-8"><span className="text-indigo-600">Cas</span> 3:</div>
+                  <div className="ml-12">Ecrire("Mercredi\n")</div>
+                  <div className="ml-8"><span className="text-indigo-600">Cas</span> 6, 7:</div>
+                  <div className="ml-12">Ecrire("Week-end!\n")</div>
+                  <div className="ml-8"><span className="text-indigo-600">Defaut</span>:</div>
+                  <div className="ml-12">Ecrire("Jour invalide\n")</div>
+                  <div className="ml-4"><span className="text-indigo-600">FinSelon</span></div>
+                  <div><span className="text-indigo-600">Fin</span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Tableaux */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              7. Tableaux
+              8. Tableaux
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
               Les tableaux permettent de stocker plusieurs valeurs du même type.
@@ -259,7 +318,7 @@ function Guide() {
           {/* Fonctions et Procédures */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              8. Fonctions et Procédures
+              9. Fonctions et Procédures
             </h2>
             <p className="text-gray-700 leading-relaxed mb-6">
               Les fonctions et procédures permettent de décomposer un programme en sous-programmes réutilisables.
@@ -363,7 +422,7 @@ function Guide() {
           {/* Opérateurs */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              9. Opérateurs
+              10. Opérateurs
             </h2>
 
             <div className="mb-6">
@@ -444,7 +503,7 @@ function Guide() {
           {/* Exemple complet */}
           <section>
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              10. Exemple complet
+              11. Exemple complet
             </h2>
             <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm">
               <div className="text-gray-700">

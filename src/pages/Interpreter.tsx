@@ -15,6 +15,7 @@ function highlightSyntax(code: string) {
     'Si', 'Alors', 'Sinon', 'FinSi',
     'Pour', 'De', 'A', 'Faire', 'FinPour',
     'TantQue', 'FinTantQue', 'Repeter', 'Jusqua',
+    'Selon', 'Cas', 'Defaut', 'FinSelon',
     'Fonction', 'Procedure', 'Retourner',
     'Lire', 'Ecrire', 'ET', 'OU', 'NON'
   ];
@@ -363,6 +364,58 @@ Debut
 Fin`,
         input: "Alice\n3",
       },
+      matchDay: {
+        code: `Algorithme JourSemaine
+Variables jour : Entier
+
+Debut
+  Ecrire("Entrez un numéro (1-7):\n")
+  Lire(jour)
+
+  Selon jour
+    Cas 1:
+      Ecrire("Lundi\n")
+    Cas 2:
+      Ecrire("Mardi\n")
+    Cas 3:
+      Ecrire("Mercredi\n")
+    Cas 4:
+      Ecrire("Jeudi\n")
+    Cas 5:
+      Ecrire("Vendredi\n")
+    Cas 6, 7:
+      Ecrire("Week-end!\n")
+    Defaut:
+      Ecrire("Jour invalide\n")
+  FinSelon
+Fin`,
+        input: "3",
+      },
+      matchGrade: {
+        code: `Algorithme MentionExamen
+Variables note : Entier
+
+Debut
+  Ecrire("Entrez votre note /20:\n")
+  Lire(note)
+
+  Selon note
+    Cas 18, 19, 20:
+      Ecrire("Mention: Excellent\n")
+    Cas 16, 17:
+      Ecrire("Mention: Très Bien\n")
+    Cas 14, 15:
+      Ecrire("Mention: Bien\n")
+    Cas 12, 13:
+      Ecrire("Mention: Assez Bien\n")
+    Cas 10, 11:
+      Ecrire("Mention: Passable\n")
+    Defaut:
+      Ecrire("Mention: Insuffisant\n")
+  FinSelon
+Fin`,
+        input: "16",
+      },
     };
 
     const example = examples[exampleName];
@@ -427,6 +480,18 @@ Fin`,
               className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
             >
               Procédure
+            </button>
+            <button
+              onClick={() => loadExample("matchDay")}
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
+            >
+              Selon (Jour)
+            </button>
+            <button
+              onClick={() => loadExample("matchGrade")}
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
+            >
+              Selon (Note)
             </button>
           </div>
         </div>

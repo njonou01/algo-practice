@@ -134,6 +134,17 @@ pub enum Statement {
         name: String,
         arguments: Vec<Expression>,
     },
+    Match {
+        expression: Expression,
+        cases: Vec<MatchCase>,
+        default_case: Option<Vec<Statement>>,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MatchCase {
+    pub values: Vec<Expression>,
+    pub statements: Vec<Statement>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -758,6 +769,81 @@ impl Parser {
                 };
 
                 Ok(Statement::Return { value })
+            }
+            Token::Selon => {
+                self.advance();
+                self.skip_newlines();
+
+                // Parse the expression to match
+                let expression = self.parse_expression()?;
+                self.skip_newlines();
+
+                // Parse cases
+                let mut cases = Vec::new();
+                let mut default_case = None;
+
+                while *self.current_token() != Token::FinSelon && *self.current_token() != Token::EOF {
+                    self.skip_newlines();
+
+                    if *self.current_token() == Token::Cas {
+                        self.advance();
+                        self.skip_newlines();
+
+                        // Parse case values (separated by commas)
+                        let mut values = Vec::new();
+                        values.push(self.parse_expression()?);
+                        self.skip_newlines();
+
+                        while *self.current_token() == Token::Virgule {
+                            self.advance();
+                            self.skip_newlines();
+                            values.push(self.parse_expression()?);
+                            self.skip_newlines();
+                        }
+
+                        // Expect ':'
+                        self.expect(Token::DeuxPoints)?;
+                        self.skip_newlines();
+
+                        // Parse statements for this case
+                        let mut statements = Vec::new();
+                        while *self.current_token() != Token::Cas
+                            && *self.current_token() != Token::Defaut
+                            && *self.current_token() != Token::FinSelon
+                            && *self.current_token() != Token::EOF
+                        {
+                            statements.push(self.parse_statement()?);
+                            self.skip_newlines();
+                        }
+
+                        cases.push(MatchCase { values, statements });
+                    } else if *self.current_token() == Token::Defaut {
+                        self.advance();
+                        self.skip_newlines();
+                        self.expect(Token::DeuxPoints)?;
+                        self.skip_newlines();
+
+                        // Parse default case statements
+                        let mut statements = Vec::new();
+                        while *self.current_token() != Token::FinSelon
+                            && *self.current_token() != Token::EOF
+                        {
+                            statements.push(self.parse_statement()?);
+                            self.skip_newlines();
+                        }
+
+                        default_case = Some(statements);
+                    } else {
+                        break;
+                    }
+                }
+
+                self.expect(Token::FinSelon)?;
+                Ok(Statement::Match {
+                    expression,
+                    cases,
+                    default_case,
+                })
             }
             _ => Err(format!(
                 "Instruction invalide: {:?}",
