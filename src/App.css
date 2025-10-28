@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 51, 234, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 51, 234, 0.7);
+}
+
+/* Syntax highlighting colors */
+.keyword {
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+.type {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.string {
+  color: #10b981;
+}
+
+.number {
+  color: #3b82f6;
+}
+
+.boolean {
+  color: #f59e0b;
+}
+
+.operator {
+  color: #f472b6;
+}
+
+.arrow {
+  color: #ec4899;
+  font-weight: 600;
+}
+
+.comment {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.text {
+  color: #e5e7eb;
+}
