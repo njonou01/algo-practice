@@ -15,6 +15,7 @@ function highlightSyntax(code: string) {
     'Si', 'Alors', 'Sinon', 'FinSi',
     'Pour', 'De', 'A', 'Faire', 'FinPour',
     'TantQue', 'FinTantQue', 'Repeter', 'Jusqua',
+    'Fonction', 'Procedure', 'Retourner',
     'Lire', 'Ecrire', 'ET', 'OU', 'NON'
   ];
 
@@ -316,6 +317,52 @@ Debut
 Fin`,
         input: "",
       },
+      functionSquare: {
+        code: `Algorithme AvecFonction
+
+Fonction Carre(n : Entier) : Entier
+Variables resultat : Entier
+Debut
+  resultat <- n * n
+  Retourner resultat
+Fin
+
+Variables x, y : Entier
+
+Debut
+  Ecrire("Entrez un nombre:\n")
+  Lire(x)
+  y <- Carre(x)
+  Ecrire("Le carré de ", x, " est ", y, "\n")
+  Ecrire("Le carré de 5 est ", Carre(5), "\n")
+Fin`,
+        input: "7",
+      },
+      procedureGreet: {
+        code: `Algorithme AvecProcedure
+
+Procedure Saluer(nom : Chaine, fois : Entier)
+Variables i : Entier
+Debut
+  Pour i De 1 A fois Faire
+    Ecrire("Bonjour ", nom, "!\n")
+  FinPour
+Fin
+
+Variables
+  prenom : Chaine
+  nombre : Entier
+
+Debut
+  Ecrire("Votre prénom:\n")
+  Lire(prenom)
+  Ecrire("Nombre de salutations:\n")
+  Lire(nombre)
+  Saluer(prenom, nombre)
+  Ecrire("Terminé!\n")
+Fin`,
+        input: "Alice\n3",
+      },
     };
 
     const example = examples[exampleName];
@@ -368,6 +415,18 @@ Fin`,
               className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
             >
               Matrice 2D
+            </button>
+            <button
+              onClick={() => loadExample("functionSquare")}
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
+            >
+              Fonction
+            </button>
+            <button
+              onClick={() => loadExample("procedureGreet")}
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
+            >
+              Procédure
             </button>
           </div>
         </div>

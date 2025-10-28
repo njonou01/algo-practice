@@ -1,4 +1,4 @@
-use crate::parser::{Algorithm, BinaryOperator, Expression, LValue, Statement, Type, UnaryOperator};
+use crate::parser::{Algorithm, BinaryOperator, Expression, Function, LValue, Statement, Type, UnaryOperator};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -72,32 +72,44 @@ impl Value {
 
                 Value::Tableau(vec![default_elem; total_size])
             }
+            Type::Void => Value::Null,
         }
     }
 }
 
 pub struct Interpreter {
+    functions: HashMap<String, Function>,
     variables: HashMap<String, Value>,
     array_dimensions: HashMap<String, Vec<usize>>, // Stocke les dimensions des tableaux
     output: Vec<String>,
     current_line: String, // Buffer pour la ligne courante
     input_values: Vec<String>,
     input_index: usize,
+    return_value: Option<Value>, // Pour gérer les returns
+    has_returned: bool, // Flag pour stopper l'exécution après un return
 }
 
 impl Interpreter {
     pub fn new(input_values: Vec<String>) -> Self {
         Interpreter {
+            functions: HashMap::new(),
             variables: HashMap::new(),
             array_dimensions: HashMap::new(),
             output: Vec::new(),
             current_line: String::new(),
             input_values,
             input_index: 0,
+            return_value: None,
+            has_returned: false,
         }
     }
 
     pub fn run(&mut self, algorithm: Algorithm) -> Result<Vec<String>, String> {
+        // Store functions
+        for func in &algorithm.functions {
+            self.functions.insert(func.name.clone(), func.clone());
+        }
+
         // Initialize variables with default values
         for var in &algorithm.variables {
             let default_value = Value::get_default_value(&var.var_type);
@@ -280,6 +292,9 @@ impl Interpreter {
                 loop {
                     for stmt in body {
                         self.execute_statement(stmt)?;
+                        if self.has_returned {
+                            return Ok(());
+                        }
                     }
 
                     let cond_value = self.evaluate_expression(condition)?;
@@ -291,10 +306,27 @@ impl Interpreter {
                 }
                 Ok(())
             }
+            Statement::Return { value } => {
+                self.return_value = if let Some(expr) = value {
+                    Some(self.evaluate_expression(expr)?)
+                } else {
+                    Some(Value::Null)
+                };
+                self.has_returned = true;
+                Ok(())
+            }
+            Statement::ProcedureCall { name, arguments } => {
+                let mut args = Vec::new();
+                for arg in arguments {
+                    args.push(self.evaluate_expression(arg)?);
+                }
+                let _ = self.call_function(name, args)?;
+                Ok(())
+            }
         }
     }
 
-    fn evaluate_expression(&self, expr: &Expression) -> Result<Value, String> {
+    fn evaluate_expression(&mut self, expr: &Expression) -> Result<Value, String> {
         match expr {
             Expression::NombreEntier(n) => Ok(Value::Entier(*n)),
             Expression::NombreReel(f) => Ok(Value::Reel(*f)),
@@ -329,8 +361,14 @@ impl Interpreter {
                     Err(format!("'{}' n'est pas un tableau", name))
                 }
             }
-            Expression::FunctionCall { name, args: _ } => {
-                Err(format!("Appel de fonction non supporté: '{}'", name))
+            Expression::FunctionCall { name, args } => {
+                let mut arg_values = Vec::new();
+                for arg in args {
+                    arg_values.push(self.evaluate_expression(arg)?);
+                }
+
+                let result = self.call_function(name, arg_values)?;
+                result.ok_or_else(|| format!("La procédure '{}' ne retourne pas de valeur", name))
             }
         }
     }
@@ -459,7 +497,7 @@ impl Interpreter {
         }
     }
 
-    fn calculate_flat_index(&self, var_name: &str, indices: &[Expression]) -> Result<usize, String> {
+    fn calculate_flat_index(&mut self, var_name: &str, indices: &[Expression]) -> Result<usize, String> {
         // Évaluer tous les indices
         let mut index_values = Vec::new();
         for idx_expr in indices {
@@ -492,6 +530,78 @@ impl Interpreter {
         } else {
             Err("Tableaux à plus de 2 dimensions non supportés".to_string())
         }
+    }
+
+    fn call_function(&mut self, func_name: &str, arguments: Vec<Value>) -> Result<Option<Value>, String> {
+        // Look up the function
+        let function = self.functions.get(func_name)
+            .ok_or_else(|| format!("Fonction '{}' non définie", func_name))?
+            .clone(); // Clone to avoid borrow checker issues
+
+        // Check argument count
+        if arguments.len() != function.parameters.len() {
+            return Err(format!(
+                "Fonction '{}': attendu {} arguments, trouvé {}",
+                func_name,
+                function.parameters.len(),
+                arguments.len()
+            ));
+        }
+
+        // Save current state
+        let saved_variables = self.variables.clone();
+        let saved_array_dimensions = self.array_dimensions.clone();
+        let saved_return_value = self.return_value.clone();
+        let saved_has_returned = self.has_returned;
+
+        // Reset return state
+        self.return_value = None;
+        self.has_returned = false;
+
+        // Bind parameters
+        for (param, arg) in function.parameters.iter().zip(arguments.iter()) {
+            self.variables.insert(param.name.clone(), arg.clone());
+        }
+
+        // Initialize local variables
+        for var in &function.variables {
+            let default_value = Value::get_default_value(&var.var_type);
+            self.variables.insert(var.name.clone(), default_value);
+
+            // Store array dimensions
+            if let Type::Tableau(_, dimensions) = &var.var_type {
+                self.array_dimensions.insert(var.name.clone(), dimensions.clone());
+            }
+        }
+
+        // Execute function body
+        for statement in &function.statements {
+            self.execute_statement(statement)?;
+            if self.has_returned {
+                break;
+            }
+        }
+
+        // Check if function returned a value when it should
+        let result = if function.return_type == Type::Void {
+            // Procedure - no return value expected
+            Ok(None)
+        } else {
+            // Function - return value expected
+            if let Some(val) = self.return_value.clone() {
+                Ok(Some(val))
+            } else {
+                Err(format!("Fonction '{}' doit retourner une valeur", func_name))
+            }
+        };
+
+        // Restore state
+        self.variables = saved_variables;
+        self.array_dimensions = saved_array_dimensions;
+        self.return_value = saved_return_value;
+        self.has_returned = saved_has_returned;
+
+        result
     }
 
     fn compare_values(&self, left: &Value, right: &Value) -> Result<std::cmp::Ordering, String> {

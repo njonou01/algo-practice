@@ -24,6 +24,12 @@ pub enum Token {
     Selon,
     Cas,
     FinSelon,
+    Fonction,
+    Procedure,
+    Retourner,
+    TypeDef,
+    Enregistrement,
+    FinEnregistrement,
 
     // Types
     Entier,
@@ -57,6 +63,7 @@ pub enum Token {
     // Délimiteurs
     Virgule,           // ,
     DeuxPoints,        // :
+    Point,             // .
     ParentheseOuv,     // (
     ParentheseFerm,    // )
     CrochetOuv,        // [
@@ -216,6 +223,12 @@ impl Lexer {
             "selon" => Token::Selon,
             "cas" => Token::Cas,
             "finselon" => Token::FinSelon,
+            "fonction" => Token::Fonction,
+            "procedure" | "procédure" => Token::Procedure,
+            "retourner" => Token::Retourner,
+            "type" => Token::TypeDef,
+            "enregistrement" => Token::Enregistrement,
+            "finenregistrement" => Token::FinEnregistrement,
             "entier" => Token::Entier,
             "reel" | "réel" => Token::Reel,
             "caractere" | "caractère" | "car" => Token::Caractere,
@@ -363,6 +376,10 @@ impl Lexer {
                 }
                 ':' => {
                     tokens.push(Token::DeuxPoints);
+                    self.advance();
+                }
+                '.' => {
+                    tokens.push(Token::Point);
                     self.advance();
                 }
                 '(' => {

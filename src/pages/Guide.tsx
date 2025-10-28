@@ -97,17 +97,35 @@ function Guide() {
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">Lire()</h3>
-                <div className="bg-gray-50 border border-gray-200 p-4 font-mono text-sm mb-2">
-                  Lire(variable)
+                <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-2">
+                  <div className="text-gray-700">
+                    <div>Lire(variable)</div>
+                    <div className="mt-2">Lire(x, y, z)</div>
+                    <div className="mt-2">Lire(tableau[i])</div>
+                  </div>
                 </div>
-                <p className="text-gray-700">Permet de saisir une valeur depuis l'entrée standard.</p>
+                <p className="text-gray-700 leading-relaxed">
+                  Permet de saisir une ou plusieurs valeurs depuis l'entrée standard.
+                  Peut aussi lire directement dans des éléments de tableaux.
+                </p>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">Ecrire()</h3>
-                <div className="bg-gray-50 border border-gray-200 p-4 font-mono text-sm mb-2">
-                  Ecrire("Message", variable)
+                <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-2">
+                  <div className="text-gray-700">
+                    <div>Ecrire("Message")</div>
+                    <div className="mt-2">Ecrire("Resultat:", variable)</div>
+                    <div className="mt-2">Ecrire("Ligne 1\n")</div>
+                    <div>Ecrire("Ligne 2\n")</div>
+                  </div>
                 </div>
-                <p className="text-gray-700">Affiche du texte et/ou des variables à l'écran.</p>
+                <p className="text-gray-700 leading-relaxed mb-2">
+                  Affiche du texte et/ou des variables à l'écran.
+                </p>
+                <p className="text-gray-700 leading-relaxed">
+                  <strong className="text-red-600">Important :</strong> Pour aller à la ligne, il faut utiliser <code className="bg-gray-100 px-2 py-1">\n</code> explicitement.
+                  Sans <code className="bg-gray-100 px-2 py-1">\n</code>, le texte reste sur la même ligne.
+                </p>
               </div>
             </div>
           </section>
@@ -238,10 +256,114 @@ function Guide() {
             </div>
           </section>
 
+          {/* Fonctions et Procédures */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
+              8. Fonctions et Procédures
+            </h2>
+            <p className="text-gray-700 leading-relaxed mb-6">
+              Les fonctions et procédures permettent de décomposer un programme en sous-programmes réutilisables.
+              Une <strong>fonction</strong> retourne une valeur, tandis qu'une <strong>procédure</strong> effectue des actions sans retourner de valeur.
+            </p>
+
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Fonctions</h3>
+              <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-4">
+                <div className="text-gray-700">
+                  <div><span className="text-indigo-600 font-semibold">Fonction</span> Carre(n : Entier) : Entier</div>
+                  <div><span className="text-indigo-600">Variables</span> resultat : Entier</div>
+                  <div><span className="text-indigo-600">Debut</span></div>
+                  <div className="ml-4">resultat <span className="text-pink-600">←</span> n * n</div>
+                  <div className="ml-4"><span className="text-indigo-600">Retourner</span> resultat</div>
+                  <div><span className="text-indigo-600">Fin</span></div>
+                </div>
+              </div>
+              <p className="text-gray-700 leading-relaxed mb-2">
+                Une fonction peut avoir des <strong>paramètres</strong> (ici <code className="bg-gray-100 px-2 py-1">n</code>)
+                et doit spécifier son <strong>type de retour</strong> (ici <code className="bg-gray-100 px-2 py-1">Entier</code>).
+              </p>
+              <p className="text-gray-700 leading-relaxed mb-4">
+                Elle peut déclarer ses propres <strong>variables locales</strong> et doit utiliser
+                <code className="bg-gray-100 px-2 py-1 text-indigo-600 mx-1">Retourner</code> pour renvoyer une valeur.
+              </p>
+
+              <h4 className="font-semibold text-gray-900 mb-2 text-sm">Appel d'une fonction</h4>
+              <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-2">
+                <div className="text-gray-700">
+                  <div>y <span className="text-pink-600">←</span> Carre(5)</div>
+                  <div>Ecrire("Résultat:", Carre(10), "\n")</div>
+                </div>
+              </div>
+              <p className="text-gray-700 leading-relaxed text-sm">
+                Les fonctions peuvent être appelées dans des expressions ou des affectations.
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Procédures</h3>
+              <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-4">
+                <div className="text-gray-700">
+                  <div><span className="text-indigo-600 font-semibold">Procedure</span> Saluer(nom : Chaine, fois : Entier)</div>
+                  <div><span className="text-indigo-600">Variables</span> i : Entier</div>
+                  <div><span className="text-indigo-600">Debut</span></div>
+                  <div className="ml-4"><span className="text-indigo-600">Pour</span> i <span className="text-indigo-600">De</span> 1 <span className="text-indigo-600">A</span> fois <span className="text-indigo-600">Faire</span></div>
+                  <div className="ml-8">Ecrire("Bonjour ", nom, "!\n")</div>
+                  <div className="ml-4"><span className="text-indigo-600">FinPour</span></div>
+                  <div><span className="text-indigo-600">Fin</span></div>
+                </div>
+              </div>
+              <p className="text-gray-700 leading-relaxed mb-4">
+                Une procédure ne retourne pas de valeur. Elle s'utilise pour effectuer des actions (affichage, modifications, etc.).
+              </p>
+
+              <h4 className="font-semibold text-gray-900 mb-2 text-sm">Appel d'une procédure</h4>
+              <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-2">
+                <div className="text-gray-700">
+                  <div>Saluer("Alice", 3)</div>
+                </div>
+              </div>
+              <p className="text-gray-700 leading-relaxed text-sm">
+                Les procédures sont appelées comme des instructions, pas dans des expressions.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">Exemple complet avec fonction</h3>
+              <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm">
+                <div className="text-gray-700">
+                  <div><span className="text-indigo-600 font-semibold">Algorithme</span> TestFonction</div>
+                  <div className="mt-2"><span className="text-indigo-600 font-semibold">Fonction</span> Maximum(a : Entier, b : Entier) : Entier</div>
+                  <div><span className="text-indigo-600">Debut</span></div>
+                  <div className="ml-4"><span className="text-indigo-600">Si</span> a &gt; b <span className="text-indigo-600">Alors</span></div>
+                  <div className="ml-8"><span className="text-indigo-600">Retourner</span> a</div>
+                  <div className="ml-4"><span className="text-indigo-600">Sinon</span></div>
+                  <div className="ml-8"><span className="text-indigo-600">Retourner</span> b</div>
+                  <div className="ml-4"><span className="text-indigo-600">FinSi</span></div>
+                  <div><span className="text-indigo-600">Fin</span></div>
+                  <div className="mt-2"><span className="text-indigo-600">Variables</span></div>
+                  <div className="ml-4">x, y, max : Entier</div>
+                  <div className="mt-2"><span className="text-indigo-600">Debut</span></div>
+                  <div className="ml-4">x <span className="text-pink-600">←</span> 15</div>
+                  <div className="ml-4">y <span className="text-pink-600">←</span> 23</div>
+                  <div className="ml-4">max <span className="text-pink-600">←</span> Maximum(x, y)</div>
+                  <div className="ml-4">Ecrire("Le maximum est:", max, "\n")</div>
+                  <div><span className="text-indigo-600">Fin</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 bg-blue-50 border border-blue-200 p-4">
+              <p className="text-sm text-blue-900">
+                <strong>Note :</strong> Les fonctions et procédures doivent être déclarées <strong>avant</strong> la section Variables de l'algorithme principal.
+                Les variables déclarées dans une fonction/procédure sont <strong>locales</strong> et n'existent que pendant l'exécution de celle-ci.
+              </p>
+            </div>
+          </section>
+
           {/* Opérateurs */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              8. Opérateurs
+              9. Opérateurs
             </h2>
 
             <div className="mb-6">
@@ -322,7 +444,7 @@ function Guide() {
           {/* Exemple complet */}
           <section>
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              9. Exemple complet
+              10. Exemple complet
             </h2>
             <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm">
               <div className="text-gray-700">
@@ -330,18 +452,18 @@ function Guide() {
                 <div><span className="text-indigo-600 font-semibold">Variables</span></div>
                 <div className="ml-4">note1, note2, note3, moyenne : Reel</div>
                 <div className="mt-2"><span className="text-indigo-600 font-semibold">Debut</span></div>
-                <div className="ml-4">Ecrire("Entrez la première note:")</div>
+                <div className="ml-4">Ecrire("Entrez la première note:\n")</div>
                 <div className="ml-4">Lire(note1)</div>
-                <div className="ml-4">Ecrire("Entrez la deuxième note:")</div>
+                <div className="ml-4">Ecrire("Entrez la deuxième note:\n")</div>
                 <div className="ml-4">Lire(note2)</div>
-                <div className="ml-4">Ecrire("Entrez la troisième note:")</div>
+                <div className="ml-4">Ecrire("Entrez la troisième note:\n")</div>
                 <div className="ml-4">Lire(note3)</div>
                 <div className="ml-4 mt-2">moyenne <span className="text-pink-600">←</span> (note1 + note2 + note3) / 3</div>
-                <div className="ml-4 mt-2">Ecrire("La moyenne est:", moyenne)</div>
+                <div className="ml-4 mt-2">Ecrire("La moyenne est: ", moyenne, "\n")</div>
                 <div className="ml-4 mt-2"><span className="text-indigo-600">Si</span> moyenne &gt;= 10 <span className="text-indigo-600">Alors</span></div>
-                <div className="ml-8">Ecrire("Admis")</div>
+                <div className="ml-8">Ecrire("Admis\n")</div>
                 <div className="ml-4"><span className="text-indigo-600">Sinon</span></div>
-                <div className="ml-8">Ecrire("Recalé")</div>
+                <div className="ml-8">Ecrire("Recalé\n")</div>
                 <div className="ml-4"><span className="text-indigo-600">FinSi</span></div>
                 <div><span className="text-indigo-600 font-semibold">Fin</span></div>
               </div>

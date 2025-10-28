@@ -9,12 +9,28 @@ pub enum Type {
     Chaine,
     Booleen,
     Tableau(Box<Type>, Vec<usize>), // Vec pour supporter 1D et 2D
+    Void, // Pour les procédures
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Variable {
     pub name: String,
     pub var_type: Type,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Parameter {
+    pub name: String,
+    pub param_type: Type,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Function {
+    pub name: String,
+    pub parameters: Vec<Parameter>,
+    pub return_type: Type,
+    pub variables: Vec<Variable>,
+    pub statements: Vec<Statement>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -111,11 +127,19 @@ pub enum Statement {
         body: Vec<Statement>,
         condition: Expression,
     },
+    Return {
+        value: Option<Expression>,
+    },
+    ProcedureCall {
+        name: String,
+        arguments: Vec<Expression>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Algorithm {
     pub name: String,
+    pub functions: Vec<Function>,
     pub variables: Vec<Variable>,
     pub statements: Vec<Statement>,
 }
@@ -179,6 +203,13 @@ impl Parser {
 
         self.skip_newlines();
 
+        // Parse functions/procedures
+        let mut functions = Vec::new();
+        while matches!(self.current_token(), Token::Fonction | Token::Procedure) {
+            functions.push(self.parse_function()?);
+            self.skip_newlines();
+        }
+
         // Parse variables
         let mut variables = Vec::new();
         if *self.current_token() == Token::Variables {
@@ -216,6 +247,7 @@ impl Parser {
 
         Ok(Algorithm {
             name,
+            functions,
             variables,
             statements,
         })
@@ -270,6 +302,117 @@ impl Parser {
         }
 
         Ok(variables)
+    }
+
+    fn parse_function(&mut self) -> Result<Function, String> {
+        let is_procedure = *self.current_token() == Token::Procedure;
+        self.advance(); // Skip Fonction ou Procedure
+        self.skip_newlines();
+
+        // Parse function name
+        let name = if let Token::Identifiant(n) = self.current_token().clone() {
+            self.advance();
+            n
+        } else {
+            return Err("Nom de fonction attendu".to_string());
+        };
+
+        self.skip_newlines();
+
+        // Parse parameters
+        let mut parameters = Vec::new();
+        if *self.current_token() == Token::ParentheseOuv {
+            self.advance();
+            self.skip_newlines();
+
+            if *self.current_token() != Token::ParentheseFerm {
+                loop {
+                    // Parse parameter name
+                    let param_name = if let Token::Identifiant(n) = self.current_token().clone() {
+                        self.advance();
+                        n
+                    } else {
+                        return Err("Nom de paramètre attendu".to_string());
+                    };
+
+                    self.skip_newlines();
+                    self.expect(Token::DeuxPoints)?;
+                    self.skip_newlines();
+
+                    let param_type = self.parse_type()?;
+
+                    parameters.push(Parameter {
+                        name: param_name,
+                        param_type,
+                    });
+
+                    self.skip_newlines();
+
+                    if *self.current_token() == Token::Virgule {
+                        self.advance();
+                        self.skip_newlines();
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            self.expect(Token::ParentheseFerm)?;
+            self.skip_newlines();
+        }
+
+        // Parse return type (only for functions)
+        let return_type = if is_procedure {
+            Type::Void
+        } else {
+            self.expect(Token::DeuxPoints)?;
+            self.skip_newlines();
+            self.parse_type()?
+        };
+
+        self.skip_newlines();
+
+        // Parse local variables
+        let mut variables = Vec::new();
+        if *self.current_token() == Token::Variables {
+            self.advance();
+            self.skip_newlines();
+
+            if *self.current_token() == Token::DeuxPoints {
+                self.advance();
+                self.skip_newlines();
+            }
+
+            variables = self.parse_variables()?;
+        }
+
+        self.skip_newlines();
+
+        // Parse Debut
+        self.expect(Token::Debut)?;
+        self.skip_newlines();
+
+        // Parse statements
+        let mut statements = Vec::new();
+        while *self.current_token() != Token::Fin && *self.current_token() != Token::EOF {
+            self.skip_newlines();
+            if *self.current_token() == Token::Fin {
+                break;
+            }
+            statements.push(self.parse_statement()?);
+            self.skip_newlines();
+        }
+
+        // Parse Fin
+        self.expect(Token::Fin)?;
+
+        Ok(Function {
+            name,
+            parameters,
+            return_type,
+            variables,
+            statements,
+        })
     }
 
     fn parse_type(&mut self) -> Result<Type, String> {
@@ -333,8 +476,29 @@ impl Parser {
                 self.advance();
                 self.skip_newlines();
 
+                // Check for procedure call
+                if *self.current_token() == Token::ParentheseOuv {
+                    self.advance();
+                    self.skip_newlines();
+
+                    let mut arguments = Vec::new();
+                    if *self.current_token() != Token::ParentheseFerm {
+                        arguments.push(self.parse_expression()?);
+                        self.skip_newlines();
+
+                        while *self.current_token() == Token::Virgule {
+                            self.advance();
+                            self.skip_newlines();
+                            arguments.push(self.parse_expression()?);
+                            self.skip_newlines();
+                        }
+                    }
+
+                    self.expect(Token::ParentheseFerm)?;
+                    Ok(Statement::ProcedureCall { name, arguments })
+                }
                 // Check for array assignment
-                if *self.current_token() == Token::CrochetOuv {
+                else if *self.current_token() == Token::CrochetOuv {
                     self.advance();
                     self.skip_newlines();
 
@@ -579,6 +743,22 @@ impl Parser {
 
                 Ok(Statement::Repeat { body, condition })
             }
+            Token::Retourner => {
+                self.advance();
+                self.skip_newlines();
+
+                // Check if there's a return value
+                let value = if matches!(
+                    self.current_token(),
+                    Token::NouvelleLigne | Token::EOF | Token::Fin
+                ) {
+                    None
+                } else {
+                    Some(self.parse_expression()?)
+                };
+
+                Ok(Statement::Return { value })
+            }
             _ => Err(format!(
                 "Instruction invalide: {:?}",
                 self.current_token()
@@ -753,8 +933,29 @@ impl Parser {
                 self.advance();
                 self.skip_newlines();
 
+                // Check for function call
+                if *self.current_token() == Token::ParentheseOuv {
+                    self.advance();
+                    self.skip_newlines();
+
+                    let mut args = Vec::new();
+                    if *self.current_token() != Token::ParentheseFerm {
+                        args.push(self.parse_expression()?);
+                        self.skip_newlines();
+
+                        while *self.current_token() == Token::Virgule {
+                            self.advance();
+                            self.skip_newlines();
+                            args.push(self.parse_expression()?);
+                            self.skip_newlines();
+                        }
+                    }
+
+                    self.expect(Token::ParentheseFerm)?;
+                    Ok(Expression::FunctionCall { name, args })
+                }
                 // Check for array access
-                if *self.current_token() == Token::CrochetOuv {
+                else if *self.current_token() == Token::CrochetOuv {
                     self.advance();
                     self.skip_newlines();
 
