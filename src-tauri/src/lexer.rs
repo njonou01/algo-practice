@@ -1,8 +1,18 @@
+//! Analyseur lexical (Lexer) pour le langage algorithmique français
+//!
+//! Ce module transforme le code source en une séquence de tokens.
+//! Il gère la reconnaissance des mots-clés, identifiants, nombres,
+//! chaînes de caractères et opérateurs du langage algorithmique.
+
 use serde::{Deserialize, Serialize};
 
+/// Énumération de tous les tokens reconnus par le langage
+///
+/// Représente les unités lexicales de base du langage algorithmique français.
+/// Chaque variante correspond à un élément syntaxique reconnaissable.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Token {
-    // Mots-clés
+    // Mots-clés de structure
     Algorithme,
     Variables,
     Constantes,
@@ -83,13 +93,25 @@ pub enum Token {
     EOF,
 }
 
+/// Analyseur lexical pour le langage algorithmique
+///
+/// Parcourt le code source caractère par caractère et produit
+/// une séquence de tokens pour l'analyseur syntaxique.
 pub struct Lexer {
+    /// Caractères du code source
     input: Vec<char>,
+    /// Position courante dans le code
     position: usize,
+    /// Caractère actuellement examiné
     current_char: Option<char>,
 }
 
 impl Lexer {
+    /// Crée un nouveau lexer à partir du code source
+    ///
+    /// # Arguments
+    ///
+    /// * `input` - Code source de l'algorithme
     pub fn new(input: String) -> Self {
         let chars: Vec<char> = input.chars().collect();
         let current_char = chars.get(0).copied();
@@ -100,15 +122,22 @@ impl Lexer {
         }
     }
 
+    /// Avance d'un caractère dans le code source
     fn advance(&mut self) {
         self.position += 1;
         self.current_char = self.input.get(self.position).copied();
     }
 
+    /// Regarde un caractère en avant sans avancer
+    ///
+    /// # Arguments
+    ///
+    /// * `offset` - Nombre de caractères à regarder en avant
     fn peek(&self, offset: usize) -> Option<char> {
         self.input.get(self.position + offset).copied()
     }
 
+    /// Ignore les espaces, tabulations et retours chariot
     fn skip_whitespace(&mut self) {
         while let Some(ch) = self.current_char {
             if ch == ' ' || ch == '\t' || ch == '\r' {
@@ -119,6 +148,7 @@ impl Lexer {
         }
     }
 
+    /// Ignore les commentaires (lignes commençant par //)
     fn skip_comment(&mut self) {
         // Commentaires avec //
         if self.current_char == Some('/') && self.peek(1) == Some('/') {
@@ -128,6 +158,10 @@ impl Lexer {
         }
     }
 
+    /// Lit un nombre (entier ou réel)
+    ///
+    /// Reconnaît les nombres avec partie décimale (point flottant).
+    /// Exemple : 42, 3.14
     fn read_number(&mut self) -> Token {
         let mut num_str = String::new();
         let mut is_float = false;
@@ -152,6 +186,10 @@ impl Lexer {
         }
     }
 
+    /// Lit une chaîne de caractères entre guillemets
+    ///
+    /// Gère les séquences d'échappement : \n, \t, \r, \\, \"
+    /// Exemple : "Bonjour\nMonde"
     fn read_string(&mut self) -> Token {
         self.advance(); // Skip opening quote
         let mut string = String::new();
@@ -185,6 +223,11 @@ impl Lexer {
         Token::ChaineDeCaracteres(string)
     }
 
+    /// Lit un identifiant ou un mot-clé
+    ///
+    /// Reconnaît les mots-clés du langage (insensibles à la casse)
+    /// et les identifiants définis par l'utilisateur.
+    /// Supporte les caractères accentués français.
     fn read_identifier(&mut self) -> Token {
         let mut ident = String::new();
 
@@ -199,7 +242,7 @@ impl Lexer {
             }
         }
 
-        // Convert to lowercase for case-insensitive keywords
+        // Conversion en minuscules pour mots-clés insensibles à la casse
         let lower = ident.to_lowercase();
 
         match lower.as_str() {
@@ -248,11 +291,20 @@ impl Lexer {
         }
     }
 
+    /// Tokenise le code source complet
+    ///
+    /// Parcourt tout le code source et produit la liste complète des tokens.
+    /// Gère les commentaires, espaces, nombres, chaînes, identifiants et opérateurs.
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(Vec<Token>)` - Liste des tokens si succès
+    /// * `Err(String)` - Message d'erreur si caractère invalide rencontré
     pub fn tokenize(&mut self) -> Result<Vec<Token>, String> {
         let mut tokens = Vec::new();
 
         while let Some(ch) = self.current_char {
-            // Skip whitespace
+            // Ignore les espaces
             if ch == ' ' || ch == '\t' || ch == '\r' {
                 self.skip_whitespace();
                 continue;

@@ -1,18 +1,35 @@
+//! Interpréteur pour le langage algorithmique français
+//!
+//! Ce module exécute l'arbre syntaxique produit par le parser.
+//! Il gère l'évaluation des expressions, l'exécution des instructions,
+//! les variables, les tableaux et les appels de fonctions/procédures.
+
 use crate::parser::{Algorithm, BinaryOperator, Expression, Function, LValue, Statement, Type, UnaryOperator};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Valeur runtime d'une variable ou expression
+///
+/// Représente toutes les valeurs possibles pendant l'exécution.
+/// Les tableaux sont stockés en mémoire linéaire (vec plat).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Value {
+    /// Valeur entière
     Entier(i64),
+    /// Valeur réelle (flottant)
     Reel(f64),
+    /// Chaîne de caractères
     Chaine(String),
+    /// Valeur booléenne
     Booleen(bool),
+    /// Tableau (stocké linéairement, même pour 2D)
     Tableau(Vec<Value>),
+    /// Valeur nulle (pour procédures)
     Null,
 }
 
 impl Value {
+    /// Convertit la valeur en chaîne pour l'affichage
     pub fn to_string(&self) -> String {
         match self {
             Value::Entier(n) => n.to_string(),
@@ -27,6 +44,12 @@ impl Value {
         }
     }
 
+    /// Convertit la valeur en entier
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(i64)` - Entier converti
+    /// * `Err(String)` - Erreur de conversion
     pub fn to_entier(&self) -> Result<i64, String> {
         match self {
             Value::Entier(n) => Ok(*n),
@@ -36,6 +59,12 @@ impl Value {
         }
     }
 
+    /// Convertit la valeur en réel
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(f64)` - Réel converti
+    /// * `Err(String)` - Erreur de conversion
     pub fn to_reel(&self) -> Result<f64, String> {
         match self {
             Value::Entier(n) => Ok(*n as f64),
@@ -45,6 +74,12 @@ impl Value {
         }
     }
 
+    /// Convertit la valeur en booléen
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(bool)` - Booléen converti
+    /// * `Err(String)` - Erreur de conversion
     pub fn to_booleen(&self) -> Result<bool, String> {
         match self {
             Value::Booleen(b) => Ok(*b),
@@ -53,6 +88,14 @@ impl Value {
         }
     }
 
+    /// Retourne la valeur par défaut pour un type donné
+    ///
+    /// Utilisé pour initialiser les variables déclarées.
+    /// Les tableaux sont créés avec la taille totale calculée.
+    ///
+    /// # Arguments
+    ///
+    /// * `var_type` - Type dont on veut la valeur par défaut
     pub fn get_default_value(var_type: &Type) -> Value {
         match var_type {
             Type::Entier => Value::Entier(0),
@@ -77,19 +120,37 @@ impl Value {
     }
 }
 
+/// Interpréteur d'algorithmes
+///
+/// Maintient l'état d'exécution : variables, tableaux, fonctions, entrées/sorties.
+/// Gère la portée des variables lors des appels de fonctions.
 pub struct Interpreter {
+    /// Table des fonctions et procédures définies
     functions: HashMap<String, Function>,
+    /// Variables globales et locales courantes
     variables: HashMap<String, Value>,
-    array_dimensions: HashMap<String, Vec<usize>>, // Stocke les dimensions des tableaux
+    /// Dimensions des tableaux (pour calcul d'index 2D)
+    array_dimensions: HashMap<String, Vec<usize>>,
+    /// Lignes de sortie complètes
     output: Vec<String>,
-    current_line: String, // Buffer pour la ligne courante
+    /// Buffer pour la ligne courante (avant \n)
+    current_line: String,
+    /// Valeurs d'entrée fournies par l'utilisateur
     input_values: Vec<String>,
+    /// Index courant dans input_values
     input_index: usize,
-    return_value: Option<Value>, // Pour gérer les returns
-    has_returned: bool, // Flag pour stopper l'exécution après un return
+    /// Valeur de retour d'une fonction
+    return_value: Option<Value>,
+    /// Flag indiquant qu'un return a été exécuté
+    has_returned: bool,
 }
 
 impl Interpreter {
+    /// Crée un nouvel interpréteur avec les valeurs d'entrée
+    ///
+    /// # Arguments
+    ///
+    /// * `input_values` - Valeurs fournies pour Lire()
     pub fn new(input_values: Vec<String>) -> Self {
         Interpreter {
             functions: HashMap::new(),
@@ -104,24 +165,40 @@ impl Interpreter {
         }
     }
 
+    /// Exécute un algorithme complet
+    ///
+    /// Point d'entrée principal de l'interpréteur.
+    /// 1. Enregistre les fonctions/procédures
+    /// 2. Initialise les variables globales
+    /// 3. Exécute les instructions du corps principal
+    /// 4. Retourne les lignes de sortie générées
+    ///
+    /// # Arguments
+    ///
+    /// * `algorithm` - AST de l'algorithme à exécuter
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(Vec<String>)` - Lignes de sortie si succès
+    /// * `Err(String)` - Message d'erreur d'exécution
     pub fn run(&mut self, algorithm: Algorithm) -> Result<Vec<String>, String> {
-        // Store functions
+        // Enregistrer toutes les fonctions et procédures
         for func in &algorithm.functions {
             self.functions.insert(func.name.clone(), func.clone());
         }
 
-        // Initialize variables with default values
+        // Initialiser les variables globales avec leurs valeurs par défaut
         for var in &algorithm.variables {
             let default_value = Value::get_default_value(&var.var_type);
             self.variables.insert(var.name.clone(), default_value);
 
-            // Stocker les dimensions pour les tableaux
+            // Stocker les dimensions pour les tableaux (utile pour indexation 2D)
             if let Type::Tableau(_, dimensions) = &var.var_type {
                 self.array_dimensions.insert(var.name.clone(), dimensions.clone());
             }
         }
 
-        // Execute statements
+        // Exécuter séquentiellement toutes les instructions
         for statement in &algorithm.statements {
             self.execute_statement(statement)?;
         }
@@ -134,6 +211,18 @@ impl Interpreter {
         Ok(self.output.clone())
     }
 
+    /// Exécute une instruction
+    ///
+    /// Dispatch vers la logique appropriée selon le type d'instruction.
+    ///
+    /// # Arguments
+    ///
+    /// * `statement` - Instruction à exécuter
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(())` si succès
+    /// * `Err(String)` si erreur d'exécution
     fn execute_statement(&mut self, statement: &Statement) -> Result<(), String> {
         match statement {
             Statement::Assignment { var_name, value } => {
@@ -340,7 +429,7 @@ impl Interpreter {
 
                         // Compare values
                         if self.values_equal(&match_value, &case_value) {
-                            // Execute statements for this case
+                            // Exécuter les instructions for this case
                             for stmt in &case.statements {
                                 self.execute_statement(stmt)?;
                                 if self.has_returned {
@@ -373,6 +462,19 @@ impl Interpreter {
         }
     }
 
+    /// Évalue une expression et retourne sa valeur
+    ///
+    /// Gère les littéraux, variables, opérations binaires/unaires,
+    /// appels de fonctions et accès aux tableaux.
+    ///
+    /// # Arguments
+    ///
+    /// * `expr` - Expression à évaluer
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(Value)` - Valeur calculée
+    /// * `Err(String)` - Erreur d'évaluation
     fn evaluate_expression(&mut self, expr: &Expression) -> Result<Value, String> {
         match expr {
             Expression::NombreEntier(n) => Ok(Value::Entier(*n)),
@@ -455,39 +557,16 @@ impl Interpreter {
                     left, right
                 )),
             },
-            BinaryOperator::Divide => match (left, right) {
-                (Value::Entier(a), Value::Entier(b)) => {
-                    if *b == 0 {
-                        Err("Division par zéro".to_string())
-                    } else {
-                        Ok(Value::Entier(a / b))
-                    }
+            BinaryOperator::Divide => {
+                // Convertir les deux opérandes en réels pour précision
+                let left_f = left.to_reel()?;
+                let right_f = right.to_reel()?;
+
+                if right_f == 0.0 {
+                    Err("Division par zéro".to_string())
+                } else {
+                    Ok(Value::Reel(left_f / right_f))
                 }
-                (Value::Reel(a), Value::Reel(b)) => {
-                    if *b == 0.0 {
-                        Err("Division par zéro".to_string())
-                    } else {
-                        Ok(Value::Reel(a / b))
-                    }
-                }
-                (Value::Entier(a), Value::Reel(b)) => {
-                    if *b == 0.0 {
-                        Err("Division par zéro".to_string())
-                    } else {
-                        Ok(Value::Reel(*a as f64 / b))
-                    }
-                }
-                (Value::Reel(a), Value::Entier(b)) => {
-                    if *b == 0 {
-                        Err("Division par zéro".to_string())
-                    } else {
-                        Ok(Value::Reel(a / *b as f64))
-                    }
-                }
-                _ => Err(format!(
-                    "Division invalide entre {:?} et {:?}",
-                    left, right
-                )),
             },
             BinaryOperator::Modulo => match (left, right) {
                 (Value::Entier(a), Value::Entier(b)) => {
@@ -544,6 +623,20 @@ impl Interpreter {
         }
     }
 
+    /// Calcule l'index plat pour un accès tableau multi-dimensionnel
+    ///
+    /// Convertit les indices 2D (ligne, colonne) en index 1D linéaire.
+    /// Formule 2D : index = ligne * nb_colonnes + colonne
+    ///
+    /// # Arguments
+    ///
+    /// * `var_name` - Nom du tableau
+    /// * `indices` - Expressions des indices (1 ou 2)
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(usize)` - Index plat calculé
+    /// * `Err(String)` - Erreur si dimensions incorrectes
     fn calculate_flat_index(&mut self, var_name: &str, indices: &[Expression]) -> Result<usize, String> {
         // Évaluer tous les indices
         let mut index_values = Vec::new();
@@ -579,13 +672,32 @@ impl Interpreter {
         }
     }
 
+    /// Appelle une fonction ou procédure
+    ///
+    /// Gère la portée des variables en sauvegardant/restaurant l'état.
+    /// 1. Sauvegarde l'état actuel (variables, tableaux)
+    /// 2. Lie les paramètres aux arguments
+    /// 3. Initialise les variables locales
+    /// 4. Exécute le corps de la fonction
+    /// 5. Restaure l'état précédent
+    ///
+    /// # Arguments
+    ///
+    /// * `func_name` - Nom de la fonction à appeler
+    /// * `arguments` - Valeurs des arguments
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(Some(Value))` - Valeur retournée par la fonction
+    /// * `Ok(None)` - Procédure sans retour
+    /// * `Err(String)` - Erreur d'appel ou d'exécution
     fn call_function(&mut self, func_name: &str, arguments: Vec<Value>) -> Result<Option<Value>, String> {
-        // Look up the function
+        // Récupérer la définition de la fonction
         let function = self.functions.get(func_name)
             .ok_or_else(|| format!("Fonction '{}' non définie", func_name))?
-            .clone(); // Clone to avoid borrow checker issues
+            .clone(); // Clone pour éviter les conflits d'emprunt
 
-        // Check argument count
+        // Vérifier le nombre d'arguments
         if arguments.len() != function.parameters.len() {
             return Err(format!(
                 "Fonction '{}': attendu {} arguments, trouvé {}",
@@ -595,27 +707,27 @@ impl Interpreter {
             ));
         }
 
-        // Save current state
+        // Sauvegarder l'état actuel (portée)
         let saved_variables = self.variables.clone();
         let saved_array_dimensions = self.array_dimensions.clone();
         let saved_return_value = self.return_value.clone();
         let saved_has_returned = self.has_returned;
 
-        // Reset return state
+        // Réinitialiser l'état de retour
         self.return_value = None;
         self.has_returned = false;
 
-        // Bind parameters
+        // Lier les paramètres aux arguments
         for (param, arg) in function.parameters.iter().zip(arguments.iter()) {
             self.variables.insert(param.name.clone(), arg.clone());
         }
 
-        // Initialize local variables
+        // Initialiser les variables locales
         for var in &function.variables {
             let default_value = Value::get_default_value(&var.var_type);
             self.variables.insert(var.name.clone(), default_value);
 
-            // Store array dimensions
+            // Stocker les dimensions pour les tableaux
             if let Type::Tableau(_, dimensions) = &var.var_type {
                 self.array_dimensions.insert(var.name.clone(), dimensions.clone());
             }

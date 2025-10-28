@@ -1,14 +1,32 @@
-import React, { useState } from "react";
+/**
+ * AlgoLab - Interpréteur d'algorithmes en français
+ *
+ * Ce fichier contient le composant principal de l'interpréteur.
+ * Il permet d'écrire, éditer, exécuter, sauvegarder et charger des algorithmes.
+ */
+
+import React, { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { save, open } from '@tauri-apps/plugin-dialog';
+import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs';
 import Editor from 'react-simple-code-editor';
 
+/**
+ * Interface pour le résultat d'exécution d'un algorithme
+ */
 interface ExecutionResult {
-  success: boolean;
-  output: string[];
-  error: string | null;
+  success: boolean;      // Indique si l'exécution s'est bien passée
+  output: string[];      // Lignes de sortie de l'algorithme
+  error: string | null;  // Message d'erreur éventuel
 }
 
-// Fonction pour colorer la syntaxe
+/**
+ * Fonction de coloration syntaxique pour l'éditeur
+ * Analyse le code et retourne des éléments JSX colorés selon le type de token
+ *
+ * @param code - Le code source de l'algorithme à colorer
+ * @returns Éléments JSX avec coloration syntaxique
+ */
 function highlightSyntax(code: string) {
   const keywords = [
     'Algorithme', 'Variables', 'Constantes', 'Debut', 'Fin',
@@ -26,14 +44,14 @@ function highlightSyntax(code: string) {
   // Remplacer <- par ←
   let highlighted = code.replace(/<-/g, '←');
 
-  // Tokenize the code into segments
+  // Découper le code en segments (tokens)
   const tokens: { type: string; value: string }[] = [];
   let currentPos = 0;
 
   while (currentPos < highlighted.length) {
     let matched = false;
 
-    // Check for comments
+    // Vérifier les commentaires
     if (highlighted.substring(currentPos).startsWith('//')) {
       const lineEnd = highlighted.indexOf('\n', currentPos);
       const commentEnd = lineEnd === -1 ? highlighted.length : lineEnd;
@@ -43,7 +61,7 @@ function highlightSyntax(code: string) {
       continue;
     }
 
-    // Check for strings
+    // Vérifier les chaînes de caractères
     if (highlighted[currentPos] === '"') {
       const stringEnd = highlighted.indexOf('"', currentPos + 1);
       if (stringEnd !== -1) {
@@ -54,7 +72,7 @@ function highlightSyntax(code: string) {
       }
     }
 
-    // Check for keywords, types, values
+    // Vérifier les mots-clés, types et valeurs
     for (const keyword of keywords) {
       if (highlighted.substring(currentPos).toLowerCase().startsWith(keyword.toLowerCase())) {
         const nextChar = highlighted[currentPos + keyword.length];
@@ -94,7 +112,7 @@ function highlightSyntax(code: string) {
     }
     if (matched) continue;
 
-    // Check for numbers
+    // Vérifier les nombres
     const numberMatch = highlighted.substring(currentPos).match(/^(\d+\.?\d*)/);
     if (numberMatch) {
       tokens.push({ type: 'number', value: numberMatch[1] });
@@ -102,26 +120,26 @@ function highlightSyntax(code: string) {
       continue;
     }
 
-    // Check for arrow
+    // Vérifier la flèche d'affectation
     if (highlighted[currentPos] === '←') {
       tokens.push({ type: 'arrow', value: '←' });
       currentPos++;
       continue;
     }
 
-    // Check for operators
+    // Vérifier les opérateurs
     if (/[+\-*/%=!<>]/.test(highlighted[currentPos])) {
       tokens.push({ type: 'operator', value: highlighted[currentPos] });
       currentPos++;
       continue;
     }
 
-    // Default: regular text
+    // Par défaut : texte normal
     tokens.push({ type: 'text', value: highlighted[currentPos] });
     currentPos++;
   }
 
-  // Convert tokens to JSX
+  // Convertir les tokens en JSX
   return (
     <span>
       {tokens.map((token, i) => (
@@ -133,7 +151,14 @@ function highlightSyntax(code: string) {
   );
 }
 
+/**
+ * Composant principal de l'interpréteur AlgoLab
+ *
+ * Gère l'éditeur de code, l'exécution des algorithmes, les entrées/sorties,
+ * et les opérations de sauvegarde/chargement de fichiers.
+ */
 function Interpreter() {
+  // État du code de l'algorithme (avec exemple par défaut)
   const [code, setCode] = useState(`Algorithme MonAlgorithme
 Variables x, y : Entier
 
@@ -144,15 +169,23 @@ Debut
   Ecrire("Le double de ", x, " est ", y, "\n")
 Fin`);
 
-  const [input, setInput] = useState("");
-  const [output, setOutput] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
+  // États pour l'exécution
+  const [input, setInput] = useState("");                    // Entrées utilisateur (une par ligne)
+  const [output, setOutput] = useState<string[]>([]);        // Sorties de l'algorithme
+  const [error, setError] = useState<string | null>(null);   // Message d'erreur éventuel
+  const [isRunning, setIsRunning] = useState(false);         // Indique si l'exécution est en cours
 
+  /**
+   * Gestionnaire de changement du champ d'entrée
+   */
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
   };
 
+  /**
+   * Exécute l'algorithme en appelant le backend Rust via Tauri
+   * Divise les entrées par ligne et envoie le code au backend pour exécution
+   */
   const executeAlgorithm = async () => {
     setIsRunning(true);
     setOutput([]);
@@ -184,7 +217,12 @@ Fin`);
     }
   };
 
+  /**
+   * Charge un exemple prédéfini dans l'éditeur
+   * @param exampleName - Nom de l'exemple à charger
+   */
   const loadExample = (exampleName: string) => {
+    // Catalogue d'exemples prédéfinis
     const examples: { [key: string]: { code: string; input: string } } = {
       hello: {
         code: `Algorithme Bonjour
@@ -427,6 +465,61 @@ Fin`,
     }
   };
 
+  /**
+   * Sauvegarde le code actuel dans un fichier .algo
+   * Extrait automatiquement le nom de l'algorithme pour proposer un nom de fichier par défaut
+   */
+  const saveFile = async () => {
+    try {
+      // Extraire le nom de l'algorithme du code (après "Algorithme")
+      const algoNameMatch = code.match(/Algorithme\s+(\w+)/i);
+      const defaultName = algoNameMatch ? algoNameMatch[1] : 'MonAlgorithme';
+
+      // Ouvrir le dialog de sauvegarde
+      const filePath = await save({
+        defaultPath: `${defaultName}.algo`,
+        filters: [{
+          name: 'Algorithme',
+          extensions: ['algo']
+        }]
+      });
+
+      // Écrire le fichier si un chemin a été sélectionné
+      if (filePath) {
+        await writeTextFile(filePath, code);
+      }
+    } catch (err) {
+      setError(`Erreur lors de la sauvegarde: ${err}`);
+    }
+  };
+
+  /**
+   * Ouvre un fichier .algo et charge son contenu dans l'éditeur
+   * Réinitialise les sorties et erreurs précédentes
+   */
+  const openFile = async () => {
+    try {
+      // Ouvrir le dialog de sélection de fichier
+      const selected = await open({
+        filters: [{
+          name: 'Algorithme',
+          extensions: ['algo']
+        }],
+        multiple: false
+      });
+
+      // Charger le contenu du fichier si un fichier a été sélectionné
+      if (selected && typeof selected === 'string') {
+        const fileContent = await readTextFile(selected);
+        setCode(fileContent);
+        setOutput([]);
+        setError(null);
+      }
+    } catch (err) {
+      setError(`Erreur lors de l'ouverture: ${err}`);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Examples Bar */}
@@ -507,7 +600,23 @@ Fin`,
               <div className="border border-gray-200">
                 <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
                   <h2 className="text-sm font-semibold text-gray-900">Algorithme</h2>
-                  <span className="text-xs text-gray-500">Tapez &lt;- pour ←</span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={openFile}
+                      className="px-3 py-1.5 text-xs bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 hover:border-gray-400 transition-all"
+                      title="Ouvrir un fichier .algo"
+                    >
+                      📁 Ouvrir
+                    </button>
+                    <button
+                      onClick={saveFile}
+                      className="px-3 py-1.5 text-xs bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 hover:border-gray-400 transition-all"
+                      title="Sauvegarder en .algo"
+                    >
+                      💾 Sauvegarder
+                    </button>
+                    <span className="text-xs text-gray-500">Tapez &lt;- pour ←</span>
+                  </div>
                 </div>
                 <div className="bg-gray-900 min-h-[480px]">
                   <Editor

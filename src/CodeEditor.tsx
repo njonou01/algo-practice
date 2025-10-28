@@ -1,4 +1,4 @@
-import React from "react";
+import React, { JSX } from "react";
 
 interface CodeEditorProps {
   code: string;
@@ -24,8 +24,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, onChange, onKeyDown }) =>
 
     return lines.map((line, lineIndex) => {
       const elements: JSX.Element[] = [];
-      let currentIndex = 0;
-      let processedLine = line;
 
       // Process strings first
       const stringRegex = /"([^"]*)"/g;
