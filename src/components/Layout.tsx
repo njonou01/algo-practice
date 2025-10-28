@@ -49,7 +49,7 @@ function Layout() {
             <nav className="flex gap-2">
               <Link
                 to="/"
-                className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/")
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all relative ${isActive("/")
                   ? "bg-indigo-50 text-indigo-700"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
@@ -60,8 +60,20 @@ function Layout() {
                 </span>
               </Link>
               <Link
+                to="/examples"
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all relative ${isActive("/examples")
+                  ? "bg-indigo-50 text-indigo-700"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  <span>📚</span>
+                  <span>Exemples</span>
+                </span>
+              </Link>
+              <Link
                 to="/guide"
-                className={`px-4 py-2 text-sm font-medium  transition-all relative ${isActive("/guide")
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all relative ${isActive("/guide")
                   ? "bg-indigo-50 text-indigo-700"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}

@@ -1,5 +1,5 @@
 /**
- * AlgoLab - Interpréteur d'algorithmes en français
+ * AlgoGénie - Interpréteur d'algorithmes en français
  *
  * Ce fichier contient le composant principal de l'interpréteur.
  * Il permet d'écrire, éditer, exécuter, sauvegarder et charger des algorithmes.
@@ -8,8 +8,11 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import Editor from 'react-simple-code-editor';
+import SplitPane from '../components/SplitPane';
+import Console from '../components/Console';
+import { useKeyboard } from '../hooks/useKeyboard';
 
 /**
  * Interface pour le résultat d'exécution d'un algorithme
@@ -152,7 +155,7 @@ function highlightSyntax(code: string) {
 }
 
 /**
- * Composant principal de l'interpréteur AlgoLab
+ * Composant principal de l'interpréteur AlgoGénie
  *
  * Gère l'éditeur de code, l'exécution des algorithmes, les entrées/sorties,
  * et les opérations de sauvegarde/chargement de fichiers.
@@ -163,24 +166,18 @@ function Interpreter() {
 Variables x, y : Entier
 
 Debut
-  Ecrire("Entrez un nombre:\n")
+  Ecrire("Entrez un nombre:\\n")
   Lire(x)
   y <- x * 2
-  Ecrire("Le double de ", x, " est ", y, "\n")
+  Ecrire("Le double de ", x, " est ", y, "\\n")
 Fin`);
 
   // États pour l'exécution
-  const [input, setInput] = useState("");                    // Entrées utilisateur (une par ligne)
-  const [output, setOutput] = useState<string[]>([]);        // Sorties de l'algorithme
-  const [error, setError] = useState<string | null>(null);   // Message d'erreur éventuel
-  const [isRunning, setIsRunning] = useState(false);         // Indique si l'exécution est en cours
-
-  /**
-   * Gestionnaire de changement du champ d'entrée
-   */
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-  };
+  const [inputValues, setInputValues] = useState<string[]>(["42"]);  // Valeurs d'entrée
+  const [output, setOutput] = useState<string[]>([]);                // Sorties de l'algorithme
+  const [error, setError] = useState<string | null>(null);           // Message d'erreur éventuel
+  const [isRunning, setIsRunning] = useState(false);                 // Indique si l'exécution est en cours
+  const [executionTime, setExecutionTime] = useState<number>();      // Temps d'exécution
 
   /**
    * Exécute l'algorithme en appelant le backend Rust via Tauri
@@ -191,16 +188,20 @@ Fin`);
     setOutput([]);
     setError(null);
 
+    const startTime = performance.now();
+
     try {
-      const inputValues = input
-        .split("\n")
+      const filteredInputs = inputValues
         .map(line => line.trim())
         .filter(line => line.length > 0);
 
       const result = await invoke<ExecutionResult>("execute_algorithm", {
         code: code,
-        inputValues: inputValues,
+        inputValues: filteredInputs,
       });
+
+      const endTime = performance.now();
+      setExecutionTime((endTime - startTime) / 1000);
 
       if (result.success) {
         setOutput(result.output);
@@ -216,254 +217,6 @@ Fin`);
       setIsRunning(false);
     }
   };
-
-  //   /**
-  //    * Charge un exemple prédéfini dans l'éditeur
-  //    * @param exampleName - Nom de l'exemple à charger
-  //    */
-  //   const loadExample = (exampleName: string) => {
-  //     // Catalogue d'exemples prédéfinis
-  //     const examples: { [key: string]: { code: string; input: string } } = {
-  //       hello: {
-  //         code: `Algorithme Bonjour
-  // Variables nom : Chaine
-
-  // Debut
-  //   Ecrire("Comment vous appelez-vous?\n")
-  //   Lire(nom)
-  //   Ecrire("Bonjour ", nom, "!\n")
-  // Fin`,
-  //         input: "Alice",
-  //       },
-  //       factorial: {
-  //         code: `Algorithme Factorielle
-  // Variables n, i, fact : Entier
-
-  // Debut
-  //   Ecrire("Entrez un nombre:\n")
-  //   Lire(n)
-  //   fact <- 1
-  //   Pour i De 1 A n Faire
-  //     fact <- fact * i
-  //   FinPour
-  //   Ecrire("Factorielle de ", n, " = ", fact, "\n")
-  // Fin`,
-  //         input: "5",
-  //       },
-  //       fibonacci: {
-  //         code: `Algorithme Fibonacci
-  // Variables n, i, a, b, temp : Entier
-
-  // Debut
-  //   Ecrire("Combien de termes?\n")
-  //   Lire(n)
-  //   a <- 0
-  //   b <- 1
-  //   Ecrire("Suite de Fibonacci:\n")
-  //   Ecrire(a, "\n")
-  //   Ecrire(b, "\n")
-  //   Pour i De 3 A n Faire
-  //     temp <- a + b
-  //     Ecrire(temp, "\n")
-  //     a <- b
-  //     b <- temp
-  //   FinPour
-  // Fin`,
-  //         input: "10",
-  //       },
-  //       prime: {
-  //         code: `Algorithme NombrePremier
-  // Variables n, i, estPremier : Entier
-
-  // Debut
-  //   Ecrire("Entrez un nombre:\n")
-  //   Lire(n)
-  //   estPremier <- 1
-
-  //   Si n < 2 Alors
-  //     estPremier <- 0
-  //   Sinon
-  //     Pour i De 2 A n - 1 Faire
-  //       Si n % i = 0 Alors
-  //         estPremier <- 0
-  //       FinSi
-  //     FinPour
-  //   FinSi
-
-  //   Si estPremier = 1 Alors
-  //     Ecrire(n, " est premier\n")
-  //   Sinon
-  //     Ecrire(n, " n'est pas premier\n")
-  //   FinSi
-  // Fin`,
-  //         input: "17",
-  //       },
-  //       array1d: {
-  //         code: `Algorithme TableauNotes
-  // Variables
-  //   notes : Tableau[5] de Reel
-  //   i : Entier
-  //   somme, moyenne : Reel
-
-  // Debut
-  //   Ecrire("Entrez 5 notes:\n")
-
-  //   Pour i De 0 A 4 Faire
-  //     Lire(notes[i])
-  //   FinPour
-
-  //   somme <- 0
-  //   Pour i De 0 A 4 Faire
-  //     somme <- somme + notes[i]
-  //   FinPour
-
-  //   moyenne <- somme / 5
-  //   Ecrire("Moyenne: ", moyenne, "\n")
-  // Fin`,
-  //         input: "15\n12\n18\n14\n16",
-  //       },
-  //       array2d: {
-  //         code: `Algorithme Matrice
-  // Variables
-  //   matrice : Tableau[3, 3] de Entier
-  //   i, j, somme : Entier
-
-  // Debut
-  //   Ecrire("Remplissage matrice 3x3\n")
-
-  //   Pour i De 0 A 2 Faire
-  //     Pour j De 0 A 2 Faire
-  //       matrice[i, j] <- i * 3 + j + 1
-  //     FinPour
-  //   FinPour
-
-  //   Ecrire("Matrice:\n")
-  //   Pour i De 0 A 2 Faire
-  //     Pour j De 0 A 2 Faire
-  //       Ecrire(matrice[i, j], " ")
-  //     FinPour
-  //     Ecrire("\n")
-  //   FinPour
-
-  //   somme <- 0
-  //   Pour i De 0 A 2 Faire
-  //     Pour j De 0 A 2 Faire
-  //       somme <- somme + matrice[i, j]
-  //     FinPour
-  //   FinPour
-
-  //   Ecrire("Somme totale: ", somme, "\n")
-  // Fin`,
-  //         input: "",
-  //       },
-  //       functionSquare: {
-  //         code: `Algorithme AvecFonction
-
-  // Fonction Carre(n : Entier) : Entier
-  // Variables resultat : Entier
-  // Debut
-  //   resultat <- n * n
-  //   Retourner resultat
-  // Fin
-
-  // Variables x, y : Entier
-
-  // Debut
-  //   Ecrire("Entrez un nombre:\n")
-  //   Lire(x)
-  //   y <- Carre(x)
-  //   Ecrire("Le carré de ", x, " est ", y, "\n")
-  //   Ecrire("Le carré de 5 est ", Carre(5), "\n")
-  // Fin`,
-  //         input: "7",
-  //       },
-  //       procedureGreet: {
-  //         code: `Algorithme AvecProcedure
-
-  // Procedure Saluer(nom : Chaine, fois : Entier)
-  // Variables i : Entier
-  // Debut
-  //   Pour i De 1 A fois Faire
-  //     Ecrire("Bonjour ", nom, "!\n")
-  //   FinPour
-  // Fin
-
-  // Variables
-  //   prenom : Chaine
-  //   nombre : Entier
-
-  // Debut
-  //   Ecrire("Votre prénom:\n")
-  //   Lire(prenom)
-  //   Ecrire("Nombre de salutations:\n")
-  //   Lire(nombre)
-  //   Saluer(prenom, nombre)
-  //   Ecrire("Terminé!\n")
-  // Fin`,
-  //         input: "Alice\n3",
-  //       },
-  //       matchDay: {
-  //         code: `Algorithme JourSemaine
-  // Variables jour : Entier
-
-  // Debut
-  //   Ecrire("Entrez un numéro (1-7):\n")
-  //   Lire(jour)
-
-  //   Selon jour
-  //     Cas 1:
-  //       Ecrire("Lundi\n")
-  //     Cas 2:
-  //       Ecrire("Mardi\n")
-  //     Cas 3:
-  //       Ecrire("Mercredi\n")
-  //     Cas 4:
-  //       Ecrire("Jeudi\n")
-  //     Cas 5:
-  //       Ecrire("Vendredi\n")
-  //     Cas 6, 7:
-  //       Ecrire("Week-end!\n")
-  //     Defaut:
-  //       Ecrire("Jour invalide\n")
-  //   FinSelon
-  // Fin`,
-  //         input: "3",
-  //       },
-  //       matchGrade: {
-  //         code: `Algorithme MentionExamen
-  // Variables note : Entier
-
-  // Debut
-  //   Ecrire("Entrez votre note /20:\n")
-  //   Lire(note)
-
-  //   Selon note
-  //     Cas 18, 19, 20:
-  //       Ecrire("Mention: Excellent\n")
-  //     Cas 16, 17:
-  //       Ecrire("Mention: Très Bien\n")
-  //     Cas 14, 15:
-  //       Ecrire("Mention: Bien\n")
-  //     Cas 12, 13:
-  //       Ecrire("Mention: Assez Bien\n")
-  //     Cas 10, 11:
-  //       Ecrire("Mention: Passable\n")
-  //     Defaut:
-  //       Ecrire("Mention: Insuffisant\n")
-  //   FinSelon
-  // Fin`,
-  //         input: "16",
-  //       },
-  //     };
-
-  //     const example = examples[exampleName];
-  //     if (example) {
-  //       setCode(example.code);
-  //       setInput(example.input);
-  //       setOutput([]);
-  //       setError(null);
-  //     }
-  //   };
 
   /**
    * Sauvegarde le code actuel dans un fichier .algo
@@ -520,178 +273,182 @@ Fin`);
     }
   };
 
+  /**
+   * Crée un nouvel algorithme vide
+   */
+  const newFile = () => {
+    setCode(`Algorithme NouvelAlgorithme
+Variables
+
+Debut
+
+Fin`);
+    setInputValues([]);
+    setOutput([]);
+    setError(null);
+  };
+
+  /**
+   * Efface la console
+   */
+  const clearConsole = () => {
+    setOutput([]);
+    setError(null);
+  };
+
+  /**
+   * Charge un exemple depuis localStorage si disponible
+   * (utilisé quand l'utilisateur clique sur "Utiliser cet exemple" depuis la page Exemples)
+   */
+  useEffect(() => {
+    const loadedExample = localStorage.getItem('loadedExample');
+    if (loadedExample) {
+      try {
+        const example = JSON.parse(loadedExample);
+        setCode(example.code);
+        setInputValues(example.input || []);
+        setOutput([]);
+        setError(null);
+        // Nettoyer le localStorage après chargement
+        localStorage.removeItem('loadedExample');
+      } catch (err) {
+        console.error('Erreur lors du chargement de l\'exemple:', err);
+      }
+    }
+  }, []);
+
+  /**
+   * Raccourcis clavier
+   */
+  useKeyboard([
+    {
+      key: 'Enter',
+      ctrl: true,
+      callback: executeAlgorithm,
+    },
+    {
+      key: 's',
+      ctrl: true,
+      callback: saveFile,
+    },
+    {
+      key: 'o',
+      ctrl: true,
+      callback: openFile,
+    },
+    {
+      key: 'n',
+      ctrl: true,
+      callback: newFile,
+    },
+    {
+      key: 'l',
+      ctrl: true,
+      callback: clearConsole,
+    },
+  ]);
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Examples Bar */}
-      {/* <div className="border-b border-gray-200 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-8 py-6">
-          <div className="flex flex-wrap gap-3">
+    <div className="flex flex-col h-full">
+      {/* Barre d'actions */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => loadExample("hello")}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
+              onClick={executeAlgorithm}
+              disabled={isRunning}
+              className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white disabled:text-gray-500 text-sm font-medium rounded transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+              title="Exécuter (Ctrl+Enter)"
             >
-              Bonjour
+              {isRunning ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  <span>Exécution...</span>
+                </>
+              ) : (
+                <>
+                  <span>▶</span>
+                  <span>Exécuter</span>
+                </>
+              )}
             </button>
+
+            <div className="h-6 w-px bg-gray-300"></div>
+
             <button
-              onClick={() => loadExample("factorial")}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
+              onClick={newFile}
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+              title="Nouveau (Ctrl+N)"
             >
-              Factorielle
+              📄 Nouveau
             </button>
+
             <button
-              onClick={() => loadExample("fibonacci")}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
+              onClick={openFile}
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+              title="Ouvrir (Ctrl+O)"
             >
-              Fibonacci
+              📂 Ouvrir
             </button>
+
             <button
-              onClick={() => loadExample("prime")}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
+              onClick={saveFile}
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+              title="Sauvegarder (Ctrl+S)"
             >
-              Nombre Premier
-            </button>
-            <button
-              onClick={() => loadExample("array1d")}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
-            >
-              Tableau 1D
-            </button>
-            <button
-              onClick={() => loadExample("array2d")}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
-            >
-              Matrice 2D
-            </button>
-            <button
-              onClick={() => loadExample("functionSquare")}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
-            >
-              Fonction
-            </button>
-            <button
-              onClick={() => loadExample("procedureGreet")}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
-            >
-              Procédure
-            </button>
-            <button
-              onClick={() => loadExample("matchDay")}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
-            >
-              Selon (Jour)
-            </button>
-            <button
-              onClick={() => loadExample("matchGrade")}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-300 hover:border-gray-400 transition-all"
-            >
-              Selon (Note)
+              💾 Sauvegarder
             </button>
           </div>
+
+          <div className="text-xs text-gray-500">
+            Tapez <code className="bg-gray-100 px-1 py-0.5 rounded">&lt;-</code> pour <code className="bg-gray-100 px-1 py-0.5 rounded">←</code>
+          </div>
         </div>
-      </div> */}
+      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-white">
-        <div className="max-w-7xl mx-auto p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column */}
-            <div className="space-y-8">
-              {/* Code Editor */}
-              <div className="border border-gray-200">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-gray-900">Algorithme</h2>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={openFile}
-                      className="px-3 py-1.5 text-xs bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 hover:border-gray-400 transition-all"
-                      title="Ouvrir un fichier .algo"
-                    >
-                      📁 Ouvrir
-                    </button>
-                    <button
-                      onClick={saveFile}
-                      className="px-3 py-1.5 text-xs bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 hover:border-gray-400 transition-all"
-                      title="Sauvegarder en .algo"
-                    >
-                      💾 Sauvegarder
-                    </button>
-                    <span className="text-xs text-gray-500">Tapez &lt;- pour ←</span>
-                  </div>
-                </div>
-                <div className="bg-gray-900 min-h-[480px]">
-                  <Editor
-                    value={code}
-                    onValueChange={code => setCode(code)}
-                    highlight={code => highlightSyntax(code)}
-                    padding={20}
-                    tabSize={2}
-                    insertSpaces={true}
-                    style={{
-                      fontFamily: '"Fira code", "Fira Mono", monospace',
-                      fontSize: 14,
-                      lineHeight: 1.5,
-                      backgroundColor: '#111827',
-                      color: '#e5e7eb',
-                      minHeight: '480px',
-                      caretColor: 'white'
-                    }}
-                  />
-                </div>
+      {/* Layout principal avec SplitPane */}
+      <div className="flex-1 overflow-hidden">
+        <SplitPane
+          left={
+            <div className="h-full flex flex-col bg-gray-50">
+              <div className="px-6 py-3 bg-gray-100 border-b border-gray-200">
+                <h2 className="text-sm font-semibold text-gray-900">📝 Éditeur</h2>
               </div>
-
-              {/* Input Section */}
-              <div className="border border-gray-200">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-gray-900">Entrées</h2>
-                  <span className="text-xs text-gray-500">Une valeur par ligne</span>
-                </div>
-                <textarea
-                  className="w-full bg-white text-gray-900 font-mono text-sm p-5 outline-none resize-none min-h-40 border-0 focus:ring-2 focus:ring-inset focus:ring-gray-900"
-                  value={input}
-                  onChange={handleInputChange}
-                  placeholder="Valeurs d'entrée..."
+              <div className="flex-1 overflow-auto bg-gray-900">
+                <Editor
+                  value={code}
+                  onValueChange={code => setCode(code)}
+                  highlight={code => highlightSyntax(code)}
+                  padding={20}
+                  tabSize={2}
+                  insertSpaces={true}
+                  style={{
+                    fontFamily: '"Fira code", "Fira Mono", monospace',
+                    fontSize: 14,
+                    lineHeight: 1.5,
+                    backgroundColor: '#111827',
+                    color: '#e5e7eb',
+                    minHeight: '100%',
+                    caretColor: 'white'
+                  }}
                 />
               </div>
             </div>
-
-            {/* Right Column */}
-            <div className="space-y-8">
-              {/* Output Section */}
-              <div className="border border-gray-200">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-gray-900">Sortie</h2>
-                  <button
-                    onClick={executeAlgorithm}
-                    disabled={isRunning}
-                    className="px-5 py-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white disabled:text-gray-500 text-sm font-medium transition-colors disabled:cursor-not-allowed"
-                  >
-                    {isRunning ? "Exécution..." : "Exécuter"}
-                  </button>
-                </div>
-                <div className="bg-gray-900 text-gray-100 font-mono text-sm p-6 min-h-[480px]">
-                  {error ? (
-                    <div className="bg-red-50 border border-red-200 text-red-900 p-4 font-sans">
-                      <div className="font-semibold mb-2">Erreur</div>
-                      <div className="text-sm">{error}</div>
-                    </div>
-                  ) : output.length > 0 ? (
-                    <div className="space-y-1">
-                      {output.map((line, index) => (
-                        <div key={index} className="text-green-400">
-                          {line}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-600 text-sm font-sans">
-                      Aucune sortie
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          }
+          right={
+            <Console
+              output={output}
+              error={error}
+              isRunning={isRunning}
+              executionTime={executionTime}
+              inputValues={inputValues}
+              onInputChange={setInputValues}
+              onClear={clearConsole}
+            />
+          }
+          defaultSplit={55}
+          minSize={30}
+        />
       </div>
     </div>
   );
