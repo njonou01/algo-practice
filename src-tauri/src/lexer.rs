@@ -6,6 +6,19 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Structure contenant un token et sa position dans le code
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TokenWithLocation {
+    pub token: Token,
+    pub line: usize,
+}
+
+impl TokenWithLocation {
+    pub fn new(token: Token, line: usize) -> Self {
+        TokenWithLocation { token, line }
+    }
+}
+
 /// Énumération de tous les tokens reconnus par le langage
 ///
 /// Représente les unités lexicales de base du langage algorithmique français.
@@ -104,6 +117,8 @@ pub struct Lexer {
     position: usize,
     /// Caractère actuellement examiné
     current_char: Option<char>,
+    /// Numéro de ligne actuel (commence à 1)
+    line_number: usize,
 }
 
 impl Lexer {
@@ -119,6 +134,7 @@ impl Lexer {
             input: chars,
             position: 0,
             current_char,
+            line_number: 1, // On commence à la ligne 1
         }
     }
 
@@ -293,14 +309,14 @@ impl Lexer {
 
     /// Tokenise le code source complet
     ///
-    /// Parcourt tout le code source et produit la liste complète des tokens.
+    /// Parcourt tout le code source et produit la liste complète des tokens avec leurs lignes.
     /// Gère les commentaires, espaces, nombres, chaînes, identifiants et opérateurs.
     ///
     /// # Retour
     ///
-    /// * `Ok(Vec<Token>)` - Liste des tokens si succès
-    /// * `Err(String)` - Message d'erreur si caractère invalide rencontré
-    pub fn tokenize(&mut self) -> Result<Vec<Token>, String> {
+    /// * `Ok(Vec<TokenWithLocation>)` - Liste des tokens avec numéros de ligne si succès
+    /// * `Err(String>` - Message d'erreur si caractère invalide rencontré
+    pub fn tokenize(&mut self) -> Result<Vec<TokenWithLocation>, String> {
         let mut tokens = Vec::new();
 
         while let Some(ch) = self.current_char {
@@ -318,32 +334,36 @@ impl Lexer {
 
             // Handle newlines
             if ch == '\n' {
-                tokens.push(Token::NouvelleLigne);
+                tokens.push(TokenWithLocation::new(Token::NouvelleLigne, self.line_number));
+                self.line_number += 1; // Incrémenter le numéro de ligne
                 self.advance();
                 continue;
             }
 
             // Numbers
             if ch.is_numeric() {
-                tokens.push(self.read_number());
+                let line = self.line_number;
+                tokens.push(TokenWithLocation::new(self.read_number(), line));
                 continue;
             }
 
             // Strings
             if ch == '"' {
-                tokens.push(self.read_string());
+                let line = self.line_number;
+                tokens.push(TokenWithLocation::new(self.read_string(), line));
                 continue;
             }
 
             // Identifiers and keywords
             if ch.is_alphabetic() || ch == '_' || "éèêàâùûôîïç".contains(ch) {
-                tokens.push(self.read_identifier());
+                let line = self.line_number;
+                tokens.push(TokenWithLocation::new(self.read_identifier(), line));
                 continue;
             }
 
             // Assignment operator <-
             if ch == '<' && self.peek(1) == Some('-') {
-                tokens.push(Token::Assignment);
+                tokens.push(TokenWithLocation::new(Token::Assignment, self.line_number));
                 self.advance();
                 self.advance();
                 continue;
@@ -352,11 +372,11 @@ impl Lexer {
             // Comparison operators
             if ch == '<' {
                 if self.peek(1) == Some('=') {
-                    tokens.push(Token::InferieurEgal);
+                    tokens.push(TokenWithLocation::new(Token::InferieurEgal, self.line_number));
                     self.advance();
                     self.advance();
                 } else {
-                    tokens.push(Token::Inferieur);
+                    tokens.push(TokenWithLocation::new(Token::Inferieur, self.line_number));
                     self.advance();
                 }
                 continue;
@@ -364,18 +384,18 @@ impl Lexer {
 
             if ch == '>' {
                 if self.peek(1) == Some('=') {
-                    tokens.push(Token::SuperieurEgal);
+                    tokens.push(TokenWithLocation::new(Token::SuperieurEgal, self.line_number));
                     self.advance();
                     self.advance();
                 } else {
-                    tokens.push(Token::Superieur);
+                    tokens.push(TokenWithLocation::new(Token::Superieur, self.line_number));
                     self.advance();
                 }
                 continue;
             }
 
             if ch == '!' && self.peek(1) == Some('=') {
-                tokens.push(Token::Different);
+                tokens.push(TokenWithLocation::new(Token::Different, self.line_number));
                 self.advance();
                 self.advance();
                 continue;
@@ -383,17 +403,17 @@ impl Lexer {
 
             // Unicode operators
             if ch == '≠' {
-                tokens.push(Token::Different);
+                tokens.push(TokenWithLocation::new(Token::Different, self.line_number));
                 self.advance();
                 continue;
             }
             if ch == '≤' {
-                tokens.push(Token::InferieurEgal);
+                tokens.push(TokenWithLocation::new(Token::InferieurEgal, self.line_number));
                 self.advance();
                 continue;
             }
             if ch == '≥' {
-                tokens.push(Token::SuperieurEgal);
+                tokens.push(TokenWithLocation::new(Token::SuperieurEgal, self.line_number));
                 self.advance();
                 continue;
             }
@@ -401,64 +421,64 @@ impl Lexer {
             // Single character tokens
             match ch {
                 '+' => {
-                    tokens.push(Token::Plus);
+                    tokens.push(TokenWithLocation::new(Token::Plus, self.line_number));
                     self.advance();
                 }
                 '-' => {
-                    tokens.push(Token::Moins);
+                    tokens.push(TokenWithLocation::new(Token::Moins, self.line_number));
                     self.advance();
                 }
                 '*' => {
-                    tokens.push(Token::Multiplier);
+                    tokens.push(TokenWithLocation::new(Token::Multiplier, self.line_number));
                     self.advance();
                 }
                 '/' => {
-                    tokens.push(Token::Diviser);
+                    tokens.push(TokenWithLocation::new(Token::Diviser, self.line_number));
                     self.advance();
                 }
                 '%' => {
-                    tokens.push(Token::Modulo);
+                    tokens.push(TokenWithLocation::new(Token::Modulo, self.line_number));
                     self.advance();
                 }
                 '=' => {
-                    tokens.push(Token::Egal);
+                    tokens.push(TokenWithLocation::new(Token::Egal, self.line_number));
                     self.advance();
                 }
                 ',' => {
-                    tokens.push(Token::Virgule);
+                    tokens.push(TokenWithLocation::new(Token::Virgule, self.line_number));
                     self.advance();
                 }
                 ':' => {
-                    tokens.push(Token::DeuxPoints);
+                    tokens.push(TokenWithLocation::new(Token::DeuxPoints, self.line_number));
                     self.advance();
                 }
                 '.' => {
-                    tokens.push(Token::Point);
+                    tokens.push(TokenWithLocation::new(Token::Point, self.line_number));
                     self.advance();
                 }
                 '(' => {
-                    tokens.push(Token::ParentheseOuv);
+                    tokens.push(TokenWithLocation::new(Token::ParentheseOuv, self.line_number));
                     self.advance();
                 }
                 ')' => {
-                    tokens.push(Token::ParentheseFerm);
+                    tokens.push(TokenWithLocation::new(Token::ParentheseFerm, self.line_number));
                     self.advance();
                 }
                 '[' => {
-                    tokens.push(Token::CrochetOuv);
+                    tokens.push(TokenWithLocation::new(Token::CrochetOuv, self.line_number));
                     self.advance();
                 }
                 ']' => {
-                    tokens.push(Token::CrochetFerm);
+                    tokens.push(TokenWithLocation::new(Token::CrochetFerm, self.line_number));
                     self.advance();
                 }
                 _ => {
-                    return Err(format!("Caractère invalide: '{}'", ch));
+                    return Err(format!("Erreur ligne {}: Caractère invalide '{}'", self.line_number, ch));
                 }
             }
         }
 
-        tokens.push(Token::EOF);
+        tokens.push(TokenWithLocation::new(Token::EOF, self.line_number));
         Ok(tokens)
     }
 }

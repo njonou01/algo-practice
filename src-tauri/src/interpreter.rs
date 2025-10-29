@@ -4,7 +4,7 @@
 //! Il gère l'évaluation des expressions, l'exécution des instructions,
 //! les variables, les tableaux et les appels de fonctions/procédures.
 
-use crate::parser::{Algorithm, BinaryOperator, Expression, Function, LValue, Statement, StructDefinition, Type, UnaryOperator};
+use crate::parser::{Algorithm, BinaryOperator, Expression, Function, LValue, Statement, StatementWithLine, StructDefinition, Type, UnaryOperator};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -124,6 +124,8 @@ pub struct Interpreter {
     return_value: Option<Value>,
     /// Flag indiquant qu'un return a été exécuté
     has_returned: bool,
+    /// Numéro de ligne de l'instruction courante (pour erreurs d'exécution)
+    current_statement_line: usize,
 }
 
 impl Interpreter {
@@ -144,7 +146,13 @@ impl Interpreter {
             input_index: 0,
             return_value: None,
             has_returned: false,
+            current_statement_line: 1,
         }
+    }
+
+    /// Formate un message d'erreur avec le numéro de ligne
+    fn error(&self, msg: &str) -> String {
+        format!("Erreur ligne {}: {}", self.current_statement_line, msg)
     }
 
     /// Retourne la valeur par défaut pour un type donné
@@ -267,13 +275,13 @@ impl Interpreter {
                         arr[flat_index] = value;
                         Ok(())
                     } else {
-                        Err(format!(
+                        Err(self.error(&format!(
                             "Index {} hors limites pour le tableau '{}'",
                             flat_index, name
-                        ))
+                        )))
                     }
                 } else {
-                    Err(format!("'{}' n'est pas un tableau", name))
+                    Err(self.error(&format!("'{}' n'est pas un tableau", name)))
                 }
             }
             LValue::FieldAccess { object, field } => {
@@ -292,6 +300,7 @@ impl Interpreter {
     /// * `field` - Nom du champ
     /// * `value` - Valeur à assigner
     fn assign_to_field(&mut self, object: &LValue, field: &str, value: Value) -> Result<(), String> {
+        let line = self.current_statement_line;
         match object {
             LValue::Variable(var_name) => {
                 // Accès direct : var.field
@@ -300,10 +309,11 @@ impl Interpreter {
                         fields.insert(field.to_string(), value);
                         Ok(())
                     } else {
-                        Err(format!("Champ '{}' introuvable dans la structure '{}'", field, type_name))
+                        let type_name = type_name.clone();
+                        Err(format!("Erreur ligne {}: Champ '{}' introuvable dans la structure '{}'", line, field, type_name))
                     }
                 } else {
-                    Err(format!("'{}' n'est pas une structure", var_name))
+                    Err(format!("Erreur ligne {}: '{}' n'est pas une structure", line, var_name))
                 }
             }
             LValue::FieldAccess { object: nested_object, field: nested_field } => {
@@ -348,8 +358,11 @@ impl Interpreter {
     ///
     /// * `Ok(())` si succès
     /// * `Err(String)` si erreur d'exécution
-    fn execute_statement(&mut self, statement: &Statement) -> Result<(), String> {
-        match statement {
+    fn execute_statement(&mut self, stmt_with_line: &StatementWithLine) -> Result<(), String> {
+        // Mettre à jour le numéro de ligne courant pour les messages d'erreur
+        self.current_statement_line = stmt_with_line.line;
+
+        match &stmt_with_line.statement {
             Statement::Assignment { var_name, value } => {
                 let val = self.evaluate_expression(value)?;
                 self.variables.insert(var_name.clone(), val);
@@ -370,21 +383,19 @@ impl Interpreter {
                         arr[flat_index] = new_value;
                         Ok(())
                     } else {
-                        Err(format!(
+                        Err(self.error(&format!(
                             "Index {} hors limites pour le tableau '{}'",
                             flat_index, var_name
-                        ))
+                        )))
                     }
                 } else {
-                    Err(format!("'{}' n'est pas un tableau", var_name))
+                    Err(self.error(&format!("'{}' n'est pas un tableau", var_name)))
                 }
             }
             Statement::Read { targets } => {
                 for target in targets {
                     if self.input_index >= self.input_values.len() {
-                        return Err(format!(
-                            "Pas assez de valeurs d'entrée"
-                        ));
+                        return Err(self.error("Pas assez de valeurs d'entrée"));
                     }
 
                     let input_str = self.input_values[self.input_index].clone();
@@ -596,7 +607,7 @@ impl Interpreter {
                 .variables
                 .get(name)
                 .cloned()
-                .ok_or_else(|| format!("Variable '{}' non définie", name)),
+                .ok_or_else(|| self.error(&format!("Variable '{}' non définie", name))),
             Expression::BinaryOp { left, op, right } => {
                 let left_val = self.evaluate_expression(left)?;
                 let right_val = self.evaluate_expression(right)?;
@@ -612,13 +623,13 @@ impl Interpreter {
 
                 if let Some(Value::Tableau(arr)) = self.variables.get(name) {
                     arr.get(flat_index).cloned().ok_or_else(|| {
-                        format!(
+                        self.error(&format!(
                             "Index {} hors limites pour le tableau '{}'",
                             flat_index, name
-                        )
+                        ))
                     })
                 } else {
-                    Err(format!("'{}' n'est pas un tableau", name))
+                    Err(self.error(&format!("'{}' n'est pas un tableau", name)))
                 }
             }
             Expression::FunctionCall { name, args } => {

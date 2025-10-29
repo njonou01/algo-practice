@@ -1,106 +1,22 @@
-   0.728982486s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint: stale: changed "/home/njonou45/Documents/project/algo-practice/src-tauri/src/interpreter.rs"
-   0.729015618s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:           (vs) "/home/njonou45/Documents/project/algo-practice/src-tauri/target/debug/.fingerprint/algo-practice-5faf7b70c936f4b8/dep-lib-algo_practice_lib"
-   0.729025332s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1761679087, nanos: 87635601 } < FileTime { seconds: 1761680334, nanos: 5548336 }
-   0.730279489s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint: fingerprint dirty for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: false }/TargetInner { ..: lib_target("algo_practice_lib", ["staticlib", "cdylib", "rlib"], "/home/njonou45/Documents/project/algo-practice/src-tauri/src/lib.rs", Edition2021) }
-   0.730313299s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/home/njonou45/Documents/project/algo-practice/src-tauri/target/debug/.fingerprint/algo-practice-5faf7b70c936f4b8/dep-lib-algo_practice_lib", reference_mtime: FileTime { seconds: 1761679087, nanos: 87635601 }, stale: "/home/njonou45/Documents/project/algo-practice/src-tauri/src/interpreter.rs", stale_mtime: FileTime { seconds: 1761680334, nanos: 5548336 } }))
-   0.790935480s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint: stale: changed "/home/njonou45/Documents/project/algo-practice/src-tauri/src/parser.rs"
-   0.790958555s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:           (vs) "/home/njonou45/Documents/project/algo-practice/src-tauri/target/debug/.fingerprint/algo-practice-4bde9572d05d4e10/dep-test-lib-algo_practice_lib"
-   0.790965706s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1761679221, nanos: 497105662 } < FileTime { seconds: 1761679392, nanos: 957256667 }
-   0.791252850s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint: fingerprint dirty for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: true }/TargetInner { ..: lib_target("algo_practice_lib", ["staticlib", "cdylib", "rlib"], "/home/njonou45/Documents/project/algo-practice/src-tauri/src/lib.rs", Edition2021) }
-   0.791276022s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/home/njonou45/Documents/project/algo-practice/src-tauri/target/debug/.fingerprint/algo-practice-4bde9572d05d4e10/dep-test-lib-algo_practice_lib", reference_mtime: FileTime { seconds: 1761679221, nanos: 497105662 }, stale: "/home/njonou45/Documents/project/algo-practice/src-tauri/src/parser.rs", stale_mtime: FileTime { seconds: 1761679392, nanos: 957256667 } }))
-   0.794349951s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo-practice"}: cargo::core::compiler::fingerprint: fingerprint dirty for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: false }/TargetInner { name: "algo-practice", doc: true, ..: with_path("/home/njonou45/Documents/project/algo-practice/src-tauri/src/main.rs", Edition2021) }
-   0.794374382s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo-practice"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { name: "algo_practice_lib" })
-   0.797001550s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo-practice"}: cargo::core::compiler::fingerprint: fingerprint dirty for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: true }/TargetInner { name: "algo-practice", doc: true, ..: with_path("/home/njonou45/Documents/project/algo-practice/src-tauri/src/main.rs", Edition2021) }
-   0.797032037s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo-practice"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { name: "algo_practice_lib" })
-   0.799844956s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="test_etudiant"}: cargo::core::compiler::fingerprint: fingerprint error for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: false }/TargetInner { kind: "example", name: "test_etudiant", tested: false, benched: false, ..: with_path("/home/njonou45/Documents/project/algo-practice/src-tauri/examples/test_etudiant.rs", Edition2021) }
-   0.799867618s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="test_etudiant"}: cargo::core::compiler::fingerprint:     err: failed to read `/home/njonou45/Documents/project/algo-practice/src-tauri/target/debug/.fingerprint/algo-practice-a81e8139ffc8f982/example-test_etudiant`
-
-Caused by:
-    No such file or directory (os error 2)
-
-Stack backtrace:
-   0: cargo_util::paths::read_bytes
-   1: cargo_util::paths::read
-   2: cargo::core::compiler::fingerprint::_compare_old_fingerprint
-   3: cargo::core::compiler::fingerprint::prepare_target
-   4: cargo::core::compiler::compile
-   5: <cargo::core::compiler::build_runner::BuildRunner>::compile
-   6: cargo::ops::cargo_compile::compile_ws
-   7: cargo::ops::cargo_compile::compile_with_exec
-   8: cargo::ops::cargo_compile::compile
-   9: cargo::commands::check::exec
-  10: <cargo::cli::Exec>::exec
-  11: cargo::main
-  12: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
-  13: std::rt::lang_start::<()>::{closure#0}
-  14: core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/core/src/ops/function.rs:290:21
-  15: std::panicking::catch_unwind::do_call
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panicking.rs:589:40
-  16: std::panicking::catch_unwind
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panicking.rs:552:19
-  17: std::panic::catch_unwind
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panic.rs:359:14
-  18: std::rt::lang_start_internal::{{closure}}
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/rt.rs:175:24
-  19: std::panicking::catch_unwind::do_call
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panicking.rs:589:40
-  20: std::panicking::catch_unwind
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panicking.rs:552:19
-  21: std::panic::catch_unwind
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panic.rs:359:14
-  22: std::rt::lang_start_internal
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/rt.rs:171:5
-  23: main
-  24: __libc_start_call_main
-             at ./csu/../sysdeps/nptl/libc_start_call_main.h:58:16
-  25: __libc_start_main_impl
-             at ./csu/../csu/libc-start.c:360:3
-  26: <unknown>
-   0.932032983s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="test_struct"}: cargo::core::compiler::fingerprint: fingerprint error for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: false }/TargetInner { kind: "example", name: "test_struct", tested: false, benched: false, ..: with_path("/home/njonou45/Documents/project/algo-practice/src-tauri/examples/test_struct.rs", Edition2021) }
-   0.932054569s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="test_struct"}: cargo::core::compiler::fingerprint:     err: failed to read `/home/njonou45/Documents/project/algo-practice/src-tauri/target/debug/.fingerprint/algo-practice-5da0023bb0686e8e/example-test_struct`
-
-Caused by:
-    No such file or directory (os error 2)
-
-Stack backtrace:
-   0: cargo_util::paths::read_bytes
-   1: cargo_util::paths::read
-   2: cargo::core::compiler::fingerprint::_compare_old_fingerprint
-   3: cargo::core::compiler::fingerprint::prepare_target
-   4: cargo::core::compiler::compile
-   5: <cargo::core::compiler::build_runner::BuildRunner>::compile
-   6: cargo::ops::cargo_compile::compile_ws
-   7: cargo::ops::cargo_compile::compile_with_exec
-   8: cargo::ops::cargo_compile::compile
-   9: cargo::commands::check::exec
-  10: <cargo::cli::Exec>::exec
-  11: cargo::main
-  12: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
-  13: std::rt::lang_start::<()>::{closure#0}
-  14: core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/core/src/ops/function.rs:290:21
-  15: std::panicking::catch_unwind::do_call
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panicking.rs:589:40
-  16: std::panicking::catch_unwind
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panicking.rs:552:19
-  17: std::panic::catch_unwind
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panic.rs:359:14
-  18: std::rt::lang_start_internal::{{closure}}
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/rt.rs:175:24
-  19: std::panicking::catch_unwind::do_call
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panicking.rs:589:40
-  20: std::panicking::catch_unwind
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panicking.rs:552:19
-  21: std::panic::catch_unwind
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/panic.rs:359:14
-  22: std::rt::lang_start_internal
-             at /rustc/1159e78c4747b02ef996e55082b704c09b970588/library/std/src/rt.rs:171:5
-  23: main
-  24: __libc_start_call_main
-             at ./csu/../sysdeps/nptl/libc_start_call_main.h:58:16
-  25: __libc_start_main_impl
-             at ./csu/../csu/libc-start.c:360:3
-  26: <unknown>
+   0.530222181s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint: stale: changed "/home/njonou45/Documents/project/algo-practice/src-tauri/src/parser.rs"
+   0.530268446s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:           (vs) "/home/njonou45/Documents/project/algo-practice/src-tauri/target/debug/.fingerprint/algo-practice-5faf7b70c936f4b8/dep-lib-algo_practice_lib"
+   0.530274944s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1761736141, nanos: 239840830 } < FileTime { seconds: 1761737655, nanos: 5255636 }
+   0.531279548s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint: fingerprint dirty for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: false }/TargetInner { ..: lib_target("algo_practice_lib", ["staticlib", "cdylib", "rlib"], "/home/njonou45/Documents/project/algo-practice/src-tauri/src/lib.rs", Edition2021) }
+   0.531331765s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/home/njonou45/Documents/project/algo-practice/src-tauri/target/debug/.fingerprint/algo-practice-5faf7b70c936f4b8/dep-lib-algo_practice_lib", reference_mtime: FileTime { seconds: 1761736141, nanos: 239840830 }, stale: "/home/njonou45/Documents/project/algo-practice/src-tauri/src/parser.rs", stale_mtime: FileTime { seconds: 1761737655, nanos: 5255636 } }))
+   0.576368108s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint: stale: changed "/home/njonou45/Documents/project/algo-practice/src-tauri/src/parser.rs"
+   0.576412562s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:           (vs) "/home/njonou45/Documents/project/algo-practice/src-tauri/target/debug/.fingerprint/algo-practice-4bde9572d05d4e10/dep-test-lib-algo_practice_lib"
+   0.576424437s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1761736141, nanos: 239840830 } < FileTime { seconds: 1761737655, nanos: 5255636 }
+   0.576564969s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint: fingerprint dirty for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: true }/TargetInner { ..: lib_target("algo_practice_lib", ["staticlib", "cdylib", "rlib"], "/home/njonou45/Documents/project/algo-practice/src-tauri/src/lib.rs", Edition2021) }
+   0.576607763s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo_practice_lib"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/home/njonou45/Documents/project/algo-practice/src-tauri/target/debug/.fingerprint/algo-practice-4bde9572d05d4e10/dep-test-lib-algo_practice_lib", reference_mtime: FileTime { seconds: 1761736141, nanos: 239840830 }, stale: "/home/njonou45/Documents/project/algo-practice/src-tauri/src/parser.rs", stale_mtime: FileTime { seconds: 1761737655, nanos: 5255636 } }))
+   0.580458526s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo-practice"}: cargo::core::compiler::fingerprint: fingerprint dirty for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: false }/TargetInner { name: "algo-practice", doc: true, ..: with_path("/home/njonou45/Documents/project/algo-practice/src-tauri/src/main.rs", Edition2021) }
+   0.580500222s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo-practice"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { name: "algo_practice_lib" })
+   0.582675670s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo-practice"}: cargo::core::compiler::fingerprint: fingerprint dirty for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: true }/TargetInner { name: "algo-practice", doc: true, ..: with_path("/home/njonou45/Documents/project/algo-practice/src-tauri/src/main.rs", Edition2021) }
+   0.582702294s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="algo-practice"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { name: "algo_practice_lib" })
+   0.584497886s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="test_etudiant"}: cargo::core::compiler::fingerprint: fingerprint dirty for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: false }/TargetInner { kind: "example", name: "test_etudiant", tested: false, benched: false, ..: with_path("/home/njonou45/Documents/project/algo-practice/src-tauri/examples/test_etudiant.rs", Edition2021) }
+   0.584512651s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="test_etudiant"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { name: "algo_practice_lib" })
+   0.586107555s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="test_struct"}: cargo::core::compiler::fingerprint: fingerprint dirty for algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)/Check { test: false }/TargetInner { kind: "example", name: "test_struct", tested: false, benched: false, ..: with_path("/home/njonou45/Documents/project/algo-practice/src-tauri/examples/test_struct.rs", Edition2021) }
+   0.586133975s  INFO prepare_target{force=false package_id=algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri) target="test_struct"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { name: "algo_practice_lib" })
     Checking algo-practice v0.1.0 (/home/njonou45/Documents/project/algo-practice/src-tauri)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.20s
+error: could not compile `algo-practice` (lib) due to 10 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `algo-practice` (lib test) due to 10 previous errors

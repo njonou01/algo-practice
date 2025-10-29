@@ -4,7 +4,7 @@
 //! Il définit toutes les structures de données représentant la syntaxe du langage :
 //! types, variables, expressions, instructions, fonctions et l'algorithme complet.
 
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenWithLocation};
 use serde::{Deserialize, Serialize};
 
 /// Types de données supportés par le langage
@@ -82,7 +82,7 @@ pub struct Function {
     /// Variables locales
     pub variables: Vec<Variable>,
     /// Instructions du corps
-    pub statements: Vec<Statement>,
+    pub statements: Vec<StatementWithLine>,
 }
 
 /// Expression évaluable du langage
@@ -179,6 +179,19 @@ pub enum LValue {
     },
 }
 
+/// Structure contenant une instruction et son numéro de ligne
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StatementWithLine {
+    pub statement: Statement,
+    pub line: usize,
+}
+
+impl StatementWithLine {
+    pub fn new(statement: Statement, line: usize) -> Self {
+        StatementWithLine { statement, line }
+    }
+}
+
 /// Instruction exécutable du langage
 ///
 /// Représente toutes les instructions possibles : affectations, E/S,
@@ -214,24 +227,24 @@ pub enum Statement {
     /// Structure conditionnelle Si/Alors/Sinon
     If {
         condition: Expression,
-        then_block: Vec<Statement>,
-        else_block: Option<Vec<Statement>>,
+        then_block: Vec<StatementWithLine>,
+        else_block: Option<Vec<StatementWithLine>>,
     },
     /// Boucle Pour (ex: Pour i De 1 A 10)
     For {
         var_name: String,
         start: Expression,
         end: Expression,
-        body: Vec<Statement>,
+        body: Vec<StatementWithLine>,
     },
     /// Boucle TantQue
     While {
         condition: Expression,
-        body: Vec<Statement>,
+        body: Vec<StatementWithLine>,
     },
     /// Boucle Répéter/Jusqu'à
     Repeat {
-        body: Vec<Statement>,
+        body: Vec<StatementWithLine>,
         condition: Expression,
     },
     /// Retour de fonction
@@ -247,7 +260,7 @@ pub enum Statement {
     Match {
         expression: Expression,
         cases: Vec<MatchCase>,
-        default_case: Option<Vec<Statement>>,
+        default_case: Option<Vec<StatementWithLine>>,
     },
 }
 
@@ -259,7 +272,7 @@ pub struct MatchCase {
     /// Valeurs déclenchant ce cas
     pub values: Vec<Expression>,
     /// Instructions à exécuter
-    pub statements: Vec<Statement>,
+    pub statements: Vec<StatementWithLine>,
 }
 
 /// Algorithme complet
@@ -277,15 +290,15 @@ pub struct Algorithm {
     /// Variables globales
     pub variables: Vec<Variable>,
     /// Instructions du corps principal
-    pub statements: Vec<Statement>,
+    pub statements: Vec<StatementWithLine>,
 }
 
 /// Analyseur syntaxique (Parser)
 ///
 /// Parcourt la séquence de tokens et construit l'arbre syntaxique.
 pub struct Parser {
-    /// Liste des tokens à analyser
-    tokens: Vec<Token>,
+    /// Liste des tokens avec leurs lignes à analyser
+    tokens: Vec<TokenWithLocation>,
     /// Position courante dans la liste
     position: usize,
 }
@@ -295,8 +308,8 @@ impl Parser {
     ///
     /// # Arguments
     ///
-    /// * `tokens` - Séquence de tokens produite par le lexer
-    pub fn new(tokens: Vec<Token>) -> Self {
+    /// * `tokens` - Séquence de tokens avec lignes produite par le lexer
+    pub fn new(tokens: Vec<TokenWithLocation>) -> Self {
         Parser {
             tokens,
             position: 0,
@@ -305,7 +318,18 @@ impl Parser {
 
     /// Retourne le token courant sans avancer
     fn current_token(&self) -> &Token {
-        self.tokens.get(self.position).unwrap_or(&Token::EOF)
+        self.tokens
+            .get(self.position)
+            .map(|t| &t.token)
+            .unwrap_or(&Token::EOF)
+    }
+
+    /// Retourne le numéro de ligne du token courant
+    fn current_line(&self) -> usize {
+        self.tokens
+            .get(self.position)
+            .map(|t| t.line)
+            .unwrap_or(1)
     }
 
     /// Avance au token suivant
@@ -339,7 +363,8 @@ impl Parser {
             Ok(())
         } else {
             Err(format!(
-                "Erreur de syntaxe: attendu {:?}, trouvé {:?}",
+                "Erreur ligne {}: Attendu {:?}, trouvé {:?}",
+                self.current_line(),
                 expected,
                 self.current_token()
             ))
@@ -366,7 +391,7 @@ impl Parser {
             self.advance();
             n
         } else {
-            return Err("Nom d'algorithme attendu".to_string());
+            return Err(format!("Erreur ligne {}: Nom d'algorithme attendu", self.current_line()));
         };
 
         self.skip_newlines();
@@ -490,7 +515,7 @@ impl Parser {
             self.advance();
             n
         } else {
-            return Err("Nom de fonction attendu".to_string());
+            return Err(format!("Erreur ligne {}: Nom de fonction attendu", self.current_line()));
         };
 
         self.skip_newlines();
@@ -508,7 +533,7 @@ impl Parser {
                         self.advance();
                         n
                     } else {
-                        return Err("Nom de paramètre attendu".to_string());
+                        return Err(format!("Erreur ligne {}: Nom de paramètre attendu", self.current_line()));
                     };
 
                     self.skip_newlines();
@@ -600,7 +625,7 @@ impl Parser {
             self.advance();
             n
         } else {
-            return Err("Nom de structure attendu".to_string());
+            return Err(format!("Erreur ligne {}: Nom de structure attendu", self.current_line()));
         };
 
         self.skip_newlines();
@@ -666,7 +691,7 @@ impl Parser {
                             self.advance();
                             self.skip_newlines();
                         } else {
-                            return Err("Taille de dimension attendue après la virgule".to_string());
+                            return Err(format!("Erreur ligne {}: Taille de dimension attendue après la virgule", self.current_line()));
                         }
                     }
                 }
@@ -683,14 +708,15 @@ impl Parser {
                 let element_type = self.parse_type()?;
                 Ok(Type::Tableau(Box::new(element_type), dimensions))
             }
-            _ => Err(format!("Type invalide: {:?}", type_token)),
+            _ => Err(format!("Erreur ligne {}: Type invalide: {:?}", self.current_line(), type_token)),
         }
     }
 
-    fn parse_statement(&mut self) -> Result<Statement, String> {
+    fn parse_statement(&mut self) -> Result<StatementWithLine, String> {
         self.skip_newlines();
+        let line = self.current_line();
 
-        match self.current_token().clone() {
+        let statement = match self.current_token().clone() {
             Token::Identifiant(name) => {
                 self.advance();
                 self.skip_newlines();
@@ -714,7 +740,7 @@ impl Parser {
                     }
 
                     self.expect(Token::ParentheseFerm)?;
-                    Ok(Statement::ProcedureCall { name, arguments })
+                    Statement::ProcedureCall { name, arguments }
                 }
                 // Check for array assignment
                 else if *self.current_token() == Token::CrochetOuv {
@@ -739,11 +765,11 @@ impl Parser {
                     self.expect(Token::Assignment)?;
                     self.skip_newlines();
                     let value = self.parse_expression()?;
-                    Ok(Statement::ArrayAssignment {
+                    Statement::ArrayAssignment {
                         var_name: name,
                         indices,
                         value,
-                    })
+                    }
                 }
                 // Check for field access assignment
                 else if *self.current_token() == Token::Point {
@@ -757,7 +783,7 @@ impl Parser {
                             self.advance();
                             field_name
                         } else {
-                            return Err("Nom de champ attendu après '.'".to_string());
+                            return Err(format!("Erreur ligne {}: Nom de champ attendu après '.'", self.current_line()));
                         };
 
                         lvalue = LValue::FieldAccess {
@@ -771,19 +797,19 @@ impl Parser {
                     self.expect(Token::Assignment)?;
                     self.skip_newlines();
                     let value = self.parse_expression()?;
-                    Ok(Statement::GeneralAssignment {
+                    Statement::GeneralAssignment {
                         target: lvalue,
                         value,
-                    })
+                    }
                 } else {
                     // Regular assignment
                     self.expect(Token::Assignment)?;
                     self.skip_newlines();
                     let value = self.parse_expression()?;
-                    Ok(Statement::Assignment {
+                    Statement::Assignment {
                         var_name: name,
                         value,
-                    })
+                    }
                 }
             }
             Token::Lire => {
@@ -830,7 +856,7 @@ impl Parser {
                                 self.advance();
                                 field_name
                             } else {
-                                return Err("Nom de champ attendu après '.'".to_string());
+                                return Err(format!("Erreur ligne {}: Nom de champ attendu après '.'", self.current_line()));
                             };
 
                             lvalue = LValue::FieldAccess {
@@ -883,7 +909,7 @@ impl Parser {
                                         self.advance();
                                         field_name
                                     } else {
-                                        return Err("Nom de champ attendu après '.'".to_string());
+                                        return Err(format!("Erreur ligne {}: Nom de champ attendu après '.'", self.current_line()));
                                     };
 
                                     lvalue = LValue::FieldAccess {
@@ -901,7 +927,7 @@ impl Parser {
                 }
 
                 self.expect(Token::ParentheseFerm)?;
-                Ok(Statement::Read { targets })
+                Statement::Read { targets }
             }
             Token::Ecrire => {
                 self.advance();
@@ -923,7 +949,7 @@ impl Parser {
                 }
 
                 self.expect(Token::ParentheseFerm)?;
-                Ok(Statement::Write { expressions })
+                Statement::Write { expressions }
             }
             Token::Si => {
                 self.advance();
@@ -957,11 +983,11 @@ impl Parser {
                 };
 
                 self.expect(Token::FinSi)?;
-                Ok(Statement::If {
+                Statement::If {
                     condition,
                     then_block,
                     else_block,
-                })
+                }
             }
             Token::Pour => {
                 self.advance();
@@ -971,7 +997,7 @@ impl Parser {
                     self.advance();
                     name
                 } else {
-                    return Err("Nom de variable attendu après Pour".to_string());
+                    return Err(format!("Erreur ligne {}: Nom de variable attendu après Pour", self.current_line()));
                 };
 
                 self.skip_newlines();
@@ -993,12 +1019,12 @@ impl Parser {
                 }
 
                 self.expect(Token::FinPour)?;
-                Ok(Statement::For {
+                Statement::For {
                     var_name,
                     start,
                     end,
                     body,
-                })
+                }
             }
             Token::TantQue => {
                 self.advance();
@@ -1017,7 +1043,7 @@ impl Parser {
                 }
 
                 self.expect(Token::FinTantQue)?;
-                Ok(Statement::While { condition, body })
+                Statement::While { condition, body }
             }
             Token::Repeter => {
                 self.advance();
@@ -1033,7 +1059,7 @@ impl Parser {
                 self.skip_newlines();
                 let condition = self.parse_expression()?;
 
-                Ok(Statement::Repeat { body, condition })
+                Statement::Repeat { body, condition }
             }
             Token::Retourner => {
                 self.advance();
@@ -1049,7 +1075,7 @@ impl Parser {
                     Some(self.parse_expression()?)
                 };
 
-                Ok(Statement::Return { value })
+                Statement::Return { value }
             }
             Token::Selon => {
                 self.advance();
@@ -1120,17 +1146,20 @@ impl Parser {
                 }
 
                 self.expect(Token::FinSelon)?;
-                Ok(Statement::Match {
+                Statement::Match {
                     expression,
                     cases,
                     default_case,
-                })
+                }
             }
-            _ => Err(format!(
-                "Instruction invalide: {:?}",
+            _ => return Err(format!(
+                "Erreur ligne {}: Instruction invalide: {:?}",
+                self.current_line(),
                 self.current_token()
             )),
-        }
+        };
+
+        Ok(StatementWithLine::new(statement, line))
     }
 
     fn parse_expression(&mut self) -> Result<Expression, String> {
@@ -1363,7 +1392,8 @@ impl Parser {
                 Ok(expr)
             }
             _ => Err(format!(
-                "Expression invalide: {:?}",
+                "Erreur ligne {}: Expression invalide: {:?}",
+                self.current_line(),
                 self.current_token()
             )),
         }
@@ -1382,7 +1412,7 @@ impl Parser {
                 self.advance();
                 name
             } else {
-                return Err("Nom de champ attendu après '.'".to_string());
+                return Err(format!("Erreur ligne {}: Nom de champ attendu après '.'", self.current_line()));
             };
 
             expr = Expression::FieldAccess {

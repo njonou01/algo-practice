@@ -461,24 +461,49 @@ Fin`);
                   <span>Éditeur</span>
                 </h2>
               </div>
-              <div className="flex-1 overflow-auto bg-gray-900">
-                <Editor
-                  value={code}
-                  onValueChange={code => setCode(code)}
-                  highlight={code => highlightSyntax(code)}
-                  padding={20}
-                  tabSize={2}
-                  insertSpaces={true}
+              <div className="flex-1 overflow-auto bg-gray-900 flex">
+                {/* Numéros de ligne */}
+                <div
+                  className="select-none bg-gray-800 text-gray-500 border-r border-gray-700"
                   style={{
                     fontFamily: '"Fira code", "Fira Mono", monospace',
                     fontSize: 14,
                     lineHeight: 1.5,
-                    backgroundColor: '#111827',
-                    color: '#e5e7eb',
-                    minHeight: '100%',
-                    caretColor: 'white'
+                    paddingTop: 20,
+                    paddingBottom: 20,
+                    paddingLeft: 10,
+                    paddingRight: 10,
+                    textAlign: 'right',
+                    minWidth: '50px'
                   }}
-                />
+                >
+                  {code.split('\n').map((_, index) => (
+                    <div key={index} style={{ height: '21px' }}>
+                      {index + 1}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Éditeur de code */}
+                <div className="flex-1">
+                  <Editor
+                    value={code}
+                    onValueChange={code => setCode(code)}
+                    highlight={code => highlightSyntax(code)}
+                    padding={20}
+                    tabSize={2}
+                    insertSpaces={true}
+                    style={{
+                      fontFamily: '"Fira code", "Fira Mono", monospace',
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                      backgroundColor: '#111827',
+                      color: '#e5e7eb',
+                      minHeight: '100%',
+                      caretColor: 'white'
+                    }}
+                  />
+                </div>
               </div>
             </div>
           }
