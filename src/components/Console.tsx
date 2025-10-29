@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react';
+import { ArrowUp, ArrowDown, AlertCircle, CheckCircle, Trash2, Plus, Info, Loader2 } from 'lucide-react';
 
 interface ConsoleProps {
   output: string[];
@@ -83,9 +84,10 @@ function Console({
             `}
           >
             <span className="flex items-center gap-2">
-              📤 Sortie
+              <ArrowUp size={16} />
+              <span>Sortie</span>
               {output.length > 0 && (
-                <span className="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded-full">
+                <span className="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700">
                   {output.length}
                 </span>
               )}
@@ -103,9 +105,10 @@ function Console({
             `}
           >
             <span className="flex items-center gap-2">
-              📥 Entrées
+              <ArrowDown size={16} />
+              <span>Entrées</span>
               {inputValues.length > 0 && (
-                <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700">
                   {inputValues.length}
                 </span>
               )}
@@ -123,9 +126,10 @@ function Console({
             `}
           >
             <span className="flex items-center gap-2">
-              ❌ Erreurs
+              <AlertCircle size={16} />
+              <span>Erreurs</span>
               {error && (
-                <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded-full">
+                <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700">
                   1
                 </span>
               )}
@@ -136,10 +140,11 @@ function Console({
         {/* Bouton Clear */}
         <button
           onClick={onClear}
-          className="px-3 py-1 mr-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+          className="px-3 py-1 mr-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
           title="Effacer (Ctrl+L)"
         >
-          🗑️ Effacer
+          <Trash2 size={16} />
+          <span>Effacer</span>
         </button>
       </div>
 
@@ -149,8 +154,8 @@ function Console({
         {activeTab === 'output' && (
           <div className="space-y-2">
             {isRunning && (
-              <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-3 py-2 rounded">
-                <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+              <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-3 py-2">
+                <Loader2 className="animate-spin" size={16} />
                 <span className="text-sm font-medium">Exécution en cours...</span>
               </div>
             )}
@@ -165,15 +170,16 @@ function Console({
             {output.map((line, index) => (
               <div
                 key={index}
-                className="font-mono text-sm text-gray-800 bg-gray-50 px-3 py-1 rounded border-l-2 border-gray-300"
+                className="font-mono text-sm text-gray-800 bg-gray-50 px-3 py-1 border-l-2 border-gray-300"
               >
                 {line}
               </div>
             ))}
 
             {!isRunning && output.length > 0 && executionTime !== undefined && (
-              <div className="mt-4 flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded border-l-4 border-green-500">
-                ✅ <span className="text-sm font-medium">Exécuté avec succès en {executionTime.toFixed(3)}s</span>
+              <div className="mt-4 flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 border-l-4 border-green-500">
+                <CheckCircle size={16} />
+                <span className="text-sm font-medium">Exécuté avec succès en {executionTime.toFixed(3)}s</span>
               </div>
             )}
           </div>
@@ -182,9 +188,10 @@ function Console({
         {/* Onglet Entrées */}
         {activeTab === 'input' && (
           <div className="space-y-3">
-            <div className="bg-blue-50 border border-blue-200 px-4 py-3 rounded">
+            <div className="bg-blue-50 border border-blue-200 px-4 py-3 flex items-start gap-2">
+              <Info size={16} className="text-blue-900 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-blue-900">
-                💡 <strong>Info :</strong> Entrez ici les valeurs que votre algorithme demandera avec <code className="bg-blue-100 px-1 py-0.5 rounded">Lire()</code>
+                <strong>Info :</strong> Entrez ici les valeurs que votre algorithme demandera avec <code className="bg-blue-100 px-1 py-0.5">Lire()</code>
               </p>
             </div>
 
@@ -195,24 +202,25 @@ function Console({
                   type="text"
                   value={value}
                   onChange={(e) => handleInputChange(index, e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                  className="flex-1 px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
                   placeholder="Valeur..."
                 />
                 <button
                   onClick={() => handleRemoveInput(index)}
-                  className="px-3 py-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                  className="px-3 py-2 text-red-600 hover:bg-red-50 transition-colors"
                   title="Supprimer"
                 >
-                  🗑️
+                  <Trash2 size={16} />
                 </button>
               </div>
             ))}
 
             <button
               onClick={handleAddInput}
-              className="w-full px-4 py-2 border-2 border-dashed border-gray-300 hover:border-indigo-500 text-gray-600 hover:text-indigo-600 rounded transition-colors text-sm font-medium"
+              className="w-full px-4 py-2 border-2 border-dashed border-gray-300 hover:border-indigo-500 text-gray-600 hover:text-indigo-600 transition-colors text-sm font-medium flex items-center justify-center gap-2"
             >
-              + Ajouter une entrée
+              <Plus size={16} />
+              <span>Ajouter une entrée</span>
             </button>
 
             {inputValues.length === 0 && (
@@ -228,9 +236,9 @@ function Console({
         {activeTab === 'errors' && (
           <div>
             {error ? (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+              <div className="bg-red-50 border-l-4 border-red-500 p-4">
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">❌</span>
+                  <AlertCircle className="text-red-500" size={24} />
                   <div className="flex-1">
                     <h3 className="font-semibold text-red-900 mb-2">Erreur d'exécution</h3>
                     <p className="font-mono text-sm text-red-800 whitespace-pre-wrap">{error}</p>
@@ -239,7 +247,7 @@ function Console({
               </div>
             ) : (
               <div className="text-gray-400 text-center py-8">
-                <p className="text-4xl mb-2">✅</p>
+                <CheckCircle size={48} className="mx-auto mb-2 text-green-400" />
                 <p className="text-sm">Aucune erreur détectée</p>
                 <p className="text-xs mt-2">Les erreurs d'exécution apparaîtront ici</p>
               </div>

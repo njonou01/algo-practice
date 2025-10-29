@@ -8,6 +8,7 @@
  */
 
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { Zap, BookOpen, BookMarked, GraduationCap, Settings } from "lucide-react";
 
 /**
  * Composant Layout - Structure principale de l'application
@@ -36,8 +37,8 @@ function Layout() {
           <div className="flex items-center justify-between">
             {/* Logo et titre */}
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-linear-to-br from-indigo-500 to-purple-600  flex items-center justify-center shadow-md">
-                <span className="  text-white text-xl font-bold">GN.</span>
+              <div className="w-11 h-11 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+                <Zap className="text-white" size={24} />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">AlgoGénie</h1>
@@ -49,38 +50,62 @@ function Layout() {
             <nav className="flex gap-2">
               <Link
                 to="/"
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all relative ${isActive("/")
+                className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/")
                   ? "bg-indigo-50 text-indigo-700"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
               >
                 <span className="flex items-center gap-2">
-                  <span>⚡</span>
+                  <Zap size={16} />
                   <span>Interpréteur</span>
                 </span>
               </Link>
               <Link
                 to="/examples"
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all relative ${isActive("/examples")
+                className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/examples")
                   ? "bg-indigo-50 text-indigo-700"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
               >
                 <span className="flex items-center gap-2">
-                  <span>📚</span>
+                  <BookOpen size={16} />
                   <span>Exemples</span>
                 </span>
               </Link>
               <Link
                 to="/guide"
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all relative ${isActive("/guide")
+                className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/guide")
                   ? "bg-indigo-50 text-indigo-700"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
               >
                 <span className="flex items-center gap-2">
-                  <span>📖</span>
+                  <BookMarked size={16} />
                   <span>Guide</span>
+                </span>
+              </Link>
+              <Link
+                to="/cours"
+                className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/cours")
+                  ? "bg-indigo-50 text-indigo-700"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  <GraduationCap size={16} />
+                  <span>Cours</span>
+                </span>
+              </Link>
+              <Link
+                to="/settings"
+                className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/settings")
+                  ? "bg-indigo-50 text-indigo-700"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Settings size={16} />
+                  <span>Paramètres</span>
                 </span>
               </Link>
             </nav>

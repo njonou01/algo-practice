@@ -13,6 +13,7 @@ import Editor from 'react-simple-code-editor';
 import SplitPane from '../components/SplitPane';
 import Console from '../components/Console';
 import { useKeyboard } from '../hooks/useKeyboard';
+import { Play, File, FolderOpen, Save, Code, Loader2 } from 'lucide-react';
 
 /**
  * Interface pour le résultat d'exécution d'un algorithme
@@ -45,8 +46,8 @@ function highlightSyntax(code: string) {
   const types = ['Entier', 'Reel', 'Chaine', 'Caractere', 'Booleen', 'Tableau'];
   const values = ['Vrai', 'Faux'];
 
-  // Remplacer <- par ←
-  let highlighted = code.replace(/<-/g, '←');
+  // Remplacer <- par ← et != par ≠
+  let highlighted = code.replace(/<-/g, '←').replace(/!=/g, '≠');
 
   // Découper le code en segments (tokens)
   const tokens: { type: string; value: string }[] = [];
@@ -79,12 +80,34 @@ function highlightSyntax(code: string) {
     // Vérifier les mots-clés, types et valeurs
     for (const keyword of keywords) {
       if (highlighted.substring(currentPos).toLowerCase().startsWith(keyword.toLowerCase())) {
+        const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
         const nextChar = highlighted[currentPos + keyword.length];
-        if (!nextChar || !/[a-zA-Z0-9]/.test(nextChar)) {
-          tokens.push({ type: 'keyword', value: highlighted.substring(currentPos, currentPos + keyword.length) });
-          currentPos += keyword.length;
-          matched = true;
-          break;
+        const isPrevAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(prevChar);
+        const isNextAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(nextChar);
+
+        // Vérifier que ce n'est pas dans un autre mot
+        if (!isPrevAlpha && !isNextAlpha) {
+          // Cas spécial pour "Algorithme" : doit être en début de ligne
+          if (keyword === 'Algorithme') {
+            // Chercher le début de la ligne
+            let lineStart = currentPos;
+            while (lineStart > 0 && highlighted[lineStart - 1] !== '\n') {
+              lineStart--;
+            }
+            // Vérifier qu'il n'y a que des espaces avant "Algorithme"
+            const beforeAlgo = highlighted.substring(lineStart, currentPos).trim();
+            if (beforeAlgo === '') {
+              tokens.push({ type: 'keyword', value: highlighted.substring(currentPos, currentPos + keyword.length) });
+              currentPos += keyword.length;
+              matched = true;
+              break;
+            }
+          } else {
+            tokens.push({ type: 'keyword', value: highlighted.substring(currentPos, currentPos + keyword.length) });
+            currentPos += keyword.length;
+            matched = true;
+            break;
+          }
         }
       }
     }
@@ -92,8 +115,12 @@ function highlightSyntax(code: string) {
 
     for (const type of types) {
       if (highlighted.substring(currentPos).toLowerCase().startsWith(type.toLowerCase())) {
+        const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
         const nextChar = highlighted[currentPos + type.length];
-        if (!nextChar || !/[a-zA-Z0-9]/.test(nextChar)) {
+        const isPrevAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(prevChar);
+        const isNextAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(nextChar);
+
+        if (!isPrevAlpha && !isNextAlpha) {
           tokens.push({ type: 'type', value: highlighted.substring(currentPos, currentPos + type.length) });
           currentPos += type.length;
           matched = true;
@@ -105,8 +132,12 @@ function highlightSyntax(code: string) {
 
     for (const value of values) {
       if (highlighted.substring(currentPos).toLowerCase().startsWith(value.toLowerCase())) {
+        const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
         const nextChar = highlighted[currentPos + value.length];
-        if (!nextChar || !/[a-zA-Z0-9]/.test(nextChar)) {
+        const isPrevAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(prevChar);
+        const isNextAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(nextChar);
+
+        if (!isPrevAlpha && !isNextAlpha) {
           tokens.push({ type: 'boolean', value: highlighted.substring(currentPos, currentPos + value.length) });
           currentPos += value.length;
           matched = true;
@@ -366,17 +397,17 @@ Fin`);
             <button
               onClick={executeAlgorithm}
               disabled={isRunning}
-              className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white disabled:text-gray-500 text-sm font-medium rounded transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white disabled:text-gray-500 text-sm font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
               title="Exécuter (Ctrl+Enter)"
             >
               {isRunning ? (
                 <>
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  <Loader2 className="animate-spin" size={16} />
                   <span>Exécution...</span>
                 </>
               ) : (
                 <>
-                  <span>▶</span>
+                  <Play size={16} />
                   <span>Exécuter</span>
                 </>
               )}
@@ -386,31 +417,35 @@ Fin`);
 
             <button
               onClick={newFile}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
               title="Nouveau (Ctrl+N)"
             >
-              📄 Nouveau
+              <File size={16} />
+              <span>Nouveau</span>
             </button>
 
             <button
               onClick={openFile}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
               title="Ouvrir (Ctrl+O)"
             >
-              📂 Ouvrir
+              <FolderOpen size={16} />
+              <span>Ouvrir</span>
             </button>
 
             <button
               onClick={saveFile}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
               title="Sauvegarder (Ctrl+S)"
             >
-              💾 Sauvegarder
+              <Save size={16} />
+              <span>Sauvegarder</span>
             </button>
           </div>
 
           <div className="text-xs text-gray-500">
-            Tapez <code className="bg-gray-100 px-1 py-0.5 rounded">&lt;-</code> pour <code className="bg-gray-100 px-1 py-0.5 rounded">←</code>
+            Tapez <code className="bg-gray-100 px-1 py-0.5">&lt;-</code> pour <code className="bg-gray-100 px-1 py-0.5">←</code> |
+            <code className="bg-gray-100 px-1 py-0.5 ml-1">!=</code> pour <code className="bg-gray-100 px-1 py-0.5">≠</code>
           </div>
         </div>
       </div>
@@ -421,7 +456,10 @@ Fin`);
           left={
             <div className="h-full flex flex-col bg-gray-50">
               <div className="px-6 py-3 bg-gray-100 border-b border-gray-200">
-                <h2 className="text-sm font-semibold text-gray-900">📝 Éditeur</h2>
+                <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <Code size={16} />
+                  <span>Éditeur</span>
+                </h2>
               </div>
               <div className="flex-1 overflow-auto bg-gray-900">
                 <Editor
