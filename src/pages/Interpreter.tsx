@@ -13,6 +13,7 @@ import Editor from 'react-simple-code-editor';
 import SplitPane from '../components/SplitPane';
 import Console from '../components/Console';
 import { useKeyboard } from '../hooks/useKeyboard';
+import { useSettings } from '../contexts/SettingsContext';
 import { Play, File, FolderOpen, Save, Code, Loader2 } from 'lucide-react';
 
 /**
@@ -29,9 +30,14 @@ interface ExecutionResult {
  * Analyse le code et retourne des éléments JSX colorés selon le type de token
  *
  * @param code - Le code source de l'algorithme à colorer
+ * @param settings - Paramètres de coloration syntaxique
  * @returns Éléments JSX avec coloration syntaxique
  */
-function highlightSyntax(code: string) {
+function highlightSyntax(code: string, settings: any) {
+  // Si la coloration est désactivée, retourner le code tel quel
+  if (!settings.syntaxHighlighting) {
+    return <span>{code}</span>;
+  }
   const keywords = [
     'Algorithme', 'Variables', 'Constantes', 'Debut', 'Fin',
     'Si', 'Alors', 'Sinon', 'FinSi',
@@ -182,14 +188,40 @@ function highlightSyntax(code: string) {
     currentPos++;
   }
 
-  // Convertir les tokens en JSX
+  // Convertir les tokens en JSX avec respect des paramètres et couleurs personnalisées
   return (
     <span>
-      {tokens.map((token, i) => (
-        <span key={i} className={token.type}>
-          {token.value}
-        </span>
-      ))}
+      {tokens.map((token, i) => {
+        // Appliquer les couleurs personnalisées si la coloration est activée pour ce type
+        let style: React.CSSProperties = {};
+
+        if (token.type === 'keyword' && settings.highlightKeywords) {
+          style.color = settings.colorKeywords;
+          style.fontWeight = 'bold';
+        } else if (token.type === 'type' && settings.highlightTypes) {
+          style.color = settings.colorTypes;
+          style.fontWeight = 'bold';
+        } else if (token.type === 'number' && settings.highlightNumbers) {
+          style.color = settings.colorNumbers;
+        } else if (token.type === 'string' && settings.highlightStrings) {
+          style.color = settings.colorStrings;
+        } else if (token.type === 'comment' && settings.highlightComments) {
+          style.color = settings.colorComments;
+          style.fontStyle = 'italic';
+        } else if (token.type === 'boolean' && settings.highlightKeywords) {
+          style.color = settings.colorBooleans;
+          style.fontWeight = 'bold';
+        } else if (token.type === 'arrow') {
+          style.color = settings.colorArrow;
+          style.fontWeight = 'bold';
+        }
+
+        return (
+          <span key={i} style={style}>
+            {token.value}
+          </span>
+        );
+      })}
     </span>
   );
 }
@@ -201,6 +233,9 @@ function highlightSyntax(code: string) {
  * et les opérations de sauvegarde/chargement de fichiers.
  */
 function Interpreter() {
+  // Récupérer les paramètres
+  const { settings } = useSettings();
+
   // État du code de l'algorithme (avec exemple par défaut)
   const [code, setCode] = useState(`Algorithme MonAlgorithme
 Variables x, y : Entier
@@ -467,7 +502,7 @@ Fin`);
                   className="select-none bg-gray-800 text-gray-500 border-r border-gray-700"
                   style={{
                     fontFamily: '"Fira code", "Fira Mono", monospace',
-                    fontSize: 14,
+                    fontSize: settings.fontSize,
                     lineHeight: 1.5,
                     paddingTop: 20,
                     paddingBottom: 20,
@@ -478,7 +513,7 @@ Fin`);
                   }}
                 >
                   {code.split('\n').map((_, index) => (
-                    <div key={index} style={{ height: '21px' }}>
+                    <div key={index} style={{ height: `${settings.fontSize * 1.5}px` }}>
                       {index + 1}
                     </div>
                   ))}
@@ -489,13 +524,13 @@ Fin`);
                   <Editor
                     value={code}
                     onValueChange={code => setCode(code)}
-                    highlight={code => highlightSyntax(code)}
+                    highlight={code => highlightSyntax(code, settings)}
                     padding={20}
-                    tabSize={2}
+                    tabSize={settings.tabSize}
                     insertSpaces={true}
                     style={{
                       fontFamily: '"Fira code", "Fira Mono", monospace',
-                      fontSize: 14,
+                      fontSize: settings.fontSize,
                       lineHeight: 1.5,
                       backgroundColor: '#111827',
                       color: '#e5e7eb',
