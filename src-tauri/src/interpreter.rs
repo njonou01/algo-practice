@@ -99,6 +99,11 @@ impl Value {
 
 }
 
+/// Type de callback pour demander des entrées de manière dynamique
+///
+/// Arguments: (prompt, variables, has_prompt) -> Result<Vec<String>, String>
+type InputCallback = Box<dyn FnMut(&str, &[String], bool) -> Result<Vec<String>, String> + Send>;
+
 /// Interpréteur d'algorithmes
 ///
 /// Maintient l'état d'exécution : variables, tableaux, fonctions, entrées/sorties.
@@ -116,10 +121,14 @@ pub struct Interpreter {
     output: Vec<String>,
     /// Buffer pour la ligne courante (avant \n)
     current_line: String,
-    /// Valeurs d'entrée fournies par l'utilisateur
+    /// Valeurs d'entrée fournies par l'utilisateur (mode synchrone)
     input_values: Vec<String>,
-    /// Index courant dans input_values
+    /// Index courant dans input_values (mode synchrone)
     input_index: usize,
+    /// Callback pour demander des entrées (mode asynchrone)
+    input_callback: Option<InputCallback>,
+    /// Dernière ligne écrite (pour associer aux Lire())
+    last_written_text: String,
     /// Valeur de retour d'une fonction
     return_value: Option<Value>,
     /// Flag indiquant qu'un return a été exécuté
@@ -129,7 +138,7 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    /// Crée un nouvel interpréteur avec les valeurs d'entrée
+    /// Crée un nouvel interpréteur avec les valeurs d'entrée (mode synchrone)
     ///
     /// # Arguments
     ///
@@ -144,6 +153,31 @@ impl Interpreter {
             current_line: String::new(),
             input_values,
             input_index: 0,
+            input_callback: None,
+            last_written_text: String::new(),
+            return_value: None,
+            has_returned: false,
+            current_statement_line: 1,
+        }
+    }
+
+    /// Crée un nouvel interpréteur avec un callback pour les entrées dynamiques (mode asynchrone)
+    ///
+    /// # Arguments
+    ///
+    /// * `callback` - Fonction appelée quand l'interpréteur a besoin d'entrées
+    pub fn new_with_callback(callback: InputCallback) -> Self {
+        Interpreter {
+            struct_defs: HashMap::new(),
+            functions: HashMap::new(),
+            variables: HashMap::new(),
+            array_dimensions: HashMap::new(),
+            output: Vec::new(),
+            current_line: String::new(),
+            input_values: Vec::new(),
+            input_index: 0,
+            input_callback: Some(callback),
+            last_written_text: String::new(),
             return_value: None,
             has_returned: false,
             current_statement_line: 1,
@@ -393,14 +427,41 @@ impl Interpreter {
                 }
             }
             Statement::Read { targets } => {
-                for target in targets {
-                    if self.input_index >= self.input_values.len() {
-                        return Err(self.error("Pas assez de valeurs d'entrée"));
+                // Collecter les noms de variables
+                let var_names: Vec<String> = targets.iter().map(|target| {
+                    match target {
+                        LValue::Variable(name) => name.clone(),
+                        LValue::ArrayElement { name, .. } => format!("{}[...]", name),
+                        LValue::FieldAccess { field, .. } => field.clone(),
                     }
+                }).collect();
 
-                    let input_str = self.input_values[self.input_index].clone();
-                    self.input_index += 1;
+                // Obtenir les valeurs selon le mode (callback ou synchrone)
+                let values = if let Some(callback) = self.input_callback.as_mut() {
+                    // Mode asynchrone : utiliser le callback
+                    let has_prompt = !self.last_written_text.is_empty();
+                    let prompt = self.last_written_text.clone();
 
+                    // Réinitialiser le texte écrit après utilisation
+                    self.last_written_text.clear();
+
+                    // Appeler le callback pour obtenir les valeurs
+                    callback(&prompt, &var_names, has_prompt)?
+                } else {
+                    // Mode synchrone : utiliser les valeurs pré-fournies
+                    let mut result = Vec::new();
+                    for _ in 0..targets.len() {
+                        if self.input_index >= self.input_values.len() {
+                            return Err(self.error("Pas assez de valeurs d'entrée"));
+                        }
+                        result.push(self.input_values[self.input_index].clone());
+                        self.input_index += 1;
+                    }
+                    result
+                };
+
+                // Assigner les valeurs aux variables
+                for (target, input_str) in targets.iter().zip(values.iter()) {
                     // Try to parse as integer first, then float, then treat as string
                     let value = if let Ok(n) = input_str.parse::<i64>() {
                         Value::Entier(n)
@@ -411,7 +472,7 @@ impl Interpreter {
                     } else if input_str.to_lowercase() == "faux" {
                         Value::Booleen(false)
                     } else {
-                        Value::Chaine(input_str)
+                        Value::Chaine(input_str.clone())
                     };
 
                     // Assigner la valeur en utilisant la méthode générique
@@ -426,6 +487,19 @@ impl Interpreter {
                     output_parts.push(value.to_string());
                 }
                 let text = output_parts.join("");
+
+                // Sauvegarder le texte écrit (pour l'associer au Lire suivant)
+                // On ne garde que les parties textuelles (entre guillemets)
+                let mut written_text = String::new();
+                for expr in expressions {
+                    if let Expression::Chaine(s) = expr {
+                        if !written_text.is_empty() {
+                            written_text.push(' ');
+                        }
+                        written_text.push_str(s);
+                    }
+                }
+                self.last_written_text = written_text;
 
                 // Traiter le texte caractère par caractère pour gérer \n
                 for ch in text.chars() {

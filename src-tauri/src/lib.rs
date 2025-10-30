@@ -14,12 +14,15 @@ use lexer::Lexer;
 use parser::Parser;
 use interpreter::Interpreter;
 use serde::{Deserialize, Serialize};
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{channel, Sender, Receiver};
+use tauri::Emitter;
 
 /// Résultat d'exécution d'un algorithme
 ///
 /// Structure renvoyée au frontend TypeScript après l'exécution d'un algorithme.
 /// Contient le statut de succès, les sorties générées et les éventuelles erreurs.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExecutionResult {
     /// Indique si l'exécution s'est terminée avec succès
     success: bool,
@@ -29,7 +32,162 @@ pub struct ExecutionResult {
     error: Option<String>,
 }
 
-/// Commande Tauri pour exécuter un algorithme en français
+/// Requête d'entrée envoyée au frontend
+///
+/// Structure émise via événement quand l'interpréteur a besoin d'une valeur
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InputRequest {
+    /// Texte du dernier Ecrire() avant le Lire(), s'il existe
+    pub prompt: String,
+    /// Noms des variables à lire
+    pub variables: Vec<String>,
+    /// true si un Ecrire() précède le Lire()
+    pub has_prompt: bool,
+}
+
+/// État de l'exécution partagé entre les threads
+type ExecutionState = Arc<Mutex<Option<Sender<Vec<String>>>>>;
+
+/// Gestionnaire d'état pour l'exécution en cours
+#[derive(Clone)]
+struct AppState {
+    /// Channel pour envoyer les valeurs d'entrée à l'interpréteur
+    input_sender: ExecutionState,
+}
+
+/// Commande Tauri pour envoyer des valeurs d'entrée à l'interpréteur en cours d'exécution
+///
+/// Cette fonction est appelée par le frontend quand l'utilisateur a entré des valeurs
+/// dans la modal d'entrée. Elle transmet ces valeurs à l'interpréteur via le channel.
+///
+/// # Arguments
+///
+/// * `values` - Les valeurs entrées par l'utilisateur
+/// * `state` - État de l'application contenant le channel
+///
+/// # Retour
+///
+/// Retourne un Result indiquant si l'envoi a réussi
+#[tauri::command]
+fn send_input_values(values: Vec<String>, state: tauri::State<AppState>) -> Result<(), String> {
+    let sender_lock = state.input_sender.lock().unwrap();
+    if let Some(sender) = sender_lock.as_ref() {
+        sender.send(values).map_err(|e| format!("Erreur lors de l'envoi des valeurs: {}", e))?;
+        Ok(())
+    } else {
+        Err("Aucune exécution en cours".to_string())
+    }
+}
+
+/// Commande Tauri pour exécuter un algorithme de manière asynchrone avec entrées dynamiques
+///
+/// Cette fonction lance l'exécution dans un thread séparé et utilise des événements
+/// pour demander des entrées au frontend pendant l'exécution.
+///
+/// # Arguments
+///
+/// * `code` - Le code source de l'algorithme en français
+/// * `app` - Handle de l'application Tauri pour émettre des événements
+/// * `state` - État de l'application pour gérer le channel
+///
+/// # Retour
+///
+/// Retourne immédiatement, les résultats sont envoyés via événements
+#[tauri::command]
+async fn execute_algorithm_async(
+    code: String,
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    // Créer un channel pour recevoir les valeurs d'entrée
+    let (tx, rx): (Sender<Vec<String>>, Receiver<Vec<String>>) = channel();
+
+    // Stocker le sender dans l'état partagé
+    {
+        let mut sender_lock = state.input_sender.lock().unwrap();
+        *sender_lock = Some(tx);
+    }
+
+    // Lancer l'exécution dans un thread séparé
+    std::thread::spawn(move || {
+        // Cloner app pour l'utiliser à la fois dans le callback et après
+        let app_for_callback = app.clone();
+        let app_for_result = app;
+
+        // Phase 1 : Analyse lexicale (tokenisation)
+        let mut lexer = Lexer::new(code);
+        let tokens = match lexer.tokenize() {
+            Ok(t) => t,
+            Err(e) => {
+                let result = ExecutionResult {
+                    success: false,
+                    output: vec![],
+                    error: Some(format!("Erreur lexicale: {}", e)),
+                };
+                let _ = app_for_result.emit("execution-complete", result);
+                return;
+            }
+        };
+
+        // Phase 2 : Analyse syntaxique (construction de l'AST)
+        let mut parser = Parser::new(tokens);
+        let algorithm = match parser.parse() {
+            Ok(a) => a,
+            Err(e) => {
+                let result = ExecutionResult {
+                    success: false,
+                    output: vec![],
+                    error: Some(format!("Erreur de syntaxe: {}", e)),
+                };
+                let _ = app_for_result.emit("execution-complete", result);
+                return;
+            }
+        };
+
+        // Phase 3 : Interprétation et exécution avec gestion dynamique des entrées
+        let mut interpreter = Interpreter::new_with_callback(Box::new(move |prompt, variables, has_prompt| {
+            // Émettre une requête d'entrée vers le frontend
+            let request = InputRequest {
+                prompt: prompt.to_string(),
+                variables: variables.to_vec(),
+                has_prompt,
+            };
+
+            if app_for_callback.emit("input-request", request).is_err() {
+                return Err("Impossible d'émettre la requête d'entrée".to_string());
+            }
+
+            // Attendre la réponse du frontend
+            match rx.recv() {
+                Ok(values) => Ok(values),
+                Err(_) => Err("Timeout ou canal fermé en attente des valeurs".to_string()),
+            }
+        }));
+
+        match interpreter.run(algorithm) {
+            Ok(output) => {
+                let result = ExecutionResult {
+                    success: true,
+                    output,
+                    error: None,
+                };
+                let _ = app_for_result.emit("execution-complete", result);
+            }
+            Err(e) => {
+                let result = ExecutionResult {
+                    success: false,
+                    output: vec![],
+                    error: Some(format!("Erreur d'exécution: {}", e)),
+                };
+                let _ = app_for_result.emit("execution-complete", result);
+            }
+        }
+    });
+
+    Ok(())
+}
+
+/// Commande Tauri pour exécuter un algorithme en français (version synchrone - pour compatibilité)
 ///
 /// Cette fonction est exposée au frontend via l'API Tauri invoke.
 /// Elle gère l'ensemble du pipeline d'exécution :
@@ -96,14 +254,21 @@ fn execute_algorithm(code: String, input_values: Vec<String>) -> ExecutionResult
 /// - `tauri_plugin_dialog` : Boîtes de dialogue pour sauvegarde/ouverture
 /// - `tauri_plugin_fs` : Accès au système de fichiers
 ///
-/// Enregistre la commande `execute_algorithm` accessible depuis le frontend.
+/// Enregistre les commandes accessibles depuis le frontend.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .invoke_handler(tauri::generate_handler![execute_algorithm])
+        .manage(AppState {
+            input_sender: Arc::new(Mutex::new(None)),
+        })
+        .invoke_handler(tauri::generate_handler![
+            execute_algorithm,
+            execute_algorithm_async,
+            send_input_values
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

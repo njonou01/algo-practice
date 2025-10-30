@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Settings as SettingsIcon, Code2, Palette, Play, CheckCircle, RotateCw, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Settings as SettingsIcon, Code2, Palette, Play, CheckCircle, RotateCw, Info, Save, X } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import type { AppSettings } from '../contexts/SettingsContext';
 
 /**
  * Page Paramètres - Configuration de l'application
@@ -8,22 +9,63 @@ import { useSettings } from '../contexts/SettingsContext';
 
 function Settings() {
   const { settings, updateSetting, resetSettings } = useSettings();
+  const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
   const [saved, setSaved] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Mettre à jour les paramètres locaux quand les paramètres globaux changent
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
+
+  // Détecter les changements
+  useEffect(() => {
+    const changed = JSON.stringify(localSettings) !== JSON.stringify(settings);
+    setHasChanges(changed);
+  }, [localSettings, settings]);
 
   const handleReset = () => {
     resetSettings();
+    setLocalSettings(settings);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleUpdateSetting = <K extends keyof typeof settings>(key: K, value: typeof settings[K]) => {
-    updateSetting(key, value);
+  const handleUpdateLocalSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+    setLocalSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSave = () => {
+    // Sauvegarder tous les paramètres
+    Object.keys(localSettings).forEach(key => {
+      const k = key as keyof AppSettings;
+      updateSetting(k, localSettings[k]);
+    });
     setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
+    setHasChanges(false);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleCancel = () => {
+    setLocalSettings(settings);
+    setHasChanges(false);
   };
 
   return (
-    <div className="h-full bg-gray-50 overflow-y-auto">
+    <div className="h-full bg-gray-50 overflow-y-auto relative">
+      {/* Toast de confirmation */}
+      {saved && (
+        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-green-600 text-white px-6 py-4 shadow-lg flex items-center gap-3 min-w-[300px]">
+            <CheckCircle size={24} className="flex-shrink-0" />
+            <div>
+              <p className="font-semibold">Paramètres enregistrés !</p>
+              <p className="text-sm text-green-100">Vos modifications ont été sauvegardées</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto p-8">
         {/* Header */}
         <div className="mb-8">
@@ -33,14 +75,6 @@ function Settings() {
           </h1>
           <p className="text-gray-600">Personnalisez votre expérience AlgoGénie</p>
         </div>
-
-        {/* Message de sauvegarde */}
-        {saved && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 flex items-center gap-2">
-            <CheckCircle size={16} />
-            <span>Paramètres sauvegardés avec succès !</span>
-          </div>
-        )}
 
         <div className="space-y-6">
           {/* Section Éditeur */}
@@ -61,11 +95,11 @@ function Settings() {
                     type="range"
                     min="10"
                     max="24"
-                    value={settings.fontSize}
-                    onChange={(e) => handleUpdateSetting('fontSize', parseInt(e.target.value))}
+                    value={localSettings.fontSize}
+                    onChange={(e) => handleUpdateLocalSetting('fontSize', parseInt(e.target.value))}
                     className="flex-1"
                   />
-                  <span className="text-gray-700 font-mono w-12 text-right">{settings.fontSize}px</span>
+                  <span className="text-gray-700 font-mono w-12 text-right">{localSettings.fontSize}px</span>
                 </div>
               </div>
 
@@ -75,8 +109,8 @@ function Settings() {
                   Taille de l'indentation (espaces)
                 </label>
                 <select
-                  value={settings.tabSize}
-                  onChange={(e) => handleUpdateSetting('tabSize', parseInt(e.target.value))}
+                  value={localSettings.tabSize}
+                  onChange={(e) => handleUpdateLocalSetting('tabSize', parseInt(e.target.value))}
                   className="w-full border border-gray-300 px-3 py-2"
                 >
                   <option value={2}>2 espaces</option>
@@ -92,14 +126,14 @@ function Settings() {
                   <p className="text-xs text-gray-500">Indenter automatiquement le code</p>
                 </div>
                 <button
-                  onClick={() => handleUpdateSetting('autoIndent', !settings.autoIndent)}
+                  onClick={() => handleUpdateLocalSetting('autoIndent', !localSettings.autoIndent)}
                   className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                    settings.autoIndent ? 'bg-indigo-600' : 'bg-gray-300'
+                    localSettings.autoIndent ? 'bg-indigo-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
                     className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                      settings.autoIndent ? 'translate-x-6' : 'translate-x-1'
+                      localSettings.autoIndent ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
@@ -122,44 +156,44 @@ function Settings() {
                   <p className="text-xs text-gray-500">Colorer automatiquement le code</p>
                 </div>
                 <button
-                  onClick={() => handleUpdateSetting('syntaxHighlighting', !settings.syntaxHighlighting)}
+                  onClick={() => handleUpdateLocalSetting('syntaxHighlighting', !localSettings.syntaxHighlighting)}
                   className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                    settings.syntaxHighlighting ? 'bg-indigo-600' : 'bg-gray-300'
+                    localSettings.syntaxHighlighting ? 'bg-indigo-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
                     className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                      settings.syntaxHighlighting ? 'translate-x-6' : 'translate-x-1'
+                      localSettings.syntaxHighlighting ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
               </div>
 
-              {settings.syntaxHighlighting && (
+              {localSettings.syntaxHighlighting && (
                 <div className="ml-4 space-y-3 border-l-2 border-gray-200 pl-4">
                   {/* Mots-clés */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span style={{ color: settings.colorKeywords }} className="font-semibold">Algorithme</span>
+                      <span style={{ color: localSettings.colorKeywords }} className="font-semibold">Algorithme</span>
                       <span className="text-sm text-gray-600">Mots-clés</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        value={settings.colorKeywords}
-                        onChange={(e) => handleUpdateSetting('colorKeywords', e.target.value)}
+                        value={localSettings.colorKeywords}
+                        onChange={(e) => handleUpdateLocalSetting('colorKeywords', e.target.value)}
                         className="w-10 h-8 border border-gray-300 cursor-pointer"
                         title="Choisir la couleur"
                       />
                       <button
-                        onClick={() => handleUpdateSetting('highlightKeywords', !settings.highlightKeywords)}
+                        onClick={() => handleUpdateLocalSetting('highlightKeywords', !localSettings.highlightKeywords)}
                         className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                          settings.highlightKeywords ? 'bg-indigo-600' : 'bg-gray-300'
+                          localSettings.highlightKeywords ? 'bg-indigo-600' : 'bg-gray-300'
                         }`}
                       >
                         <span
                           className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                            settings.highlightKeywords ? 'translate-x-6' : 'translate-x-1'
+                            localSettings.highlightKeywords ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
                       </button>
@@ -169,26 +203,26 @@ function Settings() {
                   {/* Types */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span style={{ color: settings.colorTypes }} className="font-semibold">Entier</span>
+                      <span style={{ color: localSettings.colorTypes }} className="font-semibold">Entier</span>
                       <span className="text-sm text-gray-600">Types de données</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        value={settings.colorTypes}
-                        onChange={(e) => handleUpdateSetting('colorTypes', e.target.value)}
+                        value={localSettings.colorTypes}
+                        onChange={(e) => handleUpdateLocalSetting('colorTypes', e.target.value)}
                         className="w-10 h-8 border border-gray-300 cursor-pointer"
                         title="Choisir la couleur"
                       />
                       <button
-                        onClick={() => handleUpdateSetting('highlightTypes', !settings.highlightTypes)}
+                        onClick={() => handleUpdateLocalSetting('highlightTypes', !localSettings.highlightTypes)}
                         className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                          settings.highlightTypes ? 'bg-indigo-600' : 'bg-gray-300'
+                          localSettings.highlightTypes ? 'bg-indigo-600' : 'bg-gray-300'
                         }`}
                       >
                         <span
                           className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                            settings.highlightTypes ? 'translate-x-6' : 'translate-x-1'
+                            localSettings.highlightTypes ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
                       </button>
@@ -198,26 +232,26 @@ function Settings() {
                   {/* Nombres */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span style={{ color: settings.colorNumbers }} className="font-semibold">42</span>
+                      <span style={{ color: localSettings.colorNumbers }} className="font-semibold">42</span>
                       <span className="text-sm text-gray-600">Nombres</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        value={settings.colorNumbers}
-                        onChange={(e) => handleUpdateSetting('colorNumbers', e.target.value)}
+                        value={localSettings.colorNumbers}
+                        onChange={(e) => handleUpdateLocalSetting('colorNumbers', e.target.value)}
                         className="w-10 h-8 border border-gray-300 cursor-pointer"
                         title="Choisir la couleur"
                       />
                       <button
-                        onClick={() => handleUpdateSetting('highlightNumbers', !settings.highlightNumbers)}
+                        onClick={() => handleUpdateLocalSetting('highlightNumbers', !localSettings.highlightNumbers)}
                         className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                          settings.highlightNumbers ? 'bg-indigo-600' : 'bg-gray-300'
+                          localSettings.highlightNumbers ? 'bg-indigo-600' : 'bg-gray-300'
                         }`}
                       >
                         <span
                           className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                            settings.highlightNumbers ? 'translate-x-6' : 'translate-x-1'
+                            localSettings.highlightNumbers ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
                       </button>
@@ -227,26 +261,26 @@ function Settings() {
                   {/* Chaînes */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span style={{ color: settings.colorStrings }} className="font-semibold">"texte"</span>
+                      <span style={{ color: localSettings.colorStrings }} className="font-semibold">"texte"</span>
                       <span className="text-sm text-gray-600">Chaînes de caractères</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        value={settings.colorStrings}
-                        onChange={(e) => handleUpdateSetting('colorStrings', e.target.value)}
+                        value={localSettings.colorStrings}
+                        onChange={(e) => handleUpdateLocalSetting('colorStrings', e.target.value)}
                         className="w-10 h-8 border border-gray-300 cursor-pointer"
                         title="Choisir la couleur"
                       />
                       <button
-                        onClick={() => handleUpdateSetting('highlightStrings', !settings.highlightStrings)}
+                        onClick={() => handleUpdateLocalSetting('highlightStrings', !localSettings.highlightStrings)}
                         className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                          settings.highlightStrings ? 'bg-indigo-600' : 'bg-gray-300'
+                          localSettings.highlightStrings ? 'bg-indigo-600' : 'bg-gray-300'
                         }`}
                       >
                         <span
                           className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                            settings.highlightStrings ? 'translate-x-6' : 'translate-x-1'
+                            localSettings.highlightStrings ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
                       </button>
@@ -256,26 +290,26 @@ function Settings() {
                   {/* Commentaires */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span style={{ color: settings.colorComments }} className="font-semibold">// commentaire</span>
+                      <span style={{ color: localSettings.colorComments }} className="font-semibold">// commentaire</span>
                       <span className="text-sm text-gray-600">Commentaires</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        value={settings.colorComments}
-                        onChange={(e) => handleUpdateSetting('colorComments', e.target.value)}
+                        value={localSettings.colorComments}
+                        onChange={(e) => handleUpdateLocalSetting('colorComments', e.target.value)}
                         className="w-10 h-8 border border-gray-300 cursor-pointer"
                         title="Choisir la couleur"
                       />
                       <button
-                        onClick={() => handleUpdateSetting('highlightComments', !settings.highlightComments)}
+                        onClick={() => handleUpdateLocalSetting('highlightComments', !localSettings.highlightComments)}
                         className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                          settings.highlightComments ? 'bg-indigo-600' : 'bg-gray-300'
+                          localSettings.highlightComments ? 'bg-indigo-600' : 'bg-gray-300'
                         }`}
                       >
                         <span
                           className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                            settings.highlightComments ? 'translate-x-6' : 'translate-x-1'
+                            localSettings.highlightComments ? 'translate-x-6' : 'translate-x-1'
                           }`}
                         />
                       </button>
@@ -301,14 +335,14 @@ function Settings() {
                   <p className="text-xs text-gray-500">Sauvegarder automatiquement avant l'exécution</p>
                 </div>
                 <button
-                  onClick={() => handleUpdateSetting('autoSave', !settings.autoSave)}
+                  onClick={() => handleUpdateLocalSetting('autoSave', !localSettings.autoSave)}
                   className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                    settings.autoSave ? 'bg-indigo-600' : 'bg-gray-300'
+                    localSettings.autoSave ? 'bg-indigo-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
                     className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                      settings.autoSave ? 'translate-x-6' : 'translate-x-1'
+                      localSettings.autoSave ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
@@ -321,14 +355,14 @@ function Settings() {
                   <p className="text-xs text-gray-500">Demander confirmation avant de lancer l'algorithme</p>
                 </div>
                 <button
-                  onClick={() => handleUpdateSetting('confirmBeforeRun', !settings.confirmBeforeRun)}
+                  onClick={() => handleUpdateLocalSetting('confirmBeforeRun', !localSettings.confirmBeforeRun)}
                   className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                    settings.confirmBeforeRun ? 'bg-indigo-600' : 'bg-gray-300'
+                    localSettings.confirmBeforeRun ? 'bg-indigo-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
                     className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                      settings.confirmBeforeRun ? 'translate-x-6' : 'translate-x-1'
+                      localSettings.confirmBeforeRun ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
@@ -336,14 +370,58 @@ function Settings() {
             </div>
           </section>
 
-          {/* Bouton de réinitialisation */}
-          <div className="flex justify-center">
+          {/* Boutons d'action */}
+          {hasChanges && (
+            <div className="bg-yellow-50 border border-yellow-200 p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Info size={16} className="text-yellow-900" />
+                <span className="text-sm text-yellow-900 font-medium">Vous avez des modifications non sauvegardées</span>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancel}
+                  className="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium transition-colors flex items-center gap-2"
+                >
+                  <X size={18} />
+                  <span>Annuler</span>
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors flex items-center gap-2"
+                >
+                  <Save size={18} />
+                  <span>Enregistrer</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Boutons de contrôle */}
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={handleCancel}
+              disabled={!hasChanges}
+              className="px-6 py-3 border-2 border-gray-300 hover:border-gray-400 disabled:border-gray-200 text-gray-700 disabled:text-gray-400 font-medium transition-colors flex items-center gap-2 disabled:cursor-not-allowed"
+            >
+              <X size={18} />
+              <span>Annuler</span>
+            </button>
+
+            <button
+              onClick={handleSave}
+              disabled={!hasChanges}
+              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white disabled:text-gray-500 font-medium transition-colors flex items-center gap-2 disabled:cursor-not-allowed"
+            >
+              <Save size={18} />
+              <span>Enregistrer</span>
+            </button>
+
             <button
               onClick={handleReset}
               className="px-6 py-3 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-medium transition-colors flex items-center gap-2"
             >
               <RotateCw size={18} />
-              <span>Réinitialiser les paramètres</span>
+              <span>Réinitialiser</span>
             </button>
           </div>
 
@@ -351,8 +429,7 @@ function Settings() {
           <div className="bg-blue-50 border border-blue-200 p-4 flex items-start gap-2">
             <Info size={16} className="text-blue-900 mt-0.5 flex-shrink-0" />
             <p className="text-sm text-blue-900">
-              <strong>Astuce :</strong> Les paramètres sont sauvegardés automatiquement et localement dans votre navigateur.
-              Ils seront conservés même après la fermeture de l'application.
+              <strong>Astuce :</strong> Modifiez les paramètres puis cliquez sur "Enregistrer" pour appliquer les changements.
             </p>
           </div>
 

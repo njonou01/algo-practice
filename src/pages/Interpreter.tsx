@@ -6,12 +6,14 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { useState, useEffect } from "react";
 import Editor from 'react-simple-code-editor';
 import SplitPane from '../components/SplitPane';
 import Console from '../components/Console';
+import InputModal from '../components/InputModal';
 import { useKeyboard } from '../hooks/useKeyboard';
 import { useSettings } from '../contexts/SettingsContext';
 import { Play, File, FolderOpen, Save, Code, Loader2 } from 'lucide-react';
@@ -23,6 +25,15 @@ interface ExecutionResult {
   success: boolean;      // Indique si l'exécution s'est bien passée
   output: string[];      // Lignes de sortie de l'algorithme
   error: string | null;  // Message d'erreur éventuel
+}
+
+/**
+ * Interface pour une requête d'entrée du backend
+ */
+interface InputRequest {
+  prompt: string;        // Texte du dernier Ecrire()
+  variables: string[];   // Noms des variables à lire
+  has_prompt: boolean;   // true si un Ecrire() précède
 }
 
 /**
@@ -248,49 +259,56 @@ Debut
 Fin`);
 
   // États pour l'exécution
-  const [inputValues, setInputValues] = useState<string[]>(["42"]);  // Valeurs d'entrée
   const [output, setOutput] = useState<string[]>([]);                // Sorties de l'algorithme
   const [error, setError] = useState<string | null>(null);           // Message d'erreur éventuel
   const [isRunning, setIsRunning] = useState(false);                 // Indique si l'exécution est en cours
   const [executionTime, setExecutionTime] = useState<number>();      // Temps d'exécution
 
+  // États pour la modal d'entrée
+  const [currentInputRequest, setCurrentInputRequest] = useState<InputRequest | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   /**
-   * Exécute l'algorithme en appelant le backend Rust via Tauri
-   * Divise les entrées par ligne et envoie le code au backend pour exécution
+   * Démarre l'exécution asynchrone avec gestion dynamique des entrées
    */
   const executeAlgorithm = async () => {
-    setIsRunning(true);
     setOutput([]);
     setError(null);
-
-    const startTime = performance.now();
+    setIsRunning(true);
 
     try {
-      const filteredInputs = inputValues
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
-
-      const result = await invoke<ExecutionResult>("execute_algorithm", {
+      // Lancer l'exécution asynchrone
+      await invoke("execute_algorithm_async", {
         code: code,
-        inputValues: filteredInputs,
       });
-
-      const endTime = performance.now();
-      setExecutionTime((endTime - startTime) / 1000);
-
-      if (result.success) {
-        setOutput(result.output);
-        setError(null);
-      } else {
-        setError(result.error || "Erreur inconnue");
-        setOutput([]);
-      }
     } catch (err) {
-      setError(`Erreur: ${err}`);
-      setOutput([]);
-    } finally {
+      setError(`Erreur lors du lancement: ${err}`);
       setIsRunning(false);
     }
+  };
+
+  /**
+   * Gère la soumission d'une modal d'entrée
+   */
+  const handleModalSubmit = async (values: string[]) => {
+    setIsModalOpen(false);
+
+    try {
+      // Envoyer les valeurs au backend
+      await invoke("send_input_values", { values });
+    } catch (err) {
+      setError(`Erreur lors de l'envoi des valeurs: ${err}`);
+      setIsRunning(false);
+    }
+  };
+
+  /**
+   * Annule l'exécution
+   */
+  const handleModalCancel = () => {
+    setIsModalOpen(false);
+    setIsRunning(false);
+    setError("Exécution annulée par l'utilisateur");
   };
 
   /**
@@ -358,7 +376,6 @@ Variables
 Debut
 
 Fin`);
-    setInputValues([]);
     setOutput([]);
     setError(null);
   };
@@ -381,7 +398,6 @@ Fin`);
       try {
         const example = JSON.parse(loadedExample);
         setCode(example.code);
-        setInputValues(example.input || []);
         setOutput([]);
         setError(null);
         // Nettoyer le localStorage après chargement
@@ -390,6 +406,45 @@ Fin`);
         console.error('Erreur lors du chargement de l\'exemple:', err);
       }
     }
+  }, []);
+
+  /**
+   * Écoute les événements du backend pour les requêtes d'entrée et les résultats
+   */
+  useEffect(() => {
+    let startTime = performance.now();
+
+    // Écouter les requêtes d'entrée
+    const unlistenInputRequest = listen<InputRequest>('input-request', (event) => {
+      console.log('Requête d\'entrée reçue:', event.payload);
+      setCurrentInputRequest(event.payload);
+      setIsModalOpen(true);
+    });
+
+    // Écouter les résultats d'exécution
+    const unlistenExecutionComplete = listen<ExecutionResult>('execution-complete', (event) => {
+      console.log('Exécution terminée:', event.payload);
+      const result = event.payload;
+      const endTime = performance.now();
+      setExecutionTime((endTime - startTime) / 1000);
+
+      if (result.success) {
+        setOutput(result.output);
+        setError(null);
+      } else {
+        setError(result.error || "Erreur inconnue");
+        setOutput([]);
+      }
+
+      setIsRunning(false);
+      startTime = performance.now(); // Réinitialiser pour la prochaine exécution
+    });
+
+    // Nettoyer les listeners au démontage
+    return () => {
+      unlistenInputRequest.then(fn => fn());
+      unlistenExecutionComplete.then(fn => fn());
+    };
   }, []);
 
   /**
@@ -548,8 +603,6 @@ Fin`);
               error={error}
               isRunning={isRunning}
               executionTime={executionTime}
-              inputValues={inputValues}
-              onInputChange={setInputValues}
               onClear={clearConsole}
             />
           }
@@ -557,6 +610,17 @@ Fin`);
           minSize={30}
         />
       </div>
+
+      {/* Modal pour les entrées interactives */}
+      {isModalOpen && currentInputRequest && (
+        <InputModal
+          isOpen={isModalOpen}
+          prompt={currentInputRequest.prompt || "Entrez les valeurs"}
+          variables={currentInputRequest.variables}
+          onSubmit={handleModalSubmit}
+          onCancel={handleModalCancel}
+        />
+      )}
     </div>
   );
 }

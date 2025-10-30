@@ -1,26 +1,23 @@
 /**
- * Composant Console - Interface de sortie et d'entrée
+ * Composant Console - Interface de sortie
  *
  * Console avec tabs pour séparer :
  * - Sortie : Résultats de l'exécution
- * - Entrées : Valeurs à fournir pour Lire()
  * - Erreurs : Messages d'erreur détaillés
  */
 
 import { useState } from 'react';
-import { ArrowUp, ArrowDown, AlertCircle, CheckCircle, Trash2, Plus, Info, Loader2 } from 'lucide-react';
+import { ArrowUp, AlertCircle, CheckCircle, Trash2, Loader2 } from 'lucide-react';
 
 interface ConsoleProps {
   output: string[];
   error: string | null;
   isRunning: boolean;
   executionTime?: number;
-  inputValues: string[];
-  onInputChange: (values: string[]) => void;
   onClear: () => void;
 }
 
-type TabType = 'output' | 'input' | 'errors';
+type TabType = 'output' | 'errors';
 
 /**
  * Composant Console avec interface à onglets
@@ -29,8 +26,6 @@ type TabType = 'output' | 'input' | 'errors';
  * @param error - Message d'erreur éventuel
  * @param isRunning - Indique si l'algorithme est en cours d'exécution
  * @param executionTime - Temps d'exécution en secondes
- * @param inputValues - Valeurs d'entrée pour Lire()
- * @param onInputChange - Callback quand les entrées changent
  * @param onClear - Callback pour effacer la console
  */
 function Console({
@@ -38,35 +33,9 @@ function Console({
   error,
   isRunning,
   executionTime,
-  inputValues,
-  onInputChange,
   onClear,
 }: ConsoleProps) {
   const [activeTab, setActiveTab] = useState<TabType>('output');
-
-  /**
-   * Met à jour une valeur d'entrée
-   */
-  const handleInputChange = (index: number, value: string) => {
-    const newInputs = [...inputValues];
-    newInputs[index] = value;
-    onInputChange(newInputs);
-  };
-
-  /**
-   * Ajoute une nouvelle ligne d'entrée
-   */
-  const handleAddInput = () => {
-    onInputChange([...inputValues, '']);
-  };
-
-  /**
-   * Supprime une ligne d'entrée
-   */
-  const handleRemoveInput = (index: number) => {
-    const newInputs = inputValues.filter((_, i) => i !== index);
-    onInputChange(newInputs);
-  };
 
   return (
     <div className="flex flex-col h-full bg-white border-l border-gray-200">
@@ -89,27 +58,6 @@ function Console({
               {output.length > 0 && (
                 <span className="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700">
                   {output.length}
-                </span>
-              )}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('input')}
-            className={`
-              px-4 py-2 text-sm font-medium transition-colors relative
-              ${activeTab === 'input'
-                ? 'text-indigo-600 bg-white border-b-2 border-indigo-600'
-                : 'text-gray-600 hover:text-gray-900'
-              }
-            `}
-          >
-            <span className="flex items-center gap-2">
-              <ArrowDown size={16} />
-              <span>Entrées</span>
-              {inputValues.length > 0 && (
-                <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700">
-                  {inputValues.length}
                 </span>
               )}
             </span>
@@ -180,53 +128,6 @@ function Console({
               <div className="mt-4 flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 border-l-4 border-green-500">
                 <CheckCircle size={16} />
                 <span className="text-sm font-medium">Exécuté avec succès en {executionTime.toFixed(3)}s</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Onglet Entrées */}
-        {activeTab === 'input' && (
-          <div className="space-y-3">
-            <div className="bg-blue-50 border border-blue-200 px-4 py-3 flex items-start gap-2">
-              <Info size={16} className="text-blue-900 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-blue-900">
-                <strong>Info :</strong> Entrez ici les valeurs que votre algorithme demandera avec <code className="bg-blue-100 px-1 py-0.5">Lire()</code>
-              </p>
-            </div>
-
-            {inputValues.map((value, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 font-medium w-8">#{index + 1}</span>
-                <input
-                  type="text"
-                  value={value}
-                  onChange={(e) => handleInputChange(index, e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
-                  placeholder="Valeur..."
-                />
-                <button
-                  onClick={() => handleRemoveInput(index)}
-                  className="px-3 py-2 text-red-600 hover:bg-red-50 transition-colors"
-                  title="Supprimer"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
-
-            <button
-              onClick={handleAddInput}
-              className="w-full px-4 py-2 border-2 border-dashed border-gray-300 hover:border-indigo-500 text-gray-600 hover:text-indigo-600 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-            >
-              <Plus size={16} />
-              <span>Ajouter une entrée</span>
-            </button>
-
-            {inputValues.length === 0 && (
-              <div className="text-gray-400 text-center py-8">
-                <p className="text-sm">Aucune entrée configurée</p>
-                <p className="text-xs mt-2">Cliquez sur "Ajouter" pour créer des valeurs d'entrée</p>
               </div>
             )}
           </div>
