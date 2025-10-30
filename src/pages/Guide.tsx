@@ -597,10 +597,125 @@ function Guide() {
             </div>
           </section>
 
+          {/* Mots-clés réservés */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
+              12. Mots-clés réservés
+            </h2>
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+              <p className="text-gray-900 font-semibold mb-2">⚠️ Attention !</p>
+              <p className="text-gray-700">
+                Les mots suivants sont <strong>réservés par le langage</strong> et ne peuvent pas être utilisés comme noms de variables.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {/* Structure */}
+              <div className="bg-gray-50 border border-gray-200 p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Structure</h3>
+                <div className="flex flex-wrap gap-2">
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Algorithme</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Variables</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Constantes</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Debut</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Fin</code>
+                </div>
+              </div>
+
+              {/* Conditions */}
+              <div className="bg-gray-50 border border-gray-200 p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Conditions</h3>
+                <div className="flex flex-wrap gap-2">
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Si</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Alors</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Sinon</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">FinSi</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Selon</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Cas</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Defaut</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">FinSelon</code>
+                </div>
+              </div>
+
+              {/* Boucles */}
+              <div className="bg-gray-50 border border-gray-200 p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Boucles</h3>
+                <div className="flex flex-wrap gap-2">
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Pour</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">De</code>
+                  <code className="bg-red-100 text-red-700 px-2 py-1 text-sm font-bold">A</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Faire</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">FinPour</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">TantQue</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">FinTantQue</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Repeter</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Jusqua</code>
+                </div>
+              </div>
+
+              {/* Types */}
+              <div className="bg-gray-50 border border-gray-200 p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Types de données</h3>
+                <div className="flex flex-wrap gap-2">
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Entier</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Reel</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Caractere</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Chaine</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Booleen</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Tableau</code>
+                </div>
+              </div>
+
+              {/* Fonctions */}
+              <div className="bg-gray-50 border border-gray-200 p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Fonctions/Procédures</h3>
+                <div className="flex flex-wrap gap-2">
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Fonction</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Procedure</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Retourner</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Type</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Enregistrement</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">FinEnregistrement</code>
+                </div>
+              </div>
+
+              {/* Opérateurs et I/O */}
+              <div className="bg-gray-50 border border-gray-200 p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Opérateurs & Entrées/Sorties</h3>
+                <div className="flex flex-wrap gap-2">
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Et</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Ou</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Non</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Lire</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Ecrire</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Vrai</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Faux</code>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-red-50 border-l-4 border-red-500 p-4">
+              <p className="text-gray-900 font-semibold mb-2">⚠️ Cas particulier : le mot "A"</p>
+              <p className="text-gray-700 mb-2">
+                Le mot <code className="bg-red-100 text-red-700 px-2 py-1 font-bold">A</code> (ou <code className="bg-red-100 text-red-700 px-2 py-1 font-bold">À</code>)
+                est réservé car utilisé dans les boucles <code className="bg-gray-100 px-2 py-1">Pour</code>.
+              </p>
+              <div className="bg-white border border-red-200 p-3 font-mono text-sm text-gray-700">
+                <span className="text-indigo-600">Pour</span> i <span className="text-indigo-600">De</span> 1 <span className="text-red-600 font-bold">A</span> 10 <span className="text-indigo-600">Faire</span>
+              </div>
+              <p className="text-gray-700 mt-3">
+                <strong>Alternatives :</strong> Utilisez <code className="bg-green-100 text-green-700 px-2 py-1">a1</code>,
+                <code className="bg-green-100 text-green-700 px-2 py-1 ml-1">valA</code>,
+                <code className="bg-green-100 text-green-700 px-2 py-1 ml-1">x</code>,
+                <code className="bg-green-100 text-green-700 px-2 py-1 ml-1">n</code>, etc.
+              </p>
+            </div>
+          </section>
+
           {/* Exemple complet */}
           <section>
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              12. Exemple complet
+              13. Exemple complet
             </h2>
             <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm">
               <div className="text-gray-700">
