@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Code2, Palette, Play, CheckCircle, RotateCw, Info, Save, X } from 'lucide-react';
-import { useSettings } from '../contexts/SettingsContext';
+import { CheckCircle, Code2, Info, Palette, Play, RotateCw, Save, Settings as SettingsIcon, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { AppSettings } from '../contexts/SettingsContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 /**
  * Page Paramètres - Configuration de l'application
@@ -57,7 +57,7 @@ function Settings() {
       {saved && (
         <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
           <div className="bg-green-600 text-white px-6 py-4 shadow-lg flex items-center gap-3 min-w-[300px]">
-            <CheckCircle size={24} className="flex-shrink-0" />
+            <CheckCircle size={24} className="shrink-0" />
             <div>
               <p className="font-semibold">Paramètres enregistrés !</p>
               <p className="text-sm text-green-100">Vos modifications ont été sauvegardées</p>
@@ -127,14 +127,12 @@ function Settings() {
                 </div>
                 <button
                   onClick={() => handleUpdateLocalSetting('autoIndent', !localSettings.autoIndent)}
-                  className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                    localSettings.autoIndent ? 'bg-indigo-600' : 'bg-gray-300'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center transition-colors ${localSettings.autoIndent ? 'bg-indigo-600' : 'bg-gray-300'
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                      localSettings.autoIndent ? 'translate-x-6' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-4 w-4 transform bg-white transition-transform ${localSettings.autoIndent ? 'translate-x-6' : 'translate-x-1'
+                      }`}
                   />
                 </button>
               </div>
@@ -157,14 +155,12 @@ function Settings() {
                 </div>
                 <button
                   onClick={() => handleUpdateLocalSetting('syntaxHighlighting', !localSettings.syntaxHighlighting)}
-                  className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                    localSettings.syntaxHighlighting ? 'bg-indigo-600' : 'bg-gray-300'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center transition-colors ${localSettings.syntaxHighlighting ? 'bg-indigo-600' : 'bg-gray-300'
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                      localSettings.syntaxHighlighting ? 'translate-x-6' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-4 w-4 transform bg-white transition-transform ${localSettings.syntaxHighlighting ? 'translate-x-6' : 'translate-x-1'
+                      }`}
                   />
                 </button>
               </div>
@@ -187,14 +183,12 @@ function Settings() {
                       />
                       <button
                         onClick={() => handleUpdateLocalSetting('highlightKeywords', !localSettings.highlightKeywords)}
-                        className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                          localSettings.highlightKeywords ? 'bg-indigo-600' : 'bg-gray-300'
-                        }`}
+                        className={`relative inline-flex h-6 w-11 items-center transition-colors ${localSettings.highlightKeywords ? 'bg-indigo-600' : 'bg-gray-300'
+                          }`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                            localSettings.highlightKeywords ? 'translate-x-6' : 'translate-x-1'
-                          }`}
+                          className={`inline-block h-4 w-4 transform bg-white transition-transform ${localSettings.highlightKeywords ? 'translate-x-6' : 'translate-x-1'
+                            }`}
                         />
                       </button>
                     </div>
@@ -216,14 +210,12 @@ function Settings() {
                       />
                       <button
                         onClick={() => handleUpdateLocalSetting('highlightTypes', !localSettings.highlightTypes)}
-                        className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                          localSettings.highlightTypes ? 'bg-indigo-600' : 'bg-gray-300'
-                        }`}
+                        className={`relative inline-flex h-6 w-11 items-center transition-colors ${localSettings.highlightTypes ? 'bg-indigo-600' : 'bg-gray-300'
+                          }`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                            localSettings.highlightTypes ? 'translate-x-6' : 'translate-x-1'
-                          }`}
+                          className={`inline-block h-4 w-4 transform bg-white transition-transform ${localSettings.highlightTypes ? 'translate-x-6' : 'translate-x-1'
+                            }`}
                         />
                       </button>
                     </div>
@@ -245,14 +237,12 @@ function Settings() {
                       />
                       <button
                         onClick={() => handleUpdateLocalSetting('highlightNumbers', !localSettings.highlightNumbers)}
-                        className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                          localSettings.highlightNumbers ? 'bg-indigo-600' : 'bg-gray-300'
-                        }`}
+                        className={`relative inline-flex h-6 w-11 items-center transition-colors ${localSettings.highlightNumbers ? 'bg-indigo-600' : 'bg-gray-300'
+                          }`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                            localSettings.highlightNumbers ? 'translate-x-6' : 'translate-x-1'
-                          }`}
+                          className={`inline-block h-4 w-4 transform bg-white transition-transform ${localSettings.highlightNumbers ? 'translate-x-6' : 'translate-x-1'
+                            }`}
                         />
                       </button>
                     </div>
@@ -274,14 +264,12 @@ function Settings() {
                       />
                       <button
                         onClick={() => handleUpdateLocalSetting('highlightStrings', !localSettings.highlightStrings)}
-                        className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                          localSettings.highlightStrings ? 'bg-indigo-600' : 'bg-gray-300'
-                        }`}
+                        className={`relative inline-flex h-6 w-11 items-center transition-colors ${localSettings.highlightStrings ? 'bg-indigo-600' : 'bg-gray-300'
+                          }`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                            localSettings.highlightStrings ? 'translate-x-6' : 'translate-x-1'
-                          }`}
+                          className={`inline-block h-4 w-4 transform bg-white transition-transform ${localSettings.highlightStrings ? 'translate-x-6' : 'translate-x-1'
+                            }`}
                         />
                       </button>
                     </div>
@@ -303,14 +291,12 @@ function Settings() {
                       />
                       <button
                         onClick={() => handleUpdateLocalSetting('highlightComments', !localSettings.highlightComments)}
-                        className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                          localSettings.highlightComments ? 'bg-indigo-600' : 'bg-gray-300'
-                        }`}
+                        className={`relative inline-flex h-6 w-11 items-center transition-colors ${localSettings.highlightComments ? 'bg-indigo-600' : 'bg-gray-300'
+                          }`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                            localSettings.highlightComments ? 'translate-x-6' : 'translate-x-1'
-                          }`}
+                          className={`inline-block h-4 w-4 transform bg-white transition-transform ${localSettings.highlightComments ? 'translate-x-6' : 'translate-x-1'
+                            }`}
                         />
                       </button>
                     </div>
@@ -336,14 +322,12 @@ function Settings() {
                 </div>
                 <button
                   onClick={() => handleUpdateLocalSetting('autoSave', !localSettings.autoSave)}
-                  className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                    localSettings.autoSave ? 'bg-indigo-600' : 'bg-gray-300'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center transition-colors ${localSettings.autoSave ? 'bg-indigo-600' : 'bg-gray-300'
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                      localSettings.autoSave ? 'translate-x-6' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-4 w-4 transform bg-white transition-transform ${localSettings.autoSave ? 'translate-x-6' : 'translate-x-1'
+                      }`}
                   />
                 </button>
               </div>
@@ -356,14 +340,12 @@ function Settings() {
                 </div>
                 <button
                   onClick={() => handleUpdateLocalSetting('confirmBeforeRun', !localSettings.confirmBeforeRun)}
-                  className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                    localSettings.confirmBeforeRun ? 'bg-indigo-600' : 'bg-gray-300'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center transition-colors ${localSettings.confirmBeforeRun ? 'bg-indigo-600' : 'bg-gray-300'
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                      localSettings.confirmBeforeRun ? 'translate-x-6' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-4 w-4 transform bg-white transition-transform ${localSettings.confirmBeforeRun ? 'translate-x-6' : 'translate-x-1'
+                      }`}
                   />
                 </button>
               </div>
@@ -427,7 +409,7 @@ function Settings() {
 
           {/* Info */}
           <div className="bg-blue-50 border border-blue-200 p-4 flex items-start gap-2">
-            <Info size={16} className="text-blue-900 mt-0.5 flex-shrink-0" />
+            <Info size={16} className="text-blue-900 mt-0.5 shrink-0" />
             <p className="text-sm text-blue-900">
               <strong>Astuce :</strong> Modifiez les paramètres puis cliquez sur "Enregistrer" pour appliquer les changements.
             </p>

@@ -6,23 +6,26 @@ import Examples from "./pages/Examples";
 import Cours from "./pages/Cours";
 import Settings from "./pages/Settings";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 import "./App.css";
 
 function App() {
   return (
-    <SettingsProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Interpreter />} />
-            <Route path="examples" element={<Examples />} />
-            <Route path="cours" element={<Cours />} />
-            <Route path="guide" element={<Guide />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </SettingsProvider>
+    <ErrorBoundary>
+      <SettingsProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Interpreter />} />
+              <Route path="examples" element={<Examples />} />
+              <Route path="cours" element={<Cours />} />
+              <Route path="guide" element={<Guide />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </SettingsProvider>
+    </ErrorBoundary>
   );
 }
 

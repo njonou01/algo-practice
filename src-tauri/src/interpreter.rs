@@ -7,6 +7,7 @@
 use crate::parser::{Algorithm, BinaryOperator, Expression, Function, LValue, Statement, StatementWithLine, StructDefinition, Type, UnaryOperator};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::time::{Duration, Instant};
 
 /// Valeur runtime d'une variable ou expression
 ///
@@ -135,6 +136,12 @@ pub struct Interpreter {
     has_returned: bool,
     /// Numéro de ligne de l'instruction courante (pour erreurs d'exécution)
     current_statement_line: usize,
+    /// Temps de démarrage de l'exécution (pour timeout)
+    start_time: Instant,
+    /// Durée maximale d'exécution autorisée
+    max_execution_time: Duration,
+    /// Compteur d'opérations (pour vérifier timeout périodiquement)
+    operation_count: usize,
 }
 
 impl Interpreter {
@@ -158,6 +165,9 @@ impl Interpreter {
             return_value: None,
             has_returned: false,
             current_statement_line: 1,
+            start_time: Instant::now(),
+            max_execution_time: Duration::from_secs(30),
+            operation_count: 0,
         }
     }
 
@@ -181,12 +191,41 @@ impl Interpreter {
             return_value: None,
             has_returned: false,
             current_statement_line: 1,
+            start_time: Instant::now(),
+            max_execution_time: Duration::from_secs(30),
+            operation_count: 0,
         }
     }
 
     /// Formate un message d'erreur avec le numéro de ligne
     fn error(&self, msg: &str) -> String {
         format!("Erreur ligne {}: {}", self.current_statement_line, msg)
+    }
+
+    /// Vérifie si le timeout d'exécution est dépassé
+    ///
+    /// Cette méthode est appelée périodiquement pour éviter les boucles infinies.
+    /// Elle vérifie tous les 1000 opérations si le temps d'exécution maximal est dépassé.
+    ///
+    /// # Retour
+    ///
+    /// * `Ok(())` - Exécution dans les temps
+    /// * `Err(String)` - Timeout dépassé
+    fn check_timeout(&mut self) -> Result<(), String> {
+        self.operation_count += 1;
+
+        // Vérifier le timeout tous les 1000 opérations pour limiter l'overhead
+        if self.operation_count % 1000 == 0 {
+            let elapsed = self.start_time.elapsed();
+            if elapsed > self.max_execution_time {
+                return Err(self.error(&format!(
+                    "Temps d'exécution maximal dépassé ({}s). Boucle infinie possible ?",
+                    self.max_execution_time.as_secs()
+                )));
+            }
+        }
+
+        Ok(())
     }
 
     /// Retourne la valeur par défaut pour un type donné
@@ -395,6 +434,9 @@ impl Interpreter {
     fn execute_statement(&mut self, stmt_with_line: &StatementWithLine) -> Result<(), String> {
         // Mettre à jour le numéro de ligne courant pour les messages d'erreur
         self.current_statement_line = stmt_with_line.line;
+
+        // Vérifier le timeout pour éviter les boucles infinies
+        self.check_timeout()?;
 
         match &stmt_with_line.statement {
             Statement::Assignment { var_name, value } => {

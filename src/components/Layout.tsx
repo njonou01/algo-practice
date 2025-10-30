@@ -7,8 +7,8 @@
  * - Navigation entre les pages Interpréteur et Guide
  */
 
+import { BookMarked, BookOpen, GraduationCap, Settings, Zap } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { Zap, BookOpen, BookMarked, GraduationCap, Settings } from "lucide-react";
 
 /**
  * Composant Layout - Structure principale de l'application
@@ -37,7 +37,7 @@ function Layout() {
           <div className="flex items-center justify-between">
             {/* Logo et titre */}
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+              <div className="w-11 h-11 bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
                 <Zap className="text-white" size={24} />
               </div>
               <div>
