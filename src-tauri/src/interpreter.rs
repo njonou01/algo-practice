@@ -436,10 +436,13 @@ impl Interpreter {
                     }
                 }).collect();
 
+                // Sauvegarder le prompt avant de l'effacer
+                let prompt_for_display = self.last_written_text.clone();
+                let has_prompt = !prompt_for_display.is_empty();
+
                 // Obtenir les valeurs selon le mode (callback ou synchrone)
                 let values = if let Some(callback) = self.input_callback.as_mut() {
                     // Mode asynchrone : utiliser le callback
-                    let has_prompt = !self.last_written_text.is_empty();
                     let prompt = self.last_written_text.clone();
 
                     // Réinitialiser le texte écrit après utilisation
@@ -457,8 +460,31 @@ impl Interpreter {
                         result.push(self.input_values[self.input_index].clone());
                         self.input_index += 1;
                     }
+                    // Réinitialiser le texte écrit
+                    self.last_written_text.clear();
                     result
                 };
+
+                // Afficher dans la sortie ce qui a été entré
+                for (i, input_str) in values.iter().enumerate() {
+                    if has_prompt && i == 0 {
+                        // Premier champ avec prompt : ajouter la valeur à la ligne courante
+                        self.current_line.push_str(input_str);
+                        // Flush la ligne
+                        self.output.push(self.current_line.clone());
+                        self.current_line.clear();
+                    } else if has_prompt {
+                        // Autres champs avec prompt : nouvelle ligne avec juste la valeur
+                        self.output.push(input_str.clone());
+                    } else {
+                        // Pas de prompt : afficher "nom_variable: valeur"
+                        if !self.current_line.is_empty() {
+                            self.output.push(self.current_line.clone());
+                            self.current_line.clear();
+                        }
+                        self.output.push(format!("{}: {}", var_names[i], input_str));
+                    }
+                }
 
                 // Assigner les valeurs aux variables
                 for (target, input_str) in targets.iter().zip(values.iter()) {
@@ -488,18 +514,10 @@ impl Interpreter {
                 }
                 let text = output_parts.join("");
 
-                // Sauvegarder le texte écrit (pour l'associer au Lire suivant)
-                // On ne garde que les parties textuelles (entre guillemets)
-                let mut written_text = String::new();
-                for expr in expressions {
-                    if let Expression::Chaine(s) = expr {
-                        if !written_text.is_empty() {
-                            written_text.push(' ');
-                        }
-                        written_text.push_str(s);
-                    }
-                }
-                self.last_written_text = written_text;
+                // Sauvegarder le texte écrit complet (pour l'associer au Lire suivant)
+                // Enlever les \n pour avoir un prompt propre
+                let clean_text = text.replace("\\n", "").replace('\n', "");
+                self.last_written_text = clean_text.trim().to_string();
 
                 // Traiter le texte caractère par caractère pour gérer \n
                 for ch in text.chars() {
