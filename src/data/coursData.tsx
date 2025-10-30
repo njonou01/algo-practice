@@ -293,13 +293,13 @@ Fin`,
     ),
     example: {
       code: `Algorithme Addition
-Variables a, b, somme : Entier
+Variables num1, num2, somme : Entier
 
 Debut
-  a ← 15
-  b ← 27
-  somme ← a + b
-  Ecrire("La somme de ", a, " et ", b, " est ", somme, "\\n")
+  num1 ← 15
+  num2 ← 27
+  somme ← num1 + num2
+  Ecrire("La somme de ", num1, " et ", num2, " est ", somme, "\\n")
 Fin`,
       input: [],
     },
@@ -340,14 +340,14 @@ Fin`,
     ),
     example: {
       code: `Algorithme Multiplication
-Variables a, b, produit : Entier
+Variables num1, num2, produit : Entier
 
 Debut
   Ecrire("Premier nombre:\\n")
-  Lire(a)
+  Lire(num1)
   Ecrire("Deuxième nombre:\\n")
-  Lire(b)
-  produit ← a * b
+  Lire(num2)
+  produit ← num1 * num2
   Ecrire("Produit: ", produit, "\\n")
 Fin`,
       input: ["6", "7"],
@@ -470,18 +470,18 @@ Fin`,
     ),
     example: {
       code: `Algorithme EchangeVariables
-Variables a, b, temp : Entier
+Variables val1, val2, temp : Entier
 
 Debut
-  a ← 5
-  b ← 10
-  Ecrire("Avant: a=", a, " b=", b, "\\n")
+  val1 ← 5
+  val2 ← 10
+  Ecrire("Avant: val1=", val1, " val2=", val2, "\\n")
 
-  temp ← a
-  a ← b
-  b ← temp
+  temp ← val1
+  val1 ← val2
+  val2 ← temp
 
-  Ecrire("Après: a=", a, " b=", b, "\\n")
+  Ecrire("Après: val1=", val1, " val2=", val2, "\\n")
 Fin`,
       input: [],
     },

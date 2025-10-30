@@ -56,18 +56,18 @@ Fin`,
     difficulty: 'beginner',
     category: 'Conditions',
     code: `Algorithme Maximum
-Variables a, b : Entier
+Variables num1, num2 : Entier
 
 Debut
   Ecrire("Premier nombre:\\n")
-  Lire(a)
+  Lire(num1)
   Ecrire("Deuxième nombre:\\n")
-  Lire(b)
+  Lire(num2)
 
-  Si a > b Alors
-    Ecrire("Le maximum est: ", a, "\\n")
+  Si num1 > num2 Alors
+    Ecrire("Le maximum est: ", num1, "\\n")
   Sinon
-    Ecrire("Le maximum est: ", b, "\\n")
+    Ecrire("Le maximum est: ", num2, "\\n")
   FinSi
 Fin`,
     input: ['15', '23']
@@ -79,15 +79,15 @@ Fin`,
     difficulty: 'beginner',
     category: 'Calculs',
     code: `Algorithme Somme
-Variables a, b, resultat : Entier
+Variables num1, num2, resultat : Entier
 
 Debut
   Ecrire("Premier nombre:\\n")
-  Lire(a)
+  Lire(num1)
   Ecrire("Deuxième nombre:\\n")
-  Lire(b)
-  resultat <- a + b
-  Ecrire(a, " + ", b, " = ", resultat, "\\n")
+  Lire(num2)
+  resultat <- num1 + num2
+  Ecrire(num1, " + ", num2, " = ", resultat, "\\n")
 Fin`,
     input: ['10', '25']
   },
@@ -120,21 +120,21 @@ Fin`,
     difficulty: 'intermediate',
     category: 'Boucles',
     code: `Algorithme Fibonacci
-Variables n, i, a, b, temp : Entier
+Variables n, i, fib1, fib2, temp : Entier
 
 Debut
   Ecrire("Combien de termes?\\n")
   Lire(n)
-  a <- 0
-  b <- 1
+  fib1 <- 0
+  fib2 <- 1
   Ecrire("Suite de Fibonacci:\\n")
-  Ecrire(a, "\\n")
-  Ecrire(b, "\\n")
+  Ecrire(fib1, "\\n")
+  Ecrire(fib2, "\\n")
   Pour i De 3 A n Faire
-    temp <- a + b
+    temp <- fib1 + fib2
     Ecrire(temp, "\\n")
-    a <- b
-    b <- temp
+    fib1 <- fib2
+    fib2 <- temp
   FinPour
 Fin`,
     input: ['8']
