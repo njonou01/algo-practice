@@ -89,7 +89,7 @@ function SplitPane({ left, right, defaultSplit = 50, minSize = 20 }: SplitPanePr
         onMouseDown={handleMouseDown}
         className={`
           w-1 bg-gray-300 cursor-col-resize hover:bg-indigo-500
-          transition-colors flex-shrink-0
+          transition-colors shrink-0
           ${isDragging ? 'bg-indigo-500' : ''}
         `}
         title="Glisser pour redimensionner"

@@ -9,14 +9,14 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-import { useState, useEffect } from "react";
+import { Code, File, FolderOpen, Loader2, Play, Save } from 'lucide-react';
+import { useEffect, useState } from "react";
 import Editor from 'react-simple-code-editor';
-import SplitPane from '../components/SplitPane';
 import Console from '../components/Console';
 import InputModal from '../components/InputModal';
-import { useKeyboard } from '../hooks/useKeyboard';
+import SplitPane from '../components/SplitPane';
 import { useSettings } from '../contexts/SettingsContext';
-import { Play, File, FolderOpen, Save, Code, Loader2 } from 'lucide-react';
+import { useKeyboard } from '../hooks/useKeyboard';
 
 /**
  * Interface pour le résultat d'exécution d'un algorithme
@@ -98,7 +98,7 @@ function highlightSyntax(code: string, settings: any) {
     for (const keyword of keywords) {
       if (highlighted.substring(currentPos).toLowerCase().startsWith(keyword.toLowerCase())) {
         const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
-        const nextChar = highlighted[currentPos + keyword.length];
+        const nextChar = highlighted[currentPos + keyword.length] ?? '';
         const isPrevAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(prevChar);
         const isNextAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(nextChar);
 
@@ -133,7 +133,7 @@ function highlightSyntax(code: string, settings: any) {
     for (const type of types) {
       if (highlighted.substring(currentPos).toLowerCase().startsWith(type.toLowerCase())) {
         const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
-        const nextChar = highlighted[currentPos + type.length];
+        const nextChar = highlighted[currentPos + type.length] ?? '';
         const isPrevAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(prevChar);
         const isNextAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(nextChar);
 
@@ -150,7 +150,7 @@ function highlightSyntax(code: string, settings: any) {
     for (const value of values) {
       if (highlighted.substring(currentPos).toLowerCase().startsWith(value.toLowerCase())) {
         const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
-        const nextChar = highlighted[currentPos + value.length];
+        const nextChar = highlighted[currentPos + value.length] ?? '';
         const isPrevAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(prevChar);
         const isNextAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(nextChar);
 
@@ -243,7 +243,7 @@ function highlightSyntax(code: string, settings: any) {
  * Gère l'éditeur de code, l'exécution des algorithmes, les entrées/sorties,
  * et les opérations de sauvegarde/chargement de fichiers.
  */
-function Interpreter() {
+function CodeEditor() {
   // Récupérer les paramètres
   const { settings } = useSettings();
 
@@ -556,7 +556,6 @@ Fin`);
                 <div
                   className="select-none bg-gray-800 text-gray-500 border-r border-gray-700"
                   style={{
-                    fontFamily: '"Fira code", "Fira Mono", monospace',
                     fontSize: settings.fontSize,
                     lineHeight: 1.5,
                     paddingTop: 20,
@@ -625,4 +624,4 @@ Fin`);
   );
 }
 
-export default Interpreter;
+export default CodeEditor;

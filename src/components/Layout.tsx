@@ -37,8 +37,8 @@ function Layout() {
           <div className="flex items-center justify-between">
             {/* Logo et titre */}
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
-                <Zap className="text-white" size={24} />
+              <div className="w-11 h-11 bg-linear-to-br from-indigo-500 to-purple-600 font-black text-white flex items-center justify-center shadow-md">
+                AG.
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">AlgoGénie</h1>
