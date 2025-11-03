@@ -249,14 +249,71 @@ function CodeEditor() {
   const { settings } = useSettings();
 
   // État du code de l'algorithme (avec exemple par défaut)
-  const [code, setCode] = useState(`Algorithme MonAlgorithme
-Variables x, y : Entier
+  const [code, setCode] = useState(`Algorithme DemonstrationAlgoGenie
+Enregistrement Point
+  x : Reel
+  y : Reel
+FinEnregistrement
+
+Fonction CalculerDistance(p1 : Point, p2 : Point) : Reel
+Debut
+  Retourner (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y)
+Fin
+
+Procedure AfficherPoint(p : Point, nom : Chaine)
+Debut
+  Ecrire(nom, " = (", p.x, ", ", p.y, ")\\n")
+Fin
+
+Constantes
+  PI <- 3.14159
+  MAX <- 10
+
+Variables
+  rayon, surface : Reel
+  i, somme : Entier
+  p1, p2 : Point
+  distance : Reel
 
 Debut
-  Ecrire("Entrez un nombre:\\n")
-  Lire(x)
-  y <- x * 2
-  Ecrire("Le double de ", x, " est ", y, "\\n")
+  Ecrire("=== Bienvenue dans AlgoGénie ! ===\\n\\n")
+
+  // Démonstration des constantes
+  Ecrire("Constante PI = ", PI, "\\n")
+
+  // Calcul de surface avec entrée utilisateur
+  Ecrire("\\nEntrez le rayon du cercle:\\n")
+  Lire(rayon)
+
+  Si rayon > 0 Alors
+    surface <- PI * rayon * rayon
+    Ecrire("Surface du cercle: ", surface, "\\n")
+  Sinon
+    Ecrire("Rayon invalide!\\n")
+  FinSi
+
+  // Démonstration de boucle et calcul
+  Ecrire("\\nSomme des nombres de 1 à ", MAX, ":\\n")
+  somme <- 0
+  Pour i De 1 A MAX Faire
+    somme <- somme + i
+  FinPour
+  Ecrire("Résultat: ", somme, "\\n")
+
+  // Démonstration Structure, Fonction et Procédure
+  Ecrire("\\nDémonstration avec Points:\\n")
+  p1.x <- 0.0
+  p1.y <- 0.0
+  p2.x <- 3.0
+  p2.y <- 4.0
+
+  AfficherPoint(p1, "Point 1")
+  AfficherPoint(p2, "Point 2")
+
+  distance <- CalculerDistance(p1, p2)
+  Ecrire("Distance² entre les points: ", distance, "\\n")
+
+  Ecrire("\\nEssayez le bouton Formater!\\n")
 Fin`);
 
   // États pour l'exécution
@@ -372,9 +429,14 @@ Fin`);
    */
   const newFile = () => {
     setCode(`Algorithme NouvelAlgorithme
+Constantes
+  // Ajoutez vos constantes ici (ex: PI <- 3.14159)
+
 Variables
+  // Ajoutez vos variables ici (ex: x, y : Entier)
 
 Debut
+  // Votre code ici
 
 Fin`);
     setOutput([]);
@@ -572,47 +634,48 @@ Fin`);
                   <span>Éditeur</span>
                 </h2>
               </div>
-              <div className="flex-1 overflow-auto bg-gray-900 flex">
-                {/* Numéros de ligne */}
-                <div
-                  className="select-none bg-gray-800 text-gray-500 border-r border-gray-700"
-                  style={{
-                    fontSize: settings.fontSize,
-                    lineHeight: 1.5,
-                    paddingTop: 20,
-                    paddingBottom: 20,
-                    paddingLeft: 10,
-                    paddingRight: 10,
-                    textAlign: 'right',
-                    minWidth: '50px'
-                  }}
-                >
-                  {code.split('\n').map((_, index) => (
-                    <div key={index} style={{ height: `${settings.fontSize * 1.5}px` }}>
-                      {index + 1}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Éditeur de code */}
-                <div className="flex-1">
-                  <Editor
-                    value={code}
-                    onValueChange={code => setCode(code)}
-                    highlight={code => highlightSyntax(code, settings)}
-                    padding={20}
-                    tabSize={settings.tabSize}
-                    insertSpaces={true}
+              <div className="flex-1 bg-gray-900 flex overflow-hidden">
+                <div className="flex-1 overflow-auto flex">
+                  {/* Numéros de ligne */}
+                  <div
+                    className="select-none bg-gray-800 text-gray-500 border-r border-gray-700"
                     style={{
-                      fontFamily: '"Fira code", "Fira Mono", monospace',
                       fontSize: settings.fontSize,
                       lineHeight: 1.5,
-                      backgroundColor: '#111827',
-                      color: '#e5e7eb',
-                      minHeight: '100%',
-                      caretColor: 'white'
+                      paddingTop: 20,
+                      paddingBottom: 20,
+                      paddingLeft: 10,
+                      paddingRight: 10,
+                      textAlign: 'right',
+                      minWidth: '50px'
                     }}
-                  />
+                  >
+                    {code.split('\n').map((_, index) => (
+                      <div key={index} style={{ height: `${settings.fontSize * 1.5}px` }}>
+                        {index + 1}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Éditeur de code */}
+                  <div className="flex-1">
+                    <Editor
+                      value={code}
+                      onValueChange={code => setCode(code)}
+                      highlight={code => highlightSyntax(code, settings)}
+                      padding={20}
+                      tabSize={settings.tabSize}
+                      insertSpaces={true}
+                      style={{
+                        fontFamily: '"Fira code", "Fira Mono", monospace',
+                        fontSize: settings.fontSize,
+                        lineHeight: 1.5,
+                        backgroundColor: '#111827',
+                        color: '#e5e7eb',
+                        caretColor: 'white'
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
