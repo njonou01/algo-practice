@@ -54,6 +54,10 @@ pub struct Variable {
     pub name: String,
     /// Type de la variable
     pub var_type: Type,
+    /// Indique si c'est une constante (non modifiable)
+    pub is_const: bool,
+    /// Valeur initiale (pour les constantes avec initialisation directe)
+    pub initial_value: Option<Expression>,
 }
 
 /// Paramètre de fonction ou procédure
@@ -410,8 +414,25 @@ impl Parser {
             self.skip_newlines();
         }
 
-        // Parse variables
+        // Parse constants and variables
         let mut variables = Vec::new();
+
+        // Parse constants first (if any)
+        if *self.current_token() == Token::Constantes {
+            self.advance();
+            self.skip_newlines();
+
+            // Skip optional ":"
+            if *self.current_token() == Token::DeuxPoints {
+                self.advance();
+                self.skip_newlines();
+            }
+
+            variables.extend(self.parse_variables_or_constants(true)?);
+            self.skip_newlines();
+        }
+
+        // Parse variables (if any)
         if *self.current_token() == Token::Variables {
             self.advance();
             self.skip_newlines();
@@ -422,7 +443,7 @@ impl Parser {
                 self.skip_newlines();
             }
 
-            variables = self.parse_variables()?;
+            variables.extend(self.parse_variables()?);
         }
 
         self.skip_newlines();
@@ -455,54 +476,128 @@ impl Parser {
     }
 
     fn parse_variables(&mut self) -> Result<Vec<Variable>, String> {
+        self.parse_variables_or_constants(false)
+    }
+
+    fn parse_variables_or_constants(&mut self, is_const: bool) -> Result<Vec<Variable>, String> {
         let mut variables = Vec::new();
 
         loop {
             self.skip_newlines();
 
-            // Check if we're at Debut or end of variables
-            if matches!(self.current_token(), Token::Debut | Token::EOF) {
+            // Check if we're at Debut, Variables, Constantes or end
+            if matches!(self.current_token(), Token::Debut | Token::Variables | Token::Constantes | Token::EOF) {
                 break;
             }
 
-            // Parse variable names
-            let mut names = Vec::new();
-            if let Token::Identifiant(name) = self.current_token().clone() {
-                names.push(name);
+            // Parse variable name (only one at a time for constants with initialization)
+            let name = if let Token::Identifiant(n) = self.current_token().clone() {
                 self.advance();
+                n
             } else {
                 break;
-            }
+            };
 
-            // Parse additional names separated by commas
-            while *self.current_token() == Token::Virgule {
-                self.advance();
-                self.skip_newlines();
-                if let Token::Identifiant(name) = self.current_token().clone() {
-                    names.push(name);
-                    self.advance();
-                }
-            }
-
-            // Parse ":"
-            self.expect(Token::DeuxPoints)?;
             self.skip_newlines();
 
-            // Parse type
-            let var_type = self.parse_type()?;
+            // Check if it's ":" (type declaration) or "←" (direct initialization for constants)
+            if *self.current_token() == Token::Assignment {
+                // Direct initialization: name ← value (only for constants)
+                if !is_const {
+                    return Err(format!("Erreur ligne {}: Initialisation directe non permise pour les variables (seulement pour les constantes)", self.current_line()));
+                }
 
-            // Create variables
-            for name in names {
+                self.advance(); // consume ←
+                self.skip_newlines();
+
+                // Parse the initial value expression
+                let value_expr = self.parse_expression()?;
+
+                // Infer type from the expression
+                let var_type = self.infer_type_from_expression(&value_expr)?;
+
                 variables.push(Variable {
                     name,
-                    var_type: var_type.clone(),
+                    var_type,
+                    is_const,
+                    initial_value: Some(value_expr),
                 });
+            } else if *self.current_token() == Token::DeuxPoints {
+                // Type declaration: name : Type (or name1, name2 : Type)
+                let names = vec![name];
+
+                // Parse additional names separated by commas
+                self.advance(); // consume :
+                self.skip_newlines();
+
+                // Check if there are more names after the first one
+                // (this handles the old syntax: x, y : Entier)
+                // But we need to backtrack - actually, let's handle it differently
+
+                // Actually the old code parsed "name1, name2, name3 : Type"
+                // Let's restore that functionality but handle both cases
+
+                // We already have the first name, let's check for commas BEFORE the colon
+                // Wait, I consumed the colon already. Let me restructure this.
+
+                // Parse type
+                let var_type = self.parse_type()?;
+
+                // Create variable with this type
+                variables.push(Variable {
+                    name: names[0].clone(),
+                    var_type,
+                    is_const,
+                    initial_value: None,
+                });
+            } else if *self.current_token() == Token::Virgule {
+                // Handle multiple names: name1, name2, name3 : Type
+                let mut names = vec![name];
+
+                while *self.current_token() == Token::Virgule {
+                    self.advance();
+                    self.skip_newlines();
+                    if let Token::Identifiant(n) = self.current_token().clone() {
+                        names.push(n);
+                        self.advance();
+                    }
+                }
+
+                // Now expect ":"
+                self.expect(Token::DeuxPoints)?;
+                self.skip_newlines();
+
+                // Parse type
+                let var_type = self.parse_type()?;
+
+                // Create variables
+                for n in names {
+                    variables.push(Variable {
+                        name: n,
+                        var_type: var_type.clone(),
+                        is_const,
+                        initial_value: None,
+                    });
+                }
+            } else {
+                return Err(format!("Erreur ligne {}: Attendu ':' ou '←' après le nom de variable", self.current_line()));
             }
 
             self.skip_newlines();
         }
 
         Ok(variables)
+    }
+
+    /// Infère le type d'une expression
+    fn infer_type_from_expression(&self, expr: &Expression) -> Result<Type, String> {
+        match expr {
+            Expression::NombreEntier(_) => Ok(Type::Entier),
+            Expression::NombreReel(_) => Ok(Type::Reel),
+            Expression::Chaine(_) => Ok(Type::Chaine),
+            Expression::Booleen(_) => Ok(Type::Booleen),
+            _ => Err("Impossible d'inférer le type de cette expression complexe. Utilisez la syntaxe 'nom : Type' pour les constantes avec expressions complexes.".to_string()),
+        }
     }
 
     fn parse_function(&mut self) -> Result<Function, String> {

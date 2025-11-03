@@ -6,7 +6,7 @@
 
 use crate::parser::{Algorithm, BinaryOperator, Expression, Function, LValue, Statement, StatementWithLine, StructDefinition, Type, UnaryOperator};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
 
 /// Valeur runtime d'une variable ou expression
@@ -116,6 +116,8 @@ pub struct Interpreter {
     functions: HashMap<String, Function>,
     /// Variables globales et locales courantes
     variables: HashMap<String, Value>,
+    /// Noms des constantes (non modifiables)
+    constants: HashSet<String>,
     /// Dimensions des tableaux (pour calcul d'index 2D)
     array_dimensions: HashMap<String, Vec<usize>>,
     /// Lignes de sortie complètes
@@ -155,6 +157,7 @@ impl Interpreter {
             struct_defs: HashMap::new(),
             functions: HashMap::new(),
             variables: HashMap::new(),
+            constants: HashSet::new(),
             array_dimensions: HashMap::new(),
             output: Vec::new(),
             current_line: String::new(),
@@ -181,6 +184,7 @@ impl Interpreter {
             struct_defs: HashMap::new(),
             functions: HashMap::new(),
             variables: HashMap::new(),
+            constants: HashSet::new(),
             array_dimensions: HashMap::new(),
             output: Vec::new(),
             current_line: String::new(),
@@ -300,10 +304,22 @@ impl Interpreter {
             self.functions.insert(func.name.clone(), func.clone());
         }
 
-        // Initialiser les variables globales avec leurs valeurs par défaut
+        // Initialiser les variables globales avec leurs valeurs par défaut ou initiales
         for var in &algorithm.variables {
-            let default_value = self.get_default_value_for_type(&var.var_type)?;
-            self.variables.insert(var.name.clone(), default_value);
+            // Si la variable a une valeur initiale (constante avec initialisation directe),
+            // évaluer l'expression. Sinon, utiliser la valeur par défaut du type.
+            let value = if let Some(ref init_expr) = var.initial_value {
+                self.evaluate_expression(init_expr)?
+            } else {
+                self.get_default_value_for_type(&var.var_type)?
+            };
+
+            self.variables.insert(var.name.clone(), value);
+
+            // Marquer les constantes
+            if var.is_const {
+                self.constants.insert(var.name.clone());
+            }
 
             // Stocker les dimensions pour les tableaux (utile pour indexation 2D)
             if let Type::Tableau(_, dimensions) = &var.var_type {
@@ -338,6 +354,10 @@ impl Interpreter {
     fn assign_to_lvalue(&mut self, lvalue: &LValue, value: Value) -> Result<(), String> {
         match lvalue {
             LValue::Variable(var_name) => {
+                // Vérifier si c'est une constante
+                if self.constants.contains(var_name) {
+                    return Err(self.error(&format!("Impossible de modifier la constante '{}'", var_name)));
+                }
                 self.variables.insert(var_name.clone(), value);
                 Ok(())
             }
