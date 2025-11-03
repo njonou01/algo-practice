@@ -9,7 +9,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-import { Code, File, FolderOpen, Loader2, Play, Save } from 'lucide-react';
+import { Code, File, FolderOpen, Loader2, Play, Save, Wand2 } from 'lucide-react';
 import { useEffect, useState } from "react";
 import Editor from 'react-simple-code-editor';
 import Console from '../components/Console';
@@ -17,6 +17,7 @@ import InputModal from '../components/InputModal';
 import SplitPane from '../components/SplitPane';
 import { useSettings } from '../contexts/SettingsContext';
 import { useKeyboard } from '../hooks/useKeyboard';
+import { formatCode } from '../utils/codeFormatter';
 
 /**
  * Interface pour le résultat d'exécution d'un algorithme
@@ -389,6 +390,14 @@ Fin`);
   };
 
   /**
+   * Formate le code automatiquement
+   */
+  const handleFormat = () => {
+    const formatted = formatCode(code, settings.tabSize);
+    setCode(formatted);
+  };
+
+  /**
    * Charge un exemple depuis localStorage si disponible
    * (utilisé quand l'utilisateur clique sur "Utiliser cet exemple" depuis la page Exemples)
    */
@@ -531,7 +540,19 @@ Fin`);
               <Save size={16} />
               <span>Sauvegarder</span>
             </button>
+
+            <div className="h-6 w-px bg-gray-300"></div>
+
+            <button
+              onClick={handleFormat}
+              className="px-4 py-2 text-sm text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 transition-colors flex items-center gap-2"
+              title="Formater le code"
+            >
+              <Wand2 size={16} />
+              <span>Formater</span>
+            </button>
           </div>
+          
 
           <div className="text-xs text-gray-500">
             Tapez <code className="bg-gray-100 px-1 py-0.5">&lt;-</code> pour <code className="bg-gray-100 px-1 py-0.5">←</code> |
