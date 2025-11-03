@@ -89,10 +89,92 @@ function Guide() {
             </p>
           </section>
 
+          {/* Constantes */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
+              4. Constantes
+            </h2>
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+              <p className="text-gray-900">
+                Les <strong>constantes</strong> sont des valeurs qui ne peuvent pas être modifiées après leur initialisation.
+              </p>
+            </div>
+
+            <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+              <p className="text-gray-900 font-semibold mb-2">✨ Nouvelle syntaxe simplifiée !</p>
+              <p className="text-gray-700">
+                Vous pouvez maintenant <strong>initialiser directement</strong> les constantes avec <strong>inférence de type automatique</strong> !
+              </p>
+            </div>
+
+            <h3 className="font-semibold text-gray-900 mb-2">Syntaxe recommandée (avec initialisation directe)</h3>
+            <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-4">
+              <div className="text-gray-700">
+                <div><span className="text-indigo-600 font-semibold">Algorithme</span> ExempleConstantes</div>
+                <div><span className="text-indigo-600 font-semibold">Constantes</span></div>
+                <div className="ml-4">PI <span className="text-pink-600">←</span> 3.14159 <span className="text-gray-500">// Type Reel inféré</span></div>
+                <div className="ml-4">MAX_VALUE <span className="text-pink-600">←</span> 100 <span className="text-gray-500">// Type Entier inféré</span></div>
+                <div className="ml-4">APP_NAME <span className="text-pink-600">←</span> "AlgoGénie" <span className="text-gray-500">// Type Chaine inféré</span></div>
+                <div className="ml-4">EST_ACTIF <span className="text-pink-600">←</span> Vrai <span className="text-gray-500">// Type Booleen inféré</span></div>
+                <div className="mt-2"><span className="text-indigo-600 font-semibold">Variables</span></div>
+                <div className="ml-4">rayon, surface : Reel</div>
+                <div className="mt-2"><span className="text-indigo-600 font-semibold">Debut</span></div>
+                <div className="ml-4 text-gray-500">// Les constantes sont déjà initialisées !</div>
+                <div className="ml-4">rayon <span className="text-pink-600">←</span> 5</div>
+                <div className="ml-4">surface <span className="text-pink-600">←</span> PI * rayon * rayon</div>
+                <div className="ml-4">Ecrire("Surface: ", surface, "\\n")</div>
+                <div><span className="text-indigo-600 font-semibold">Fin</span></div>
+              </div>
+            </div>
+
+            <div className="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-4">
+              <p className="text-gray-900 font-semibold mb-2">💡 Avantages :</p>
+              <ul className="list-disc list-inside space-y-1 text-gray-700">
+                <li>Déclaration ET initialisation en une seule ligne</li>
+                <li>Type inféré automatiquement (pas besoin de spécifier)</li>
+                <li>Code plus concis et lisible</li>
+                <li>Constantes déjà initialisées avant le <code className="bg-white px-2 py-1">Debut</code></li>
+              </ul>
+            </div>
+
+            <h3 className="font-semibold text-gray-900 mb-2">Ancienne syntaxe (toujours supportée)</h3>
+            <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-4">
+              <div className="text-gray-700">
+                <div><span className="text-indigo-600 font-semibold">Constantes</span></div>
+                <div className="ml-4">PI : Reel</div>
+                <div className="ml-4">MAX_VALUE : Entier</div>
+                <div className="mt-2"><span className="text-indigo-600 font-semibold">Debut</span></div>
+                <div className="ml-4">PI <span className="text-pink-600">←</span> 3.14159</div>
+                <div className="ml-4">MAX_VALUE <span className="text-pink-600">←</span> 100</div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+              <p className="text-gray-900 font-semibold mb-2">⚠️ Restrictions :</p>
+              <ul className="list-disc list-inside space-y-1 text-gray-700">
+                <li>L'initialisation directe fonctionne uniquement avec des <strong>valeurs littérales</strong> (nombres, chaînes, booléens)</li>
+                <li>Pour des expressions complexes (ex: <code className="bg-white px-2 py-1">2 + 2</code>), utilisez l'ancienne syntaxe avec type explicite</li>
+                <li>Une fois initialisées, les constantes <strong>ne peuvent pas être modifiées</strong></li>
+                <li>Toute tentative de modification génère une erreur</li>
+              </ul>
+            </div>
+
+            <h3 className="font-semibold text-gray-900 mb-2">Exemple d'erreur</h3>
+            <div className="bg-red-50 border border-red-200 p-6 font-mono text-sm mb-2">
+              <div className="text-gray-700">
+                <div>PI <span className="text-pink-600">←</span> 3.14159</div>
+                <div className="text-red-600">PI <span className="text-pink-600">←</span> 3.14 <span className="ml-2">// ❌ Erreur !</span></div>
+              </div>
+            </div>
+            <p className="text-gray-700 text-sm italic">
+              Erreur : "Impossible de modifier la constante 'PI'"
+            </p>
+          </section>
+
           {/* Entrées/Sorties */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              4. Entrées et sorties
+              5. Entrées et sorties
             </h2>
             <div className="space-y-4">
               <div>
@@ -133,7 +215,7 @@ function Guide() {
           {/* Structures conditionnelles */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              5. Structures conditionnelles
+              6. Structures conditionnelles
             </h2>
             <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm mb-4">
               <div className="text-gray-700">
@@ -152,7 +234,7 @@ function Guide() {
           {/* Boucles */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              6. Boucles
+              7. Boucles
             </h2>
 
             <div className="mb-6">
@@ -195,7 +277,7 @@ function Guide() {
           {/* Structure Selon */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              7. Structure Selon/Cas
+              8. Structure Selon/Cas
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
               La structure <code className="bg-gray-100 px-2 py-1 text-indigo-600">Selon</code> permet de tester une valeur
@@ -254,7 +336,7 @@ function Guide() {
           {/* Tableaux */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              8. Tableaux
+              9. Tableaux
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
               Les tableaux permettent de stocker plusieurs valeurs du même type.
@@ -318,7 +400,7 @@ function Guide() {
           {/* Structures */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              9. Structures/Enregistrements
+              10. Structures/Enregistrements
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
               Les structures (aussi appelées enregistrements) permettent de regrouper plusieurs données
@@ -415,7 +497,7 @@ function Guide() {
           {/* Fonctions et Procédures */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              10. Fonctions et Procédures
+              11. Fonctions et Procédures
             </h2>
             <p className="text-gray-700 leading-relaxed mb-6">
               Les fonctions et procédures permettent de décomposer un programme en sous-programmes réutilisables.
@@ -519,7 +601,7 @@ function Guide() {
           {/* Opérateurs */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              11. Opérateurs
+              12. Opérateurs
             </h2>
 
             <div className="mb-6">
@@ -600,7 +682,7 @@ function Guide() {
           {/* Mots-clés réservés */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              12. Mots-clés réservés
+              13. Mots-clés réservés
             </h2>
             <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
               <p className="text-gray-900 font-semibold mb-2">⚠️ Attention !</p>
@@ -715,7 +797,7 @@ function Guide() {
           {/* Exemple complet */}
           <section>
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              13. Exemple complet
+              14. Exemple complet
             </h2>
             <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm">
               <div className="text-gray-700">
