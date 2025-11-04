@@ -9,8 +9,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-import { Code, File, FolderOpen, Loader2, Play, Save, Wand2 } from 'lucide-react';
-import { useEffect, useState } from "react";
+import { Code, File, FolderOpen, Loader2, Maximize2, Minimize2, Play, Save, Wand2 } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
 import Editor from 'react-simple-code-editor';
 import Console from '../components/Console';
 import InputModal from '../components/InputModal';
@@ -127,6 +127,10 @@ FinAlgorithme`);
   // États pour la modal d'entrée
   const [currentInputRequest, setCurrentInputRequest] = useState<InputRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // État et référence pour le mode plein écran
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const fullscreenRef = useRef<HTMLDivElement>(null);
 
   /**
    * Démarre l'exécution asynchrone avec gestion dynamique des entrées
@@ -262,6 +266,44 @@ Fin`);
   };
 
   /**
+   * Active ou désactive le mode plein écran
+   */
+  const toggleFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      // Entrer en mode plein écran
+      if (fullscreenRef.current) {
+        try {
+          await fullscreenRef.current.requestFullscreen();
+        } catch (err) {
+          console.error('Erreur lors de l\'activation du plein écran:', err);
+        }
+      }
+    } else {
+      // Quitter le mode plein écran
+      try {
+        await document.exitFullscreen();
+      } catch (err) {
+        console.error('Erreur lors de la sortie du plein écran:', err);
+      }
+    }
+  };
+
+  /**
+   * Écoute les changements d'état du mode plein écran
+   */
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  /**
    * Charge un exemple depuis localStorage si disponible
    * (utilisé quand l'utilisateur clique sur "Utiliser cet exemple" depuis la page Exemples)
    */
@@ -322,7 +364,7 @@ Fin`);
 
 
   return (
-    <div className="flex flex-col h-full">
+    <div ref={fullscreenRef} className="flex flex-col h-full">
       {/* Barre d'actions */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="px-6 py-3 flex items-center justify-between">
@@ -385,6 +427,26 @@ Fin`);
               <Wand2 size={16} />
               <span>Formater</span>
             </button>
+
+            <div className="h-6 w-px bg-gray-300"></div>
+
+            <button
+              onClick={toggleFullscreen}
+              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              title={isFullscreen ? "Quitter le plein écran (ESC)" : "Plein écran"}
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize2 size={16} />
+                  <span>Quitter</span>
+                </>
+              ) : (
+                <>
+                  <Maximize2 size={16} />
+                  <span>Plein écran</span>
+                </>
+              )}
+            </button>
           </div>
 
 
@@ -398,6 +460,7 @@ Fin`);
       {/* Layout principal avec SplitPane */}
       <div className="flex-1 overflow-hidden">
         <SplitPane
+          key={isFullscreen ? 'fullscreen' : 'normal'}
           left={
             <div className="h-full flex flex-col bg-gray-50">
               <div className="px-6 py-3 bg-gray-100 border-b border-gray-200">
@@ -461,8 +524,8 @@ Fin`);
               onClear={clearConsole}
             />
           }
-          defaultSplit={55}
-          minSize={30}
+          defaultSplit={isFullscreen ? 85 : 55}
+          minSize={isFullscreen ? 10 : 30}
         />
       </div>
 
