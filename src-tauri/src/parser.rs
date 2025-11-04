@@ -448,23 +448,23 @@ impl Parser {
 
         self.skip_newlines();
 
-        // Parse "Debut"
-        self.expect(Token::Debut)?;
+        // Parse "DebutAlgorithme"
+        self.expect(Token::DebutAlgorithme)?;
         self.skip_newlines();
 
         // Parse statements
         let mut statements = Vec::new();
-        while *self.current_token() != Token::Fin && *self.current_token() != Token::EOF {
+        while *self.current_token() != Token::FinAlgorithme && *self.current_token() != Token::EOF {
             self.skip_newlines();
-            if *self.current_token() == Token::Fin {
+            if *self.current_token() == Token::FinAlgorithme {
                 break;
             }
             statements.push(self.parse_statement()?);
             self.skip_newlines();
         }
 
-        // Parse "Fin"
-        self.expect(Token::Fin)?;
+        // Parse "FinAlgorithme"
+        self.expect(Token::FinAlgorithme)?;
 
         Ok(Algorithm {
             name,
@@ -485,8 +485,8 @@ impl Parser {
         loop {
             self.skip_newlines();
 
-            // Check if we're at Debut, Variables, Constantes or end
-            if matches!(self.current_token(), Token::Debut | Token::Variables | Token::Constantes | Token::EOF) {
+            // Check if we're at Debut*, Variables, Constantes or end
+            if matches!(self.current_token(), Token::Debut | Token::DebutAlgorithme | Token::DebutFonction | Token::DebutProcedure | Token::Variables | Token::Constantes | Token::EOF) {
                 break;
             }
 
@@ -684,23 +684,28 @@ impl Parser {
 
         self.skip_newlines();
 
-        // Parse Debut
-        self.expect(Token::Debut)?;
+        // Parse DebutFonction ou DebutProcedure
+        if is_procedure {
+            self.expect(Token::DebutProcedure)?;
+        } else {
+            self.expect(Token::DebutFonction)?;
+        }
         self.skip_newlines();
 
         // Parse statements
         let mut statements = Vec::new();
-        while *self.current_token() != Token::Fin && *self.current_token() != Token::EOF {
+        let end_token = if is_procedure { Token::FinProcedure } else { Token::FinFonction };
+        while *self.current_token() != end_token && *self.current_token() != Token::EOF {
             self.skip_newlines();
-            if *self.current_token() == Token::Fin {
+            if *self.current_token() == end_token {
                 break;
             }
             statements.push(self.parse_statement()?);
             self.skip_newlines();
         }
 
-        // Parse Fin
-        self.expect(Token::Fin)?;
+        // Parse FinFonction ou FinProcedure
+        self.expect(end_token)?;
 
         Ok(Function {
             name,
