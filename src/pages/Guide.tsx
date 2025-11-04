@@ -17,15 +17,15 @@ function Guide() {
                 <div><span className="text-indigo-600 font-semibold">Algorithme</span> NomDeLAlgorithme</div>
                 <div><span className="text-indigo-600 font-semibold">Variables</span></div>
                 <div className="ml-4">variable1, variable2 : Type</div>
-                <div className="mt-2"><span className="text-indigo-600 font-semibold">Debut</span></div>
+                <div className="mt-2"><span className="text-indigo-600 font-semibold">DebutAlgorithme</span></div>
                 <div className="ml-4 text-gray-500">// Instructions ici</div>
-                <div><span className="text-indigo-600 font-semibold">Fin</span></div>
+                <div><span className="text-indigo-600 font-semibold">FinAlgorithme</span></div>
               </div>
             </div>
             <p className="text-gray-700 leading-relaxed">
               Tout algorithme commence par le mot-clé <code className="bg-gray-100 px-2 py-1 text-indigo-600">Algorithme</code> suivi du nom.
               Les variables sont déclarées dans la section <code className="bg-gray-100 px-2 py-1 text-indigo-600">Variables</code>.
-              Le corps de l'algorithme se trouve entre <code className="bg-gray-100 px-2 py-1 text-indigo-600">Debut</code> et <code className="bg-gray-100 px-2 py-1 text-indigo-600">Fin</code>.
+              Le corps de l'algorithme se trouve entre <code className="bg-gray-100 px-2 py-1 text-indigo-600">DebutAlgorithme</code> et <code className="bg-gray-100 px-2 py-1 text-indigo-600">FinAlgorithme</code>.
             </p>
           </section>
 
@@ -118,12 +118,12 @@ function Guide() {
                 <div className="ml-4">EST_ACTIF <span className="text-pink-600">←</span> Vrai <span className="text-gray-500">// Type Booleen inféré</span></div>
                 <div className="mt-2"><span className="text-indigo-600 font-semibold">Variables</span></div>
                 <div className="ml-4">rayon, surface : Reel</div>
-                <div className="mt-2"><span className="text-indigo-600 font-semibold">Debut</span></div>
+                <div className="mt-2"><span className="text-indigo-600 font-semibold">DebutAlgorithme</span></div>
                 <div className="ml-4 text-gray-500">// Les constantes sont déjà initialisées !</div>
                 <div className="ml-4">rayon <span className="text-pink-600">←</span> 5</div>
                 <div className="ml-4">surface <span className="text-pink-600">←</span> PI * rayon * rayon</div>
                 <div className="ml-4">Ecrire("Surface: ", surface, "\\n")</div>
-                <div><span className="text-indigo-600 font-semibold">Fin</span></div>
+                <div><span className="text-indigo-600 font-semibold">FinAlgorithme</span></div>
               </div>
             </div>
 
@@ -133,7 +133,7 @@ function Guide() {
                 <li>Déclaration ET initialisation en une seule ligne</li>
                 <li>Type inféré automatiquement (pas besoin de spécifier)</li>
                 <li>Code plus concis et lisible</li>
-                <li>Constantes déjà initialisées avant le <code className="bg-white px-2 py-1">Debut</code></li>
+                <li>Constantes déjà initialisées avant le <code className="bg-white px-2 py-1">DebutAlgorithme</code></li>
               </ul>
             </div>
 
@@ -143,7 +143,7 @@ function Guide() {
                 <div><span className="text-indigo-600 font-semibold">Constantes</span></div>
                 <div className="ml-4">PI : Reel</div>
                 <div className="ml-4">MAX_VALUE : Entier</div>
-                <div className="mt-2"><span className="text-indigo-600 font-semibold">Debut</span></div>
+                <div className="mt-2"><span className="text-indigo-600 font-semibold">DebutAlgorithme</span></div>
                 <div className="ml-4">PI <span className="text-pink-600">←</span> 3.14159</div>
                 <div className="ml-4">MAX_VALUE <span className="text-pink-600">←</span> 100</div>
               </div>
@@ -312,7 +312,7 @@ function Guide() {
               <div className="bg-gray-50 border border-gray-200 p-6 font-mono text-sm">
                 <div className="text-gray-700">
                   <div><span className="text-indigo-600">Variables</span> jour : Entier</div>
-                  <div className="mt-2"><span className="text-indigo-600">Debut</span></div>
+                  <div className="mt-2"><span className="text-indigo-600">DebutAlgorithme</span></div>
                   <div className="ml-4">Ecrire("Entrez un numéro (1-7):\n")</div>
                   <div className="ml-4">Lire(jour)</div>
                   <div className="ml-4 mt-2"><span className="text-indigo-600">Selon</span> jour</div>
@@ -327,7 +327,7 @@ function Guide() {
                   <div className="ml-8"><span className="text-indigo-600">Defaut</span>:</div>
                   <div className="ml-12">Ecrire("Jour invalide\n")</div>
                   <div className="ml-4"><span className="text-indigo-600">FinSelon</span></div>
-                  <div><span className="text-indigo-600">Fin</span></div>
+                  <div><span className="text-indigo-600">FinAlgorithme</span></div>
                 </div>
               </div>
             </div>
@@ -380,7 +380,7 @@ function Guide() {
                   <div><span className="text-indigo-600">Variables</span></div>
                   <div className="ml-4">tab : <span className="text-indigo-600">Tableau[10]</span> <span className="text-indigo-600">de</span> Entier</div>
                   <div className="ml-4">i, somme : Entier</div>
-                  <div className="mt-2"><span className="text-indigo-600">Debut</span></div>
+                  <div className="mt-2"><span className="text-indigo-600">DebutAlgorithme</span></div>
                   <div className="ml-4 mb-2 text-gray-500">// Remplir le tableau</div>
                   <div className="ml-4"><span className="text-indigo-600">Pour</span> i <span className="text-indigo-600">De</span> 0 <span className="text-indigo-600">A</span> 9 <span className="text-indigo-600">Faire</span></div>
                   <div className="ml-8">tab[i] <span className="text-pink-600">←</span> i * 2</div>
@@ -391,7 +391,7 @@ function Guide() {
                   <div className="ml-8">somme <span className="text-pink-600">←</span> somme + tab[i]</div>
                   <div className="ml-4"><span className="text-indigo-600">FinPour</span></div>
                   <div className="ml-4 mt-2">Ecrire("Somme:", somme)</div>
-                  <div><span className="text-indigo-600">Fin</span></div>
+                  <div><span className="text-indigo-600">FinAlgorithme</span></div>
                 </div>
               </div>
             </div>
@@ -465,7 +465,7 @@ function Guide() {
                   <div className="mt-2"><span className="text-indigo-600 font-semibold">Variables</span></div>
                   <div className="ml-4">e1, e2 : Etudiant</div>
                   <div className="ml-4">meilleur : Chaine</div>
-                  <div className="mt-2"><span className="text-indigo-600 font-semibold">Debut</span></div>
+                  <div className="mt-2"><span className="text-indigo-600 font-semibold">DebutAlgorithme</span></div>
                   <div className="ml-4">Ecrire("Nom étudiant 1:\n")</div>
                   <div className="ml-4">Lire(e1.nom)</div>
                   <div className="ml-4">Ecrire("Moyenne:\n")</div>
@@ -480,7 +480,7 @@ function Guide() {
                   <div className="ml-8">meilleur <span className="text-pink-600">←</span> e2.nom</div>
                   <div className="ml-4"><span className="text-indigo-600">FinSi</span></div>
                   <div className="ml-4 mt-2">Ecrire("Meilleure moyenne: ", meilleur, "\n")</div>
-                  <div><span className="text-indigo-600 font-semibold">Fin</span></div>
+                  <div><span className="text-indigo-600 font-semibold">FinAlgorithme</span></div>
                 </div>
               </div>
             </div>
@@ -510,10 +510,10 @@ function Guide() {
                 <div className="text-gray-700">
                   <div><span className="text-indigo-600 font-semibold">Fonction</span> Carre(n : Entier) : Entier</div>
                   <div><span className="text-indigo-600">Variables</span> resultat : Entier</div>
-                  <div><span className="text-indigo-600">Debut</span></div>
+                  <div><span className="text-indigo-600">DebutAlgorithme</span></div>
                   <div className="ml-4">resultat <span className="text-pink-600">←</span> n * n</div>
                   <div className="ml-4"><span className="text-indigo-600">Retourner</span> resultat</div>
-                  <div><span className="text-indigo-600">Fin</span></div>
+                  <div><span className="text-indigo-600">FinAlgorithme</span></div>
                 </div>
               </div>
               <p className="text-gray-700 leading-relaxed mb-2">
@@ -543,11 +543,11 @@ function Guide() {
                 <div className="text-gray-700">
                   <div><span className="text-indigo-600 font-semibold">Procedure</span> Saluer(nom : Chaine, fois : Entier)</div>
                   <div><span className="text-indigo-600">Variables</span> i : Entier</div>
-                  <div><span className="text-indigo-600">Debut</span></div>
+                  <div><span className="text-indigo-600">DebutAlgorithme</span></div>
                   <div className="ml-4"><span className="text-indigo-600">Pour</span> i <span className="text-indigo-600">De</span> 1 <span className="text-indigo-600">A</span> fois <span className="text-indigo-600">Faire</span></div>
                   <div className="ml-8">Ecrire("Bonjour ", nom, "!\n")</div>
                   <div className="ml-4"><span className="text-indigo-600">FinPour</span></div>
-                  <div><span className="text-indigo-600">Fin</span></div>
+                  <div><span className="text-indigo-600">FinAlgorithme</span></div>
                 </div>
               </div>
               <p className="text-gray-700 leading-relaxed mb-4">
@@ -571,21 +571,21 @@ function Guide() {
                 <div className="text-gray-700">
                   <div><span className="text-indigo-600 font-semibold">Algorithme</span> TestFonction</div>
                   <div className="mt-2"><span className="text-indigo-600 font-semibold">Fonction</span> Maximum(a : Entier, b : Entier) : Entier</div>
-                  <div><span className="text-indigo-600">Debut</span></div>
+                  <div><span className="text-indigo-600">DebutAlgorithme</span></div>
                   <div className="ml-4"><span className="text-indigo-600">Si</span> a &gt; b <span className="text-indigo-600">Alors</span></div>
                   <div className="ml-8"><span className="text-indigo-600">Retourner</span> a</div>
                   <div className="ml-4"><span className="text-indigo-600">Sinon</span></div>
                   <div className="ml-8"><span className="text-indigo-600">Retourner</span> b</div>
                   <div className="ml-4"><span className="text-indigo-600">FinSi</span></div>
-                  <div><span className="text-indigo-600">Fin</span></div>
+                  <div><span className="text-indigo-600">FinAlgorithme</span></div>
                   <div className="mt-2"><span className="text-indigo-600">Variables</span></div>
                   <div className="ml-4">x, y, max : Entier</div>
-                  <div className="mt-2"><span className="text-indigo-600">Debut</span></div>
+                  <div className="mt-2"><span className="text-indigo-600">DebutAlgorithme</span></div>
                   <div className="ml-4">x <span className="text-pink-600">←</span> 15</div>
                   <div className="ml-4">y <span className="text-pink-600">←</span> 23</div>
                   <div className="ml-4">max <span className="text-pink-600">←</span> Maximum(x, y)</div>
                   <div className="ml-4">Ecrire("Le maximum est:", max, "\n")</div>
-                  <div><span className="text-indigo-600">Fin</span></div>
+                  <div><span className="text-indigo-600">FinAlgorithme</span></div>
                 </div>
               </div>
             </div>
@@ -699,8 +699,8 @@ function Guide() {
                   <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Algorithme</code>
                   <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Variables</code>
                   <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Constantes</code>
-                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Debut</code>
-                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">Fin</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">DebutAlgorithme</code>
+                  <code className="bg-indigo-100 text-indigo-700 px-2 py-1 text-sm">FinAlgorithme</code>
                 </div>
               </div>
 
@@ -804,7 +804,7 @@ function Guide() {
                 <div><span className="text-indigo-600 font-semibold">Algorithme</span> CalculMoyenne</div>
                 <div><span className="text-indigo-600 font-semibold">Variables</span></div>
                 <div className="ml-4">note1, note2, note3, moyenne : Reel</div>
-                <div className="mt-2"><span className="text-indigo-600 font-semibold">Debut</span></div>
+                <div className="mt-2"><span className="text-indigo-600 font-semibold">DebutAlgorithme</span></div>
                 <div className="ml-4">Ecrire("Entrez la première note:\n")</div>
                 <div className="ml-4">Lire(note1)</div>
                 <div className="ml-4">Ecrire("Entrez la deuxième note:\n")</div>
@@ -818,7 +818,7 @@ function Guide() {
                 <div className="ml-4"><span className="text-indigo-600">Sinon</span></div>
                 <div className="ml-8">Ecrire("Recalé\n")</div>
                 <div className="ml-4"><span className="text-indigo-600">FinSi</span></div>
-                <div><span className="text-indigo-600 font-semibold">Fin</span></div>
+                <div><span className="text-indigo-600 font-semibold">FinAlgorithme</span></div>
               </div>
             </div>
           </section>
