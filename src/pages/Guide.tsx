@@ -777,16 +777,18 @@ function Guide() {
             </div>
 
             <div className="bg-red-50 border-l-4 border-red-500 p-4">
-              <p className="text-gray-900 font-semibold mb-2">⚠️ Cas particulier : le mot "A"</p>
+              <p className="text-gray-900 font-semibold mb-2">⚠️ Cas particulier : le mot "À"</p>
               <p className="text-gray-700 mb-2">
-                Le mot <code className="bg-red-100 text-red-700 px-2 py-1 font-bold">A</code> (ou <code className="bg-red-100 text-red-700 px-2 py-1 font-bold">À</code>)
+                Seul le mot <code className="bg-red-100 text-red-700 px-2 py-1 font-bold">À</code> (avec accent)
                 est réservé car utilisé dans les boucles <code className="bg-gray-100 px-2 py-1">Pour</code>.
+                Le mot <code className="bg-green-100 text-green-700 px-2 py-1">a</code> (sans accent) peut être utilisé comme nom de variable.
               </p>
               <div className="bg-white border border-red-200 p-3 font-mono text-sm text-gray-700">
-                <span className="text-indigo-600">Pour</span> i <span className="text-indigo-600">De</span> 1 <span className="text-red-600 font-bold">A</span> 10 <span className="text-indigo-600">Faire</span>
+                <span className="text-indigo-600">Pour</span> i <span className="text-indigo-600">De</span> 1 <span className="text-red-600 font-bold">À</span> 10 <span className="text-indigo-600">Faire</span>
               </div>
               <p className="text-gray-700 mt-3">
-                <strong>Alternatives :</strong> Utilisez <code className="bg-green-100 text-green-700 px-2 py-1">a1</code>,
+                <strong>Exemples valides :</strong> <code className="bg-green-100 text-green-700 px-2 py-1">a</code>,
+                <code className="bg-green-100 text-green-700 px-2 py-1 ml-1">a1</code>,
                 <code className="bg-green-100 text-green-700 px-2 py-1 ml-1">valA</code>,
                 <code className="bg-green-100 text-green-700 px-2 py-1 ml-1">x</code>,
                 <code className="bg-green-100 text-green-700 px-2 py-1 ml-1">n</code>, etc.

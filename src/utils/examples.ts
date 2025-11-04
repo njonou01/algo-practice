@@ -106,7 +106,7 @@ DebutAlgorithme
   Ecrire("Entrez un nombre:\\n")
   Lire(n)
   fact <- 1
-  Pour i De 1 A n Faire
+  Pour i De 1 À n Faire
     fact <- fact * i
   FinPour
   Ecrire("Factorielle de ", n, " = ", fact, "\\n")
@@ -130,7 +130,7 @@ DebutAlgorithme
   Ecrire("Suite de Fibonacci:\\n")
   Ecrire(fib1, "\\n")
   Ecrire(fib2, "\\n")
-  Pour i De 3 A n Faire
+  Pour i De 3 À n Faire
     temp <- fib1 + fib2
     Ecrire(temp, "\\n")
     fib1 <- fib2
@@ -156,7 +156,7 @@ DebutAlgorithme
   Si n < 2 Alors
     estPremier <- 0
   Sinon
-    Pour i De 2 A n - 1 Faire
+    Pour i De 2 À n - 1 Faire
       Si n % i = 0 Alors
         estPremier <- 0
       FinSi
@@ -186,12 +186,12 @@ Variables
 DebutAlgorithme
   Ecrire("Entrez 5 notes:\\n")
 
-  Pour i De 0 A 4 Faire
+  Pour i De 0 À 4 Faire
     Lire(notes[i])
   FinPour
 
   somme <- 0
-  Pour i De 0 A 4 Faire
+  Pour i De 0 À 4 Faire
     somme <- somme + notes[i]
   FinPour
 
@@ -248,23 +248,23 @@ Variables
 DebutAlgorithme
   Ecrire("Remplissage matrice 3x3\\n")
 
-  Pour i De 0 A 2 Faire
-    Pour j De 0 A 2 Faire
+  Pour i De 0 À 2 Faire
+    Pour j De 0 À 2 Faire
       matrice[i, j] <- i * 3 + j + 1
     FinPour
   FinPour
 
   Ecrire("Matrice:\\n")
-  Pour i De 0 A 2 Faire
-    Pour j De 0 A 2 Faire
+  Pour i De 0 À 2 Faire
+    Pour j De 0 À 2 Faire
       Ecrire(matrice[i, j], " ")
     FinPour
     Ecrire("\\n")
   FinPour
 
   somme <- 0
-  Pour i De 0 A 2 Faire
-    Pour j De 0 A 2 Faire
+  Pour i De 0 À 2 Faire
+    Pour j De 0 À 2 Faire
       somme <- somme + matrice[i, j]
     FinPour
   FinPour
@@ -310,7 +310,7 @@ FinAlgorithme`,
 Procedure Saluer(nom : Chaine, fois : Entier)
 Variables i : Entier
 DebutAlgorithme
-  Pour i De 1 A fois Faire
+  Pour i De 1 À fois Faire
     Ecrire("Bonjour ", nom, "!\\n")
   FinPour
 Fin
@@ -342,12 +342,12 @@ Variables
 
 DebutAlgorithme
   Ecrire("Entrez 5 nombres:\\n")
-  Pour i De 0 A 4 Faire
+  Pour i De 0 À 4 Faire
     Lire(tab[i])
   FinPour
 
-  Pour i De 0 A 3 Faire
-    Pour j De 0 A 3 - i Faire
+  Pour i De 0 À 3 Faire
+    Pour j De 0 À 3 - i Faire
       Si tab[j] > tab[j + 1] Alors
         temp <- tab[j]
         tab[j] <- tab[j + 1]
@@ -357,7 +357,7 @@ DebutAlgorithme
   FinPour
 
   Ecrire("Tableau trié:\\n")
-  Pour i De 0 A 4 Faire
+  Pour i De 0 À 4 Faire
     Ecrire(tab[i], " ")
   FinPour
   Ecrire("\\n")

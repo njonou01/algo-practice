@@ -2182,7 +2182,7 @@ Fin`,
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
                 <h5 className="font-semibold text-red-900 mb-2">❌ Modifier le compteur dans la boucle</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
-{`Pour i De 1 A 10 Faire
+{`Pour i De 1 À 10 Faire
   i ← i + 5  // ❌ NE JAMAIS FAIRE ÇA !
 FinPour`}
                 </pre>
@@ -2234,7 +2234,7 @@ Debut
   Lire(nombre)
 
   Ecrire("\\n=== Table de ", nombre, " ===\\n")
-  Pour i De 1 A 10 Faire
+  Pour i De 1 À 10 Faire
     resultat ← nombre * i
     Ecrire(nombre, " x ", i, " = ", resultat, "\\n")
   FinPour
@@ -2334,7 +2334,7 @@ Fin`,
                   <h4 className="font-semibold text-yellow-700 mb-2">🔢 Pour</h4>
                   <p className="text-sm text-gray-700">Nombre d'itérations <strong>connu</strong> à l'avance</p>
                   <div className="bg-gray-900 text-gray-100 p-2 font-mono text-xs mt-2">
-                    <div>Pour i De 1 A 10 Faire</div>
+                    <div>Pour i De 1 À 10 Faire</div>
                     <div className="ml-2">...</div>
                     <div>FinPour</div>
                   </div>
@@ -2845,12 +2845,12 @@ notes[5] ← 20  // ❌ ERREUR ! Indice 5 n'existe pas (max: 4)`}
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
                 <h5 className="font-semibold text-red-900 mb-2">❌ Oublier que les indices commencent à 0</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
-{`Pour i De 1 A 10 Faire  // ❌ On saute notes[0] !
+{`Pour i De 1 À 10 Faire  // ❌ On saute notes[0] !
   Ecrire(notes[i])
 FinPour`}
                 </pre>
                 <pre className="text-sm bg-green-100 p-2 mt-1">
-{`Pour i De 0 A 9 Faire  // ✅ CORRECT
+{`Pour i De 0 À 9 Faire  // ✅ CORRECT
   Ecrire(notes[i])
 FinPour`}
                 </pre>
@@ -2896,7 +2896,7 @@ Debut
   somme ← 0
 
   Ecrire("=== Saisie des notes ===\\n")
-  Pour i De 0 A 4 Faire
+  Pour i De 0 À 4 Faire
     Ecrire("Note ", i + 1, ": ")
     Lire(notes[i])
     somme ← somme + notes[i]
@@ -2905,7 +2905,7 @@ Debut
   moyenne ← somme / 5
 
   Ecrire("\\n=== Résultats ===\\n")
-  Pour i De 0 A 4 Faire
+  Pour i De 0 À 4 Faire
     Ecrire("Note ", i + 1, ": ", notes[i], "\\n")
   FinPour
 
@@ -3073,12 +3073,12 @@ Fin`,
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
                 <h5 className="font-semibold text-red-900 mb-2">❌ Mauvais calcul d'indices dans les boucles</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
-{`Pour i De 0 A taille Faire  // ❌ Dépassement !
+{`Pour i De 0 À taille Faire  // ❌ Dépassement !
   tableau[i]...
 FinPour`}
                 </pre>
                 <pre className="text-sm bg-green-100 p-2 mt-1">
-{`Pour i De 0 A taille - 1 Faire  // ✅ CORRECT
+{`Pour i De 0 À taille - 1 Faire  // ✅ CORRECT
   tableau[i]...
 FinPour`}
                 </pre>
@@ -3121,7 +3121,7 @@ Variables i, max, min : Entier
 
 Debut
   Ecrire("=== Saisie de 8 nombres ===\\n")
-  Pour i De 0 A 7 Faire
+  Pour i De 0 À 7 Faire
     Ecrire("Nombre ", i + 1, ": ")
     Lire(nombres[i])
   FinPour
@@ -3130,7 +3130,7 @@ Debut
   max ← nombres[0]
   min ← nombres[0]
 
-  Pour i De 1 A 7 Faire
+  Pour i De 1 À 7 Faire
     Si (nombres[i] > max) Alors
       max ← nombres[i]
     FinSi
@@ -3335,7 +3335,7 @@ Fin`}
 Variables resultat, i : Entier
 Debut
   resultat ← 1
-  Pour i De 1 A exposant Faire
+  Pour i De 1 À exposant Faire
     resultat ← resultat * base
   FinPour
   Retourner resultat
@@ -3533,7 +3533,7 @@ Fin`,
 Variables i : Entier
 Debut
   // Ligne du haut
-  Pour i De 1 A largeur Faire
+  Pour i De 1 À largeur Faire
     Ecrire("=")
   FinPour
   Ecrire("\\n")
@@ -3542,7 +3542,7 @@ Debut
   Ecrire("  ", texte, "\\n")
 
   // Ligne du bas
-  Pour i De 1 A largeur Faire
+  Pour i De 1 À largeur Faire
     Ecrire("=")
   FinPour
   Ecrire("\\n")

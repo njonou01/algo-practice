@@ -56,7 +56,7 @@ function highlightSyntax(code: string, settings: any) {
     'DebutFonction', 'FinFonction',
     'DebutProcedure', 'FinProcedure',
     'Si', 'Alors', 'Sinon', 'FinSi',
-    'Pour', 'De', 'A', 'Faire', 'FinPour',
+    'Pour', 'De', 'À', 'Faire', 'FinPour',
     'TantQue', 'FinTantQue', 'Repeter', 'Jusqua',
     'Selon', 'Cas', 'Defaut', 'FinSelon',
     'Fonction', 'Procedure', 'Retourner',
@@ -298,7 +298,7 @@ DebutAlgorithme
   // Démonstration de boucle et calcul
   Ecrire("\\nSomme des nombres de 1 à ", MAX, ":\\n")
   somme <- 0
-  Pour i De 1 A MAX Faire
+  Pour i De 1 À MAX Faire
     somme <- somme + i
   FinPour
   Ecrire("Résultat: ", somme, "\\n")
@@ -617,7 +617,7 @@ Fin`);
               <span>Formater</span>
             </button>
           </div>
-          
+
 
           <div className="text-xs text-gray-500">
             Tapez <code className="bg-gray-100 px-1 py-0.5">&lt;-</code> pour <code className="bg-gray-100 px-1 py-0.5">←</code> |
