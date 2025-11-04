@@ -16,7 +16,7 @@ import Console from '../components/Console';
 import InputModal from '../components/InputModal';
 import SplitPane from '../components/SplitPane';
 import { useSettings } from '../contexts/SettingsContext';
-import { useKeyboard } from '../hooks/useKeyboard';
+import { useHighlightSyntax } from '../hooks/useHighlightSyntax';
 import { formatCode } from '../utils/codeFormatter';
 
 /**
@@ -38,210 +38,6 @@ interface InputRequest {
 }
 
 /**
- * Fonction de coloration syntaxique pour l'éditeur
- * Analyse le code et retourne des éléments JSX colorés selon le type de token
- *
- * @param code - Le code source de l'algorithme à colorer
- * @param settings - Paramètres de coloration syntaxique
- * @returns Éléments JSX avec coloration syntaxique
- */
-function highlightSyntax(code: string, settings: any) {
-  // Si la coloration est désactivée, retourner le code tel quel
-  if (!settings.syntaxHighlighting) {
-    return <span>{code}</span>;
-  }
-  const keywords = [
-    'Algorithme', 'Variables', 'Constantes', 'Debut', 'Fin',
-    'DebutAlgorithme', 'FinAlgorithme',
-    'DebutFonction', 'FinFonction',
-    'DebutProcedure', 'FinProcedure',
-    'Si', 'Alors', 'Sinon', 'FinSi',
-    'Pour', 'De', 'À', 'Faire', 'FinPour',
-    'TantQue', 'FinTantQue', 'Repeter', 'Jusqua',
-    'Selon', 'Cas', 'Defaut', 'FinSelon',
-    'Fonction', 'Procedure', 'Retourner',
-    'Structure', 'Enregistrement', 'FinStructure', 'FinEnregistrement',
-    'Lire', 'Ecrire', 'ET', 'OU', 'NON'
-  ];
-
-  const types = ['Entier', 'Reel', 'Chaine', 'Caractere', 'Booleen', 'Tableau'];
-  const values = ['Vrai', 'Faux'];
-
-  // Remplacer <- par ← et != par ≠
-  let highlighted = code.replace(/<-/g, '←').replace(/!=/g, '≠');
-
-  // Découper le code en segments (tokens)
-  const tokens: { type: string; value: string }[] = [];
-  let currentPos = 0;
-
-  while (currentPos < highlighted.length) {
-    let matched = false;
-
-    // Vérifier les commentaires
-    if (highlighted.substring(currentPos).startsWith('//')) {
-      const lineEnd = highlighted.indexOf('\n', currentPos);
-      const commentEnd = lineEnd === -1 ? highlighted.length : lineEnd;
-      tokens.push({ type: 'comment', value: highlighted.substring(currentPos, commentEnd) });
-      currentPos = commentEnd;
-      matched = true;
-      continue;
-    }
-
-    // Vérifier les chaînes de caractères
-    if (highlighted[currentPos] === '"') {
-      const stringEnd = highlighted.indexOf('"', currentPos + 1);
-      if (stringEnd !== -1) {
-        tokens.push({ type: 'string', value: highlighted.substring(currentPos, stringEnd + 1) });
-        currentPos = stringEnd + 1;
-        matched = true;
-        continue;
-      }
-    }
-
-    // Vérifier les mots-clés, types et valeurs
-    for (const keyword of keywords) {
-      if (highlighted.substring(currentPos).toLowerCase().startsWith(keyword.toLowerCase())) {
-        const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
-        const nextChar = highlighted[currentPos + keyword.length] ?? '';
-        const isPrevAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(prevChar);
-        const isNextAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(nextChar);
-
-        // Vérifier que ce n'est pas dans un autre mot
-        if (!isPrevAlpha && !isNextAlpha) {
-          // Cas spécial pour "Algorithme" : doit être en début de ligne
-          if (keyword === 'Algorithme') {
-            // Chercher le début de la ligne
-            let lineStart = currentPos;
-            while (lineStart > 0 && highlighted[lineStart - 1] !== '\n') {
-              lineStart--;
-            }
-            // Vérifier qu'il n'y a que des espaces avant "Algorithme"
-            const beforeAlgo = highlighted.substring(lineStart, currentPos).trim();
-            if (beforeAlgo === '') {
-              tokens.push({ type: 'keyword', value: highlighted.substring(currentPos, currentPos + keyword.length) });
-              currentPos += keyword.length;
-              matched = true;
-              break;
-            }
-          } else {
-            tokens.push({ type: 'keyword', value: highlighted.substring(currentPos, currentPos + keyword.length) });
-            currentPos += keyword.length;
-            matched = true;
-            break;
-          }
-        }
-      }
-    }
-    if (matched) continue;
-
-    for (const type of types) {
-      if (highlighted.substring(currentPos).toLowerCase().startsWith(type.toLowerCase())) {
-        const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
-        const nextChar = highlighted[currentPos + type.length] ?? '';
-        const isPrevAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(prevChar);
-        const isNextAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(nextChar);
-
-        if (!isPrevAlpha && !isNextAlpha) {
-          tokens.push({ type: 'type', value: highlighted.substring(currentPos, currentPos + type.length) });
-          currentPos += type.length;
-          matched = true;
-          break;
-        }
-      }
-    }
-    if (matched) continue;
-
-    for (const value of values) {
-      if (highlighted.substring(currentPos).toLowerCase().startsWith(value.toLowerCase())) {
-        const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
-        const nextChar = highlighted[currentPos + value.length] ?? '';
-        const isPrevAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(prevChar);
-        const isNextAlpha = /[a-zA-Z0-9_éèêàâùûôîïç]/.test(nextChar);
-
-        if (!isPrevAlpha && !isNextAlpha) {
-          tokens.push({ type: 'boolean', value: highlighted.substring(currentPos, currentPos + value.length) });
-          currentPos += value.length;
-          matched = true;
-          break;
-        }
-      }
-    }
-    if (matched) continue;
-
-    // Vérifier les nombres (mais pas dans les identifiants)
-    const numberMatch = highlighted.substring(currentPos).match(/^(\d+\.?\d*)/);
-    if (numberMatch) {
-      // Vérifier que ce n'est pas dans un identifiant
-      const prevChar = currentPos > 0 ? highlighted[currentPos - 1] : '';
-      const nextChar = highlighted[currentPos + numberMatch[1].length] || '';
-      const isPrevAlpha = /[a-zA-Z_éèêàâùûôîïç]/.test(prevChar);
-      const isNextAlpha = /[a-zA-Z_éèêàâùûôîïç]/.test(nextChar);
-
-      if (!isPrevAlpha && !isNextAlpha) {
-        tokens.push({ type: 'number', value: numberMatch[1] });
-        currentPos += numberMatch[1].length;
-        continue;
-      }
-    }
-
-    // Vérifier la flèche d'affectation
-    if (highlighted[currentPos] === '←') {
-      tokens.push({ type: 'arrow', value: '←' });
-      currentPos++;
-      continue;
-    }
-
-    // Vérifier les opérateurs
-    if (/[+\-*/%=!<>]/.test(highlighted[currentPos])) {
-      tokens.push({ type: 'operator', value: highlighted[currentPos] });
-      currentPos++;
-      continue;
-    }
-
-    // Par défaut : texte normal
-    tokens.push({ type: 'text', value: highlighted[currentPos] });
-    currentPos++;
-  }
-
-  // Convertir les tokens en JSX avec respect des paramètres et couleurs personnalisées
-  return (
-    <span>
-      {tokens.map((token, i) => {
-        // Appliquer les couleurs personnalisées si la coloration est activée pour ce type
-        let style: React.CSSProperties = {};
-
-        if (token.type === 'keyword' && settings.highlightKeywords) {
-          style.color = settings.colorKeywords;
-          style.fontWeight = 'bold';
-        } else if (token.type === 'type' && settings.highlightTypes) {
-          style.color = settings.colorTypes;
-          style.fontWeight = 'bold';
-        } else if (token.type === 'number' && settings.highlightNumbers) {
-          style.color = settings.colorNumbers;
-        } else if (token.type === 'string' && settings.highlightStrings) {
-          style.color = settings.colorStrings;
-        } else if (token.type === 'comment' && settings.highlightComments) {
-          style.color = settings.colorComments;
-          style.fontStyle = 'italic';
-        } else if (token.type === 'boolean' && settings.highlightKeywords) {
-          style.color = settings.colorBooleans;
-          style.fontWeight = 'bold';
-        } else if (token.type === 'arrow') {
-          style.color = settings.colorArrow;
-          style.fontWeight = 'bold';
-        }
-
-        return (
-          <span key={i} style={style}>
-            {token.value}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
-
-/**
  * Composant principal de l'interpréteur AlgoGénie
  *
  * Gère l'éditeur de code, l'exécution des algorithmes, les entrées/sorties,
@@ -250,6 +46,9 @@ function highlightSyntax(code: string, settings: any) {
 function CodeEditor() {
   // Récupérer les paramètres
   const { settings } = useSettings();
+
+  // Hook de coloration syntaxique
+  const highlightSyntax = useHighlightSyntax(settings);
 
   // État du code de l'algorithme (avec exemple par défaut)
   const [code, setCode] = useState(`Algorithme DemonstrationAlgoGenie
@@ -521,36 +320,6 @@ Fin`);
     };
   }, []);
 
-  /**
-   * Raccourcis clavier
-   */
-  useKeyboard([
-    {
-      key: 'Enter',
-      ctrl: true,
-      callback: executeAlgorithm,
-    },
-    {
-      key: 's',
-      ctrl: true,
-      callback: saveFile,
-    },
-    {
-      key: 'o',
-      ctrl: true,
-      callback: openFile,
-    },
-    {
-      key: 'n',
-      ctrl: true,
-      callback: newFile,
-    },
-    {
-      key: 'l',
-      ctrl: true,
-      callback: clearConsole,
-    },
-  ]);
 
   return (
     <div className="flex flex-col h-full">
@@ -665,7 +434,7 @@ Fin`);
                     <Editor
                       value={code}
                       onValueChange={code => setCode(code)}
-                      highlight={code => highlightSyntax(code, settings)}
+                      highlight={highlightSyntax}
                       padding={20}
                       tabSize={settings.tabSize}
                       insertSpaces={true}

@@ -1,14 +1,14 @@
 import { CheckCircle, Code2, Info, Palette, Play, RotateCw, Save, Settings as SettingsIcon, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { AppSettings } from '../contexts/SettingsContext';
-import { useSettings } from '../contexts/SettingsContext';
+import { defaultSettings, useSettings } from '../contexts/SettingsContext';
 
 /**
  * Page Paramètres - Configuration de l'application
  */
 
 function Settings() {
-  const { settings, updateSetting, resetSettings } = useSettings();
+  const { settings, updateSetting, updateAllSettings, resetSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
   const [saved, setSaved] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -26,7 +26,7 @@ function Settings() {
 
   const handleReset = () => {
     resetSettings();
-    setLocalSettings(settings);
+    setLocalSettings(defaultSettings);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -36,11 +36,8 @@ function Settings() {
   };
 
   const handleSave = () => {
-    // Sauvegarder tous les paramètres
-    Object.keys(localSettings).forEach(key => {
-      const k = key as keyof AppSettings;
-      updateSetting(k, localSettings[k]);
-    });
+    // Sauvegarder tous les paramètres en une seule fois
+    updateAllSettings(localSettings);
     setSaved(true);
     setHasChanges(false);
     setTimeout(() => setSaved(false), 2000);
@@ -352,28 +349,15 @@ function Settings() {
             </div>
           </section>
 
-          {/* Boutons d'action */}
+          {/* Indicateur de modifications */}
           {hasChanges && (
-            <div className="bg-yellow-50 border border-yellow-200 p-4 flex items-center justify-between">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
               <div className="flex items-center gap-2">
-                <Info size={16} className="text-yellow-900" />
-                <span className="text-sm text-yellow-900 font-medium">Vous avez des modifications non sauvegardées</span>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleCancel}
-                  className="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium transition-colors flex items-center gap-2"
-                >
-                  <X size={18} />
-                  <span>Annuler</span>
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors flex items-center gap-2"
-                >
-                  <Save size={18} />
-                  <span>Enregistrer</span>
-                </button>
+                <Info size={20} className="text-yellow-700" />
+                <div>
+                  <p className="font-semibold text-yellow-900">Modifications non sauvegardées</p>
+                  <p className="text-sm text-yellow-700">N'oubliez pas d'enregistrer vos changements</p>
+                </div>
               </div>
             </div>
           )}

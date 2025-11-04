@@ -52,6 +52,7 @@ export const defaultSettings: AppSettings = {
 interface SettingsContextType {
   settings: AppSettings;
   updateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
+  updateAllSettings: (newSettings: AppSettings) => void;
   resetSettings: () => void;
 }
 
@@ -79,13 +80,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('appSettings', JSON.stringify(newSettings));
   };
 
+  const updateAllSettings = (newSettings: AppSettings) => {
+    setSettings(newSettings);
+    localStorage.setItem('appSettings', JSON.stringify(newSettings));
+  };
+
   const resetSettings = () => {
     setSettings(defaultSettings);
     localStorage.setItem('appSettings', JSON.stringify(defaultSettings));
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, resetSettings }}>
+    <SettingsContext.Provider value={{ settings, updateSetting, updateAllSettings, resetSettings }}>
       {children}
     </SettingsContext.Provider>
   );
