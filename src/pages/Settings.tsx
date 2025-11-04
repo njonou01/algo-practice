@@ -1,4 +1,4 @@
-import { CheckCircle, Code2, Info, Palette, Play, RotateCw, Save, Settings as SettingsIcon, X } from 'lucide-react';
+import { CheckCircle, Code2, Info, Moon, Palette, Play, RotateCw, Save, Settings as SettingsIcon, Sun, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { AppSettings } from '../contexts/SettingsContext';
 import { defaultSettings, useSettings } from '../contexts/SettingsContext';
@@ -74,6 +74,62 @@ function Settings() {
         </div>
 
         <div className="space-y-6">
+          {/* Section Apparence */}
+          <section className="bg-white border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Palette size={20} />
+              <span>Apparence</span>
+            </h2>
+
+            <div className="space-y-4">
+              {/* Thème */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Thème
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => handleUpdateLocalSetting('theme', 'dark')}
+                    className={`
+                      p-4 border-2 rounded-lg transition-all flex items-center gap-3
+                      ${localSettings.theme === 'dark'
+                        ? 'border-indigo-600 bg-indigo-50 shadow-md'
+                        : 'border-gray-300 hover:border-gray-400 bg-white'
+                      }
+                    `}
+                  >
+                    <Moon size={20} className={localSettings.theme === 'dark' ? 'text-indigo-600' : 'text-gray-600'} />
+                    <div className="text-left">
+                      <div className={`font-semibold ${localSettings.theme === 'dark' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                        Mode sombre
+                      </div>
+                      <div className="text-xs text-gray-600">Recommandé pour les yeux</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleUpdateLocalSetting('theme', 'light')}
+                    className={`
+                      p-4 border-2 rounded-lg transition-all flex items-center gap-3
+                      ${localSettings.theme === 'light'
+                        ? 'border-indigo-600 bg-indigo-50 shadow-md'
+                        : 'border-gray-300 hover:border-gray-400 bg-white'
+                      }
+                    `}
+                  >
+                    <Sun size={20} className={localSettings.theme === 'light' ? 'text-indigo-600' : 'text-gray-600'} />
+                    <div className="text-left">
+                      <div className={`font-semibold ${localSettings.theme === 'light' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                        Mode clair
+                      </div>
+                      <div className="text-xs text-gray-600">Plus de luminosité</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Section Éditeur */}
           <section className="bg-white border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">

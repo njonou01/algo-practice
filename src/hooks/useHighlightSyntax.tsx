@@ -20,6 +20,28 @@ export function useHighlightSyntax(settings: AppSettings) {
       return <span>{code}</span>;
     }
 
+    // Adapter les couleurs selon le thème
+    const isDarkTheme = settings.theme === 'dark';
+
+    // Fonction pour assombrir une couleur hexadécimale en mode light
+    const adjustColor = (hexColor: string): string => {
+      if (isDarkTheme) return hexColor;
+
+      // Convertir hex en RGB
+      const hex = hexColor.replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+
+      // Assombrir (multiplier par 0.6)
+      const newR = Math.floor(r * 0.6);
+      const newG = Math.floor(g * 0.6);
+      const newB = Math.floor(b * 0.6);
+
+      // Retourner en hex
+      return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+    };
+
     // Mots-clés du langage
     const keywords = [
       'Algorithme', 'Variables', 'Constantes', 'Debut', 'Fin',
@@ -173,23 +195,23 @@ export function useHighlightSyntax(settings: AppSettings) {
 
           // Appliquer les couleurs personnalisées si la coloration est activée pour ce type
           if (token.type === 'keyword' && settings.highlightKeywords) {
-            style.color = settings.colorKeywords;
+            style.color = adjustColor(settings.colorKeywords);
             style.fontWeight = 'bold';
           } else if (token.type === 'type' && settings.highlightTypes) {
-            style.color = settings.colorTypes;
+            style.color = adjustColor(settings.colorTypes);
             style.fontWeight = 'bold';
           } else if (token.type === 'number' && settings.highlightNumbers) {
-            style.color = settings.colorNumbers;
+            style.color = adjustColor(settings.colorNumbers);
           } else if (token.type === 'string' && settings.highlightStrings) {
-            style.color = settings.colorStrings;
+            style.color = adjustColor(settings.colorStrings);
           } else if (token.type === 'comment' && settings.highlightComments) {
-            style.color = settings.colorComments;
+            style.color = adjustColor(settings.colorComments);
             style.fontStyle = 'italic';
           } else if (token.type === 'boolean' && settings.highlightKeywords) {
-            style.color = settings.colorBooleans;
+            style.color = adjustColor(settings.colorBooleans);
             style.fontWeight = 'bold';
           } else if (token.type === 'arrow') {
-            style.color = settings.colorArrow;
+            style.color = adjustColor(settings.colorArrow);
             style.fontWeight = 'bold';
           }
 

@@ -13,6 +13,7 @@ interface SplitPaneProps {
   defaultSplit?: number; // Position initiale en % (0-100)
   minSize?: number;      // Taille minimale en %
   direction?: 'horizontal' | 'vertical'; // Direction du split
+  theme?: 'dark' | 'light'; // Thème de couleur
 }
 
 /**
@@ -24,7 +25,7 @@ interface SplitPaneProps {
  * @param minSize - Taille minimale de chaque panneau (défaut: 20%)
  * @param direction - Direction du split: 'horizontal' (gauche/droite) ou 'vertical' (haut/bas)
  */
-function SplitPane({ left, right, defaultSplit = 50, minSize = 20, direction = 'horizontal' }: SplitPaneProps) {
+function SplitPane({ left, right, defaultSplit = 50, minSize = 20, direction = 'horizontal', theme = 'dark' }: SplitPaneProps) {
   const [splitPosition, setSplitPosition] = useState(defaultSplit);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -84,6 +85,12 @@ function SplitPane({ left, right, defaultSplit = 50, minSize = 20, direction = '
   }, [isDragging, direction]);
 
   const isHorizontal = direction === 'horizontal';
+  const isDarkTheme = theme === 'dark';
+
+  // Classes de couleur pour le diviseur selon le thème
+  const dividerBaseColor = isDarkTheme ? 'bg-gray-600' : 'bg-gray-300';
+  const dividerHoverColor = isDarkTheme ? 'hover:bg-indigo-400' : 'hover:bg-indigo-500';
+  const dividerActiveColor = isDarkTheme ? 'bg-indigo-400' : 'bg-indigo-500';
 
   return (
     <div ref={containerRef} className={`flex ${isHorizontal ? 'flex-row' : 'flex-col'} h-full w-full overflow-hidden`}>
@@ -100,9 +107,9 @@ function SplitPane({ left, right, defaultSplit = 50, minSize = 20, direction = '
         onMouseDown={handleMouseDown}
         className={`
           ${isHorizontal ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'}
-          bg-gray-300 hover:bg-indigo-500
+          ${isDragging ? dividerActiveColor : dividerBaseColor}
+          ${dividerHoverColor}
           transition-colors shrink-0
-          ${isDragging ? 'bg-indigo-500' : ''}
         `}
         title="Glisser pour redimensionner"
       />

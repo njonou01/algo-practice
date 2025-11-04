@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface AppSettings {
+  // Apparence
+  theme: 'dark' | 'light';
+
   // Éditeur
   fontSize: number;
   tabSize: number;
@@ -29,6 +32,7 @@ export interface AppSettings {
 }
 
 export const defaultSettings: AppSettings = {
+  theme: 'dark',
   fontSize: 14,
   tabSize: 2,
   autoIndent: true,

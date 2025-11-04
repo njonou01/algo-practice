@@ -367,21 +367,58 @@ Fin`);
   }, []);
 
 
+  // Définir les couleurs selon le thème
+  const isDarkTheme = settings.theme === 'dark';
+  const editorColors = isDarkTheme
+    ? {
+        background: '#111827',
+        lineNumberBg: '#1f2937',
+        lineNumberText: '#6b7280',
+        lineNumberBorder: '#374151',
+        text: '#e5e7eb',
+        caret: 'white'
+      }
+    : {
+        background: '#ffffff',
+        lineNumberBg: '#f9fafb',
+        lineNumberText: '#9ca3af',
+        lineNumberBorder: '#e5e7eb',
+        text: '#1f2937',
+        caret: '#1f2937'
+      };
+
+  // Classes CSS pour les boutons selon le thème
+  const buttonClasses = isDarkTheme
+    ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100';
+
+  const dividerClasses = isDarkTheme ? 'bg-gray-600' : 'bg-gray-300';
+
+  const formatButtonClasses = isDarkTheme
+    ? 'text-indigo-400 hover:text-indigo-300 hover:bg-gray-700'
+    : 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50';
+
+  const hintTextClasses = isDarkTheme ? 'text-gray-400' : 'text-gray-500';
+  const hintCodeClasses = isDarkTheme ? 'bg-gray-700 text-gray-300' : 'bg-gray-100';
+
   // Définir les panneaux éditeur et console
   const editorPanel = (
-    <div className="h-full flex flex-col bg-gray-50">
-      <div className="px-6 py-3 bg-gray-100 border-b border-gray-200">
-        <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+    <div className={`h-full flex flex-col ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-50'}`}>
+      <div className={`px-6 py-3 border-b ${isDarkTheme ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-200'}`}>
+        <h2 className={`text-sm font-semibold flex items-center gap-2 ${isDarkTheme ? 'text-gray-200' : 'text-gray-900'}`}>
           <Code size={16} />
           <span>Éditeur</span>
         </h2>
       </div>
-      <div className="flex-1 bg-gray-900 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden" style={{ backgroundColor: editorColors.background }}>
         <div className="flex-1 overflow-auto flex">
           {/* Numéros de ligne */}
           <div
-            className="select-none bg-gray-800 text-gray-500 border-r border-gray-700"
+            className="select-none border-r"
             style={{
+              backgroundColor: editorColors.lineNumberBg,
+              color: editorColors.lineNumberText,
+              borderColor: editorColors.lineNumberBorder,
               fontSize: settings.fontSize,
               lineHeight: 1.5,
               paddingTop: 20,
@@ -412,9 +449,9 @@ Fin`);
                 fontFamily: '"Fira code", "Fira Mono", monospace',
                 fontSize: settings.fontSize,
                 lineHeight: 1.5,
-                backgroundColor: '#111827',
-                color: '#e5e7eb',
-                caretColor: 'white'
+                backgroundColor: editorColors.background,
+                color: editorColors.text,
+                caretColor: editorColors.caret
               }}
             />
           </div>
@@ -432,6 +469,7 @@ Fin`);
       onClear={clearConsole}
       position={consolePosition}
       onPositionChange={setConsolePosition}
+      theme={settings.theme}
     />
   );
 
@@ -444,9 +482,9 @@ Fin`);
     : (isFullscreen ? 80 : 60);
 
   return (
-    <div ref={fullscreenRef} className="flex flex-col h-full">
+    <div ref={fullscreenRef} className={`flex flex-col h-full ${isDarkTheme ? 'bg-gray-900' : 'bg-white'}`}>
       {/* Barre d'actions */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+      <div className={`border-b shadow-sm ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
@@ -468,11 +506,11 @@ Fin`);
               )}
             </button>
 
-            <div className="h-6 w-px bg-gray-300"></div>
+            <div className={`h-6 w-px ${dividerClasses}`}></div>
 
             <button
               onClick={newFile}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              className={`px-4 py-2 text-sm transition-colors flex items-center gap-2 ${buttonClasses}`}
               title="Nouveau (Ctrl+N)"
             >
               <File size={16} />
@@ -481,7 +519,7 @@ Fin`);
 
             <button
               onClick={openFile}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              className={`px-4 py-2 text-sm transition-colors flex items-center gap-2 ${buttonClasses}`}
               title="Ouvrir (Ctrl+O)"
             >
               <FolderOpen size={16} />
@@ -490,29 +528,29 @@ Fin`);
 
             <button
               onClick={saveFile}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              className={`px-4 py-2 text-sm transition-colors flex items-center gap-2 ${buttonClasses}`}
               title="Sauvegarder (Ctrl+S)"
             >
               <Save size={16} />
               <span>Sauvegarder</span>
             </button>
 
-            <div className="h-6 w-px bg-gray-300"></div>
+            <div className={`h-6 w-px ${dividerClasses}`}></div>
 
             <button
               onClick={handleFormat}
-              className="px-4 py-2 text-sm text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 transition-colors flex items-center gap-2"
+              className={`px-4 py-2 text-sm transition-colors flex items-center gap-2 ${formatButtonClasses}`}
               title="Formater le code"
             >
               <Wand2 size={16} />
               <span>Formater</span>
             </button>
 
-            <div className="h-6 w-px bg-gray-300"></div>
+            <div className={`h-6 w-px ${dividerClasses}`}></div>
 
             <button
               onClick={toggleFullscreen}
-              className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              className={`px-4 py-2 text-sm transition-colors flex items-center gap-2 ${buttonClasses}`}
               title={isFullscreen ? "Quitter le plein écran (ESC)" : "Plein écran"}
             >
               {isFullscreen ? (
@@ -530,9 +568,9 @@ Fin`);
           </div>
 
 
-          <div className="text-xs text-gray-500">
-            Tapez <code className="bg-gray-100 px-1 py-0.5">&lt;-</code> pour <code className="bg-gray-100 px-1 py-0.5">←</code> |
-            <code className="bg-gray-100 px-1 py-0.5 ml-1">!=</code> pour <code className="bg-gray-100 px-1 py-0.5">≠</code>
+          <div className={`text-xs ${hintTextClasses}`}>
+            Tapez <code className={`px-1 py-0.5 ${hintCodeClasses}`}>&lt;-</code> pour <code className={`px-1 py-0.5 ${hintCodeClasses}`}>←</code> |
+            <code className={`px-1 py-0.5 ml-1 ${hintCodeClasses}`}>!=</code> pour <code className={`px-1 py-0.5 ${hintCodeClasses}`}>≠</code>
           </div>
         </div>
       </div>
@@ -546,6 +584,7 @@ Fin`);
           direction={isHorizontalSplit ? 'horizontal' : 'vertical'}
           defaultSplit={defaultSplitSize}
           minSize={isFullscreen ? 10 : 30}
+          theme={settings.theme}
         />
       </div>
 
