@@ -52,6 +52,9 @@ function highlightSyntax(code: string, settings: any) {
   }
   const keywords = [
     'Algorithme', 'Variables', 'Constantes', 'Debut', 'Fin',
+    'DebutAlgorithme', 'FinAlgorithme',
+    'DebutFonction', 'FinFonction',
+    'DebutProcedure', 'FinProcedure',
     'Si', 'Alors', 'Sinon', 'FinSi',
     'Pour', 'De', 'A', 'Faire', 'FinPour',
     'TantQue', 'FinTantQue', 'Repeter', 'Jusqua',
@@ -256,14 +259,14 @@ Enregistrement Point
 FinEnregistrement
 
 Fonction CalculerDistance(p1 : Point, p2 : Point) : Reel
-Debut
+DebutFonction
   Retourner (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y)
-Fin
+FinFonction
 
 Procedure AfficherPoint(p : Point, nom : Chaine)
-Debut
+DebutProcedure
   Ecrire(nom, " = (", p.x, ", ", p.y, ")\\n")
-Fin
+FinProcedure
 
 Constantes
   PI <- 3.14159
@@ -275,7 +278,7 @@ Variables
   p1, p2 : Point
   distance : Reel
 
-Debut
+DebutAlgorithme
   Ecrire("=== Bienvenue dans AlgoGénie ! ===\\n\\n")
 
   // Démonstration des constantes
@@ -314,7 +317,7 @@ Debut
   Ecrire("Distance² entre les points: ", distance, "\\n")
 
   Ecrire("\\nEssayez le bouton Formater!\\n")
-Fin`);
+FinAlgorithme`);
 
   // États pour l'exécution
   const [output, setOutput] = useState<string[]>([]);                // Sorties de l'algorithme
