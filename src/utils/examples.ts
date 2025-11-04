@@ -25,11 +25,11 @@ export const examples: AlgorithmExample[] = [
     code: `Algorithme Bonjour
 Variables nom : Chaine
 
-Debut
+DebutAlgorithme
   Ecrire("Comment vous appelez-vous?\\n")
   Lire(nom)
   Ecrire("Bonjour ", nom, "!\\n")
-Fin`,
+FinAlgorithme`,
     input: ['Alice']
   },
   {
@@ -41,12 +41,12 @@ Fin`,
     code: `Algorithme Double
 Variables x, y : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Entrez un nombre:\\n")
   Lire(x)
   y <- x * 2
   Ecrire("Le double de ", x, " est ", y, "\\n")
-Fin`,
+FinAlgorithme`,
     input: ['15']
   },
   {
@@ -58,7 +58,7 @@ Fin`,
     code: `Algorithme Maximum
 Variables num1, num2 : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Premier nombre:\\n")
   Lire(num1)
   Ecrire("Deuxième nombre:\\n")
@@ -69,7 +69,7 @@ Debut
   Sinon
     Ecrire("Le maximum est: ", num2, "\\n")
   FinSi
-Fin`,
+FinAlgorithme`,
     input: ['15', '23']
   },
   {
@@ -81,14 +81,14 @@ Fin`,
     code: `Algorithme Somme
 Variables num1, num2, resultat : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Premier nombre:\\n")
   Lire(num1)
   Ecrire("Deuxième nombre:\\n")
   Lire(num2)
   resultat <- num1 + num2
   Ecrire(num1, " + ", num2, " = ", resultat, "\\n")
-Fin`,
+FinAlgorithme`,
     input: ['10', '25']
   },
 
@@ -102,7 +102,7 @@ Fin`,
     code: `Algorithme Factorielle
 Variables n, i, fact : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Entrez un nombre:\\n")
   Lire(n)
   fact <- 1
@@ -110,7 +110,7 @@ Debut
     fact <- fact * i
   FinPour
   Ecrire("Factorielle de ", n, " = ", fact, "\\n")
-Fin`,
+FinAlgorithme`,
     input: ['5']
   },
   {
@@ -122,7 +122,7 @@ Fin`,
     code: `Algorithme Fibonacci
 Variables n, i, fib1, fib2, temp : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Combien de termes?\\n")
   Lire(n)
   fib1 <- 0
@@ -136,7 +136,7 @@ Debut
     fib1 <- fib2
     fib2 <- temp
   FinPour
-Fin`,
+FinAlgorithme`,
     input: ['8']
   },
   {
@@ -148,7 +148,7 @@ Fin`,
     code: `Algorithme NombrePremier
 Variables n, i, estPremier : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Entrez un nombre:\\n")
   Lire(n)
   estPremier <- 1
@@ -168,7 +168,7 @@ Debut
   Sinon
     Ecrire(n, " n'est pas premier\\n")
   FinSi
-Fin`,
+FinAlgorithme`,
     input: ['17']
   },
   {
@@ -183,7 +183,7 @@ Variables
   i : Entier
   somme, moyenne : Reel
 
-Debut
+DebutAlgorithme
   Ecrire("Entrez 5 notes:\\n")
 
   Pour i De 0 A 4 Faire
@@ -197,7 +197,7 @@ Debut
 
   moyenne <- somme / 5
   Ecrire("Moyenne: ", moyenne, "\\n")
-Fin`,
+FinAlgorithme`,
     input: ['15', '12', '18', '14', '16']
   },
   {
@@ -209,7 +209,7 @@ Fin`,
     code: `Algorithme JourSemaine
 Variables jour : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Entrez un numéro (1-7):\\n")
   Lire(jour)
 
@@ -229,7 +229,7 @@ Debut
     Defaut:
       Ecrire("Jour invalide\\n")
   FinSelon
-Fin`,
+FinAlgorithme`,
     input: ['3']
   },
 
@@ -245,7 +245,7 @@ Variables
   matrice : Tableau[3, 3] de Entier
   i, j, somme : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Remplissage matrice 3x3\\n")
 
   Pour i De 0 A 2 Faire
@@ -270,7 +270,7 @@ Debut
   FinPour
 
   Ecrire("Somme totale: ", somme, "\\n")
-Fin`,
+FinAlgorithme`,
     input: []
   },
   {
@@ -283,20 +283,20 @@ Fin`,
 
 Fonction Carre(n : Entier) : Entier
 Variables resultat : Entier
-Debut
+DebutAlgorithme
   resultat <- n * n
   Retourner resultat
 Fin
 
 Variables x, y : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Entrez un nombre:\\n")
   Lire(x)
   y <- Carre(x)
   Ecrire("Le carré de ", x, " est ", y, "\\n")
   Ecrire("Le carré de 5 est ", Carre(5), "\\n")
-Fin`,
+FinAlgorithme`,
     input: ['7']
   },
   {
@@ -309,7 +309,7 @@ Fin`,
 
 Procedure Saluer(nom : Chaine, fois : Entier)
 Variables i : Entier
-Debut
+DebutAlgorithme
   Pour i De 1 A fois Faire
     Ecrire("Bonjour ", nom, "!\\n")
   FinPour
@@ -319,14 +319,14 @@ Variables
   prenom : Chaine
   nombre : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Votre prénom:\\n")
   Lire(prenom)
   Ecrire("Nombre de salutations:\\n")
   Lire(nombre)
   Saluer(prenom, nombre)
   Ecrire("Terminé!\\n")
-Fin`,
+FinAlgorithme`,
     input: ['Alice', '3']
   },
   {
@@ -340,7 +340,7 @@ Variables
   tab : Tableau[5] de Entier
   i, j, temp : Entier
 
-Debut
+DebutAlgorithme
   Ecrire("Entrez 5 nombres:\\n")
   Pour i De 0 A 4 Faire
     Lire(tab[i])
@@ -361,7 +361,7 @@ Debut
     Ecrire(tab[i], " ")
   FinPour
   Ecrire("\\n")
-Fin`,
+FinAlgorithme`,
     input: ['42', '17', '88', '5', '31']
   },
   {
@@ -382,7 +382,7 @@ Variables
   etudiant1, etudiant2 : Etudiant
   meilleur : Chaine
 
-Debut
+DebutAlgorithme
   // Initialisation du premier étudiant
   Ecrire("Premier étudiant\\n")
   Ecrire("Nom:\\n")
@@ -414,7 +414,7 @@ Debut
   FinSi
 
   Ecrire("\\nMeilleure moyenne: ", meilleur, "\\n")
-Fin`,
+FinAlgorithme`,
     input: ['Alice', '20', '15.5', 'Bob', '22', '14.2']
   }
 ];
