@@ -132,6 +132,10 @@ FinAlgorithme`);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fullscreenRef = useRef<HTMLDivElement>(null);
 
+  // État pour la position de la console
+  type ConsolePosition = 'right' | 'left' | 'top' | 'bottom';
+  const [consolePosition, setConsolePosition] = useState<ConsolePosition>('bottom');
+
   /**
    * Démarre l'exécution asynchrone avec gestion dynamique des entrées
    */
@@ -363,6 +367,82 @@ Fin`);
   }, []);
 
 
+  // Définir les panneaux éditeur et console
+  const editorPanel = (
+    <div className="h-full flex flex-col bg-gray-50">
+      <div className="px-6 py-3 bg-gray-100 border-b border-gray-200">
+        <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <Code size={16} />
+          <span>Éditeur</span>
+        </h2>
+      </div>
+      <div className="flex-1 bg-gray-900 flex overflow-hidden">
+        <div className="flex-1 overflow-auto flex">
+          {/* Numéros de ligne */}
+          <div
+            className="select-none bg-gray-800 text-gray-500 border-r border-gray-700"
+            style={{
+              fontSize: settings.fontSize,
+              lineHeight: 1.5,
+              paddingTop: 20,
+              paddingBottom: 20,
+              paddingLeft: 10,
+              paddingRight: 10,
+              textAlign: 'right',
+              minWidth: '50px'
+            }}
+          >
+            {code.split('\n').map((_, index) => (
+              <div key={index} style={{ height: `${settings.fontSize * 1.5}px` }}>
+                {index + 1}
+              </div>
+            ))}
+          </div>
+
+          {/* Éditeur de code */}
+          <div className="flex-1">
+            <Editor
+              value={code}
+              onValueChange={code => setCode(code)}
+              highlight={highlightSyntax}
+              padding={20}
+              tabSize={settings.tabSize}
+              insertSpaces={true}
+              style={{
+                fontFamily: '"Fira code", "Fira Mono", monospace',
+                fontSize: settings.fontSize,
+                lineHeight: 1.5,
+                backgroundColor: '#111827',
+                color: '#e5e7eb',
+                caretColor: 'white'
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const consolePanel = (
+    <Console
+      output={output}
+      error={error}
+      isRunning={isRunning}
+      executionTime={executionTime}
+      onClear={clearConsole}
+      position={consolePosition}
+      onPositionChange={setConsolePosition}
+    />
+  );
+
+  // Déterminer la configuration du SplitPane selon la position
+  const isHorizontalSplit = consolePosition === 'left' || consolePosition === 'right';
+  const firstPanel = (consolePosition === 'left' || consolePosition === 'top') ? consolePanel : editorPanel;
+  const secondPanel = (consolePosition === 'left' || consolePosition === 'top') ? editorPanel : consolePanel;
+  const defaultSplitSize = isHorizontalSplit
+    ? (isFullscreen ? 85 : 55)
+    : (isFullscreen ? 80 : 60);
+
   return (
     <div ref={fullscreenRef} className="flex flex-col h-full">
       {/* Barre d'actions */}
@@ -460,71 +540,11 @@ Fin`);
       {/* Layout principal avec SplitPane */}
       <div className="flex-1 overflow-hidden">
         <SplitPane
-          key={isFullscreen ? 'fullscreen' : 'normal'}
-          left={
-            <div className="h-full flex flex-col bg-gray-50">
-              <div className="px-6 py-3 bg-gray-100 border-b border-gray-200">
-                <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  <Code size={16} />
-                  <span>Éditeur</span>
-                </h2>
-              </div>
-              <div className="flex-1 bg-gray-900 flex overflow-hidden">
-                <div className="flex-1 overflow-auto flex">
-                  {/* Numéros de ligne */}
-                  <div
-                    className="select-none bg-gray-800 text-gray-500 border-r border-gray-700"
-                    style={{
-                      fontSize: settings.fontSize,
-                      lineHeight: 1.5,
-                      paddingTop: 20,
-                      paddingBottom: 20,
-                      paddingLeft: 10,
-                      paddingRight: 10,
-                      textAlign: 'right',
-                      minWidth: '50px'
-                    }}
-                  >
-                    {code.split('\n').map((_, index) => (
-                      <div key={index} style={{ height: `${settings.fontSize * 1.5}px` }}>
-                        {index + 1}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Éditeur de code */}
-                  <div className="flex-1">
-                    <Editor
-                      value={code}
-                      onValueChange={code => setCode(code)}
-                      highlight={highlightSyntax}
-                      padding={20}
-                      tabSize={settings.tabSize}
-                      insertSpaces={true}
-                      style={{
-                        fontFamily: '"Fira code", "Fira Mono", monospace',
-                        fontSize: settings.fontSize,
-                        lineHeight: 1.5,
-                        backgroundColor: '#111827',
-                        color: '#e5e7eb',
-                        caretColor: 'white'
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          }
-          right={
-            <Console
-              output={output}
-              error={error}
-              isRunning={isRunning}
-              executionTime={executionTime}
-              onClear={clearConsole}
-            />
-          }
-          defaultSplit={isFullscreen ? 85 : 55}
+          key={`${isFullscreen ? 'fullscreen' : 'normal'}-${consolePosition}`}
+          left={firstPanel}
+          right={secondPanel}
+          direction={isHorizontalSplit ? 'horizontal' : 'vertical'}
+          defaultSplit={defaultSplitSize}
           minSize={isFullscreen ? 10 : 30}
         />
       </div>

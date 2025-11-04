@@ -12,17 +12,19 @@ interface SplitPaneProps {
   right: ReactNode;
   defaultSplit?: number; // Position initiale en % (0-100)
   minSize?: number;      // Taille minimale en %
+  direction?: 'horizontal' | 'vertical'; // Direction du split
 }
 
 /**
  * Composant SplitPane
  *
- * @param left - Contenu du panneau gauche (éditeur)
- * @param right - Contenu du panneau droit (console)
+ * @param left - Contenu du premier panneau (éditeur)
+ * @param right - Contenu du second panneau (console)
  * @param defaultSplit - Position initiale du diviseur (défaut: 50%)
  * @param minSize - Taille minimale de chaque panneau (défaut: 20%)
+ * @param direction - Direction du split: 'horizontal' (gauche/droite) ou 'vertical' (haut/bas)
  */
-function SplitPane({ left, right, defaultSplit = 50, minSize = 20 }: SplitPaneProps) {
+function SplitPane({ left, right, defaultSplit = 50, minSize = 20, direction = 'horizontal' }: SplitPaneProps) {
   const [splitPosition, setSplitPosition] = useState(defaultSplit);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,7 +44,14 @@ function SplitPane({ left, right, defaultSplit = 50, minSize = 20 }: SplitPanePr
 
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
-    const newPosition = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+
+    // Calculer la position selon la direction
+    let newPosition: number;
+    if (direction === 'horizontal') {
+      newPosition = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+    } else {
+      newPosition = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+    }
 
     // Limiter la position entre minSize et (100 - minSize)
     const clampedPosition = Math.max(minSize, Math.min(100 - minSize, newPosition));
@@ -63,7 +72,7 @@ function SplitPane({ left, right, defaultSplit = 50, minSize = 20 }: SplitPanePr
       document.addEventListener('mouseup', handleMouseUp);
       // Empêcher la sélection de texte pendant le drag
       document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'col-resize';
+      document.body.style.cursor = direction === 'horizontal' ? 'col-resize' : 'row-resize';
     }
 
     return () => {
@@ -72,13 +81,15 @@ function SplitPane({ left, right, defaultSplit = 50, minSize = 20 }: SplitPanePr
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging]);
+  }, [isDragging, direction]);
+
+  const isHorizontal = direction === 'horizontal';
 
   return (
-    <div ref={containerRef} className="flex h-full w-full overflow-hidden">
-      {/* Panneau gauche */}
+    <div ref={containerRef} className={`flex ${isHorizontal ? 'flex-row' : 'flex-col'} h-full w-full overflow-hidden`}>
+      {/* Premier panneau */}
       <div
-        style={{ width: `${splitPosition}%` }}
+        style={isHorizontal ? { width: `${splitPosition}%` } : { height: `${splitPosition}%` }}
         className="overflow-hidden"
       >
         {left}
@@ -88,16 +99,17 @@ function SplitPane({ left, right, defaultSplit = 50, minSize = 20 }: SplitPanePr
       <div
         onMouseDown={handleMouseDown}
         className={`
-          w-1 bg-gray-300 cursor-col-resize hover:bg-indigo-500
+          ${isHorizontal ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'}
+          bg-gray-300 hover:bg-indigo-500
           transition-colors shrink-0
           ${isDragging ? 'bg-indigo-500' : ''}
         `}
         title="Glisser pour redimensionner"
       />
 
-      {/* Panneau droit */}
+      {/* Second panneau */}
       <div
-        style={{ width: `${100 - splitPosition}%` }}
+        style={isHorizontal ? { width: `${100 - splitPosition}%` } : { height: `${100 - splitPosition}%` }}
         className="overflow-hidden"
       >
         {right}

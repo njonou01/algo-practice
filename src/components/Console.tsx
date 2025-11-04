@@ -6,8 +6,10 @@
  * - Erreurs : Messages d'erreur détaillés
  */
 
-import { useState } from 'react';
-import { ArrowUp, AlertCircle, CheckCircle, Trash2, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, AlertCircle, CheckCircle, Trash2, Loader2 } from 'lucide-react';
+
+type ConsolePosition = 'right' | 'left' | 'top' | 'bottom';
 
 interface ConsoleProps {
   output: string[];
@@ -15,6 +17,8 @@ interface ConsoleProps {
   isRunning: boolean;
   executionTime?: number;
   onClear: () => void;
+  position: ConsolePosition;
+  onPositionChange: (position: ConsolePosition) => void;
 }
 
 type TabType = 'output' | 'errors';
@@ -27,6 +31,8 @@ type TabType = 'output' | 'errors';
  * @param isRunning - Indique si l'algorithme est en cours d'exécution
  * @param executionTime - Temps d'exécution en secondes
  * @param onClear - Callback pour effacer la console
+ * @param position - Position actuelle de la console
+ * @param onPositionChange - Callback pour changer la position
  */
 function Console({
   output,
@@ -34,8 +40,28 @@ function Console({
   isRunning,
   executionTime,
   onClear,
+  position,
+  onPositionChange,
 }: ConsoleProps) {
   const [activeTab, setActiveTab] = useState<TabType>('output');
+  const [isPositionMenuOpen, setIsPositionMenuOpen] = useState(false);
+
+  /**
+   * Ferme le menu de position quand on clique ailleurs
+   */
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isPositionMenuOpen) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.console-position-menu')) {
+          setIsPositionMenuOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isPositionMenuOpen]);
 
   return (
     <div className="flex flex-col h-full bg-white border-l border-gray-200">
@@ -85,15 +111,65 @@ function Console({
           </button>
         </div>
 
-        {/* Bouton Clear */}
-        <button
-          onClick={onClear}
-          className="px-3 py-1 mr-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
-          title="Effacer (Ctrl+L)"
-        >
-          <Trash2 size={16} />
-          <span>Effacer</span>
-        </button>
+        <div className="flex items-center gap-1">
+          {/* Menu de position */}
+          <div className="relative console-position-menu">
+            <button
+              onClick={() => setIsPositionMenuOpen(!isPositionMenuOpen)}
+              className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              title="Position de la console"
+            >
+              {position === 'right' && <ArrowRight size={16} />}
+              {position === 'left' && <ArrowLeft size={16} />}
+              {position === 'top' && <ArrowUp size={16} />}
+              {position === 'bottom' && <ArrowDown size={16} />}
+            </button>
+
+            {/* Menu déroulant */}
+            {isPositionMenuOpen && (
+              <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[120px]">
+                <button
+                  onClick={() => { onPositionChange('right'); setIsPositionMenuOpen(false); }}
+                  className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2 ${position === 'right' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'}`}
+                >
+                  <ArrowRight size={16} />
+                  <span>Droite</span>
+                </button>
+                <button
+                  onClick={() => { onPositionChange('left'); setIsPositionMenuOpen(false); }}
+                  className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2 ${position === 'left' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'}`}
+                >
+                  <ArrowLeft size={16} />
+                  <span>Gauche</span>
+                </button>
+                <button
+                  onClick={() => { onPositionChange('top'); setIsPositionMenuOpen(false); }}
+                  className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2 ${position === 'top' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'}`}
+                >
+                  <ArrowUp size={16} />
+                  <span>Haut</span>
+                </button>
+                <button
+                  onClick={() => { onPositionChange('bottom'); setIsPositionMenuOpen(false); }}
+                  className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2 ${position === 'bottom' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'}`}
+                >
+                  <ArrowDown size={16} />
+                  <span>Bas</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Bouton Clear */}
+          <button
+            onClick={onClear}
+            className="px-3 py-1 mr-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
+            title="Effacer (Ctrl+L)"
+          >
+            <Trash2 size={16} />
+            <span>Effacer</span>
+          </button>
+        </div>
       </div>
 
       {/* Contenu des onglets */}
