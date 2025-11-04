@@ -285,7 +285,7 @@ impl Lexer {
             "finsi" => Token::FinSi,
             "pour" => Token::Pour,
             "de" => Token::De,
-            "a" | "à" => Token::A,
+            "à" => Token::A,
             "faire" => Token::Faire,
             "finpour" => Token::FinPour,
             "tantque" => Token::TantQue,
