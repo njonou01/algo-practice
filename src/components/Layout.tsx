@@ -9,6 +9,7 @@
 
 import { BookMarked, BookOpen, GraduationCap, Settings, Zap } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { useSettings } from "../contexts/SettingsContext";
 
 /**
  * Composant Layout - Structure principale de l'application
@@ -20,6 +21,9 @@ import { Link, Outlet, useLocation } from "react-router-dom";
  */
 function Layout() {
   const location = useLocation();
+  const { settings } = useSettings();
+
+  const isDarkTheme = settings.theme === 'dark';
 
   /**
    * Vérifie si une route est actuellement active
@@ -30,9 +34,9 @@ function Layout() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className={`flex flex-col h-screen ${isDarkTheme ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* En-tête avec navigation */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className={`border-b shadow-sm ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-8 py-4">
           <div className="flex items-center justify-between">
             {/* Logo et titre */}
@@ -41,8 +45,8 @@ function Layout() {
                 AG.
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">AlgoGénie</h1>
-                <p className="text-xs text-gray-500">Interpréteur d'algorithmes en français</p>
+                <h1 className={`text-xl font-bold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>AlgoGénie</h1>
+                <p className={`text-xs ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>Interpréteur d'algorithmes en français</p>
               </div>
             </div>
 
@@ -51,8 +55,8 @@ function Layout() {
               <Link
                 to="/"
                 className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/")
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? (isDarkTheme ? "bg-indigo-900 text-indigo-300" : "bg-indigo-50 text-indigo-700")
+                  : (isDarkTheme ? "text-gray-300 hover:bg-gray-700 hover:text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900")
                   }`}
               >
                 <span className="flex items-center gap-2">
@@ -63,8 +67,8 @@ function Layout() {
               <Link
                 to="/examples"
                 className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/examples")
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? (isDarkTheme ? "bg-indigo-900 text-indigo-300" : "bg-indigo-50 text-indigo-700")
+                  : (isDarkTheme ? "text-gray-300 hover:bg-gray-700 hover:text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900")
                   }`}
               >
                 <span className="flex items-center gap-2">
@@ -75,8 +79,8 @@ function Layout() {
               <Link
                 to="/guide"
                 className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/guide")
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? (isDarkTheme ? "bg-indigo-900 text-indigo-300" : "bg-indigo-50 text-indigo-700")
+                  : (isDarkTheme ? "text-gray-300 hover:bg-gray-700 hover:text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900")
                   }`}
               >
                 <span className="flex items-center gap-2">
@@ -87,8 +91,8 @@ function Layout() {
               <Link
                 to="/cours"
                 className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/cours")
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? (isDarkTheme ? "bg-indigo-900 text-indigo-300" : "bg-indigo-50 text-indigo-700")
+                  : (isDarkTheme ? "text-gray-300 hover:bg-gray-700 hover:text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900")
                   }`}
               >
                 <span className="flex items-center gap-2">
@@ -99,8 +103,8 @@ function Layout() {
               <Link
                 to="/settings"
                 className={`px-4 py-2 text-sm font-medium transition-all relative ${isActive("/settings")
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? (isDarkTheme ? "bg-indigo-900 text-indigo-300" : "bg-indigo-50 text-indigo-700")
+                  : (isDarkTheme ? "text-gray-300 hover:bg-gray-700 hover:text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900")
                   }`}
               >
                 <span className="flex items-center gap-2">

@@ -8,15 +8,16 @@
 import { useNavigate } from 'react-router-dom';
 import { examples, AlgorithmExample, getExamplesByDifficulty } from '../utils/examples';
 import { useState } from 'react';
+import { useSettings } from '../contexts/SettingsContext';
 
 /**
  * Composant de carte pour afficher un exemple d'algorithme
  */
-function ExampleCard({ example, onUse }: { example: AlgorithmExample; onUse: (example: AlgorithmExample) => void }) {
+function ExampleCard({ example, onUse, isDarkTheme }: { example: AlgorithmExample; onUse: (example: AlgorithmExample) => void; isDarkTheme: boolean }) {
   const difficultyColors = {
-    beginner: 'bg-green-100 text-green-800 border-green-300',
-    intermediate: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    advanced: 'bg-red-100 text-red-800 border-red-300',
+    beginner: isDarkTheme ? 'bg-green-900 text-green-200 border-green-700' : 'bg-green-100 text-green-800 border-green-300',
+    intermediate: isDarkTheme ? 'bg-yellow-900 text-yellow-200 border-yellow-700' : 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    advanced: isDarkTheme ? 'bg-red-900 text-red-200 border-red-700' : 'bg-red-100 text-red-800 border-red-300',
   };
 
   const difficultyLabels = {
@@ -26,23 +27,23 @@ function ExampleCard({ example, onUse }: { example: AlgorithmExample; onUse: (ex
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white overflow-hidden">
+    <div className={`border rounded-lg hover:shadow-md transition-shadow overflow-hidden ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
-          <h3 className="font-semibold text-gray-900 text-lg">{example.name}</h3>
+          <h3 className={`font-semibold text-lg ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>{example.name}</h3>
           <span className={`px-3 py-1 text-xs font-medium rounded-full border ${difficultyColors[example.difficulty]}`}>
             {difficultyLabels[example.difficulty]}
           </span>
         </div>
 
-        <p className="text-sm text-gray-600 mb-3">{example.description}</p>
+        <p className={`text-sm mb-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-600'}`}>{example.description}</p>
 
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+          <span className={`text-xs px-2 py-1 rounded ${isDarkTheme ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`}>
             📁 {example.category}
           </span>
           {example.input.length > 0 && (
-            <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+            <span className={`text-xs px-2 py-1 rounded ${isDarkTheme ? 'bg-blue-900 text-blue-200' : 'bg-blue-50 text-blue-700'}`}>
               📥 {example.input.length} entrée{example.input.length > 1 ? 's' : ''}
             </span>
           )}
@@ -64,6 +65,8 @@ function ExampleCard({ example, onUse }: { example: AlgorithmExample; onUse: (ex
  */
 function Examples() {
   const navigate = useNavigate();
+  const { settings } = useSettings();
+  const isDarkTheme = settings.theme === 'dark';
   const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
 
   /**
@@ -90,14 +93,14 @@ function Examples() {
   const advancedCount = getExamplesByDifficulty('advanced').length;
 
   return (
-    <div className="flex-1 bg-gray-50 overflow-auto">
+    <div className={`flex-1 overflow-auto ${isDarkTheme ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="max-w-7xl mx-auto p-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">
+          <h1 className={`text-3xl font-bold mb-3 ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
             📚 Bibliothèque d'Exemples
           </h1>
-          <p className="text-gray-600">
+          <p className={isDarkTheme ? 'text-gray-300' : 'text-gray-600'}>
             Explorez notre collection d'algorithmes d'exemple pour apprendre et vous inspirer.
             Cliquez sur un exemple pour le charger directement dans l'éditeur.
           </p>
@@ -105,13 +108,13 @@ function Examples() {
 
         {/* Filtres */}
         <div className="mb-6 flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-gray-700">Filtrer par niveau:</span>
+          <span className={`text-sm font-medium ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Filtrer par niveau:</span>
           <button
             onClick={() => setSelectedDifficulty('all')}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               selectedDifficulty === 'all'
                 ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                : isDarkTheme ? 'bg-gray-800 text-gray-300 border border-gray-600 hover:bg-gray-700' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
             }`}
           >
             Tous ({examples.length})
@@ -121,7 +124,7 @@ function Examples() {
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               selectedDifficulty === 'beginner'
                 ? 'bg-green-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                : isDarkTheme ? 'bg-gray-800 text-gray-300 border border-gray-600 hover:bg-gray-700' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
             }`}
           >
             🟢 Débutant ({beginnerCount})
@@ -131,7 +134,7 @@ function Examples() {
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               selectedDifficulty === 'intermediate'
                 ? 'bg-yellow-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                : isDarkTheme ? 'bg-gray-800 text-gray-300 border border-gray-600 hover:bg-gray-700' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
             }`}
           >
             🟡 Intermédiaire ({intermediateCount})
@@ -141,7 +144,7 @@ function Examples() {
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               selectedDifficulty === 'advanced'
                 ? 'bg-red-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                : isDarkTheme ? 'bg-gray-800 text-gray-300 border border-gray-600 hover:bg-gray-700' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
             }`}
           >
             🔴 Avancé ({advancedCount})
@@ -155,6 +158,7 @@ function Examples() {
               key={example.id}
               example={example}
               onUse={handleUseExample}
+              isDarkTheme={isDarkTheme}
             />
           ))}
         </div>
@@ -162,7 +166,7 @@ function Examples() {
         {/* Message si aucun résultat */}
         {filteredExamples.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">Aucun exemple trouvé pour ce niveau</p>
+            <p className={isDarkTheme ? 'text-gray-400' : 'text-gray-500'}>Aucun exemple trouvé pour ce niveau</p>
           </div>
         )}
       </div>
