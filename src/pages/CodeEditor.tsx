@@ -9,15 +9,20 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
+import { Editor as MonacoEditor } from '@monaco-editor/react';
 import { Code, File, FolderOpen, Loader2, Maximize2, Minimize2, Play, Save, Wand2 } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
-import Editor from 'react-simple-code-editor';
 import Console from '../components/Console';
 import InputModal from '../components/InputModal';
 import SplitPane from '../components/SplitPane';
 import { useSettings } from '../contexts/SettingsContext';
-import { useHighlightSyntax } from '../hooks/useHighlightSyntax';
 import { formatCode } from '../utils/codeFormatter';
+import {
+  algorithmLanguageDefinition,
+  setupCompletionProvider,
+  createDynamicTheme,
+  getMonacoOptions
+} from '../config/monacoConfig';
 
 /**
  * Interface pour le résultat d'exécution d'un algorithme
@@ -48,8 +53,9 @@ function CodeEditor() {
   // Récupérer les paramètres
   const { settings } = useSettings();
 
-  // Hook de coloration syntaxique
-  const highlightSyntax = useHighlightSyntax(settings);
+  // Référence à l'éditeur Monaco
+  const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
 
   // État du code de l'algorithme (avec exemple par défaut)
   const [code, setCode] = useState(`Algorithme DemonstrationAlgoGenie
@@ -136,6 +142,35 @@ FinAlgorithme`);
   // État pour la position de la console
   type ConsolePosition = 'right' | 'left' | 'top' | 'bottom';
   const [consolePosition, setConsolePosition] = useState<ConsolePosition>('bottom');
+
+  /**
+   * Mettre à jour le thème Monaco quand les settings changent
+   */
+  useEffect(() => {
+    if (monacoRef.current && editorRef.current) {
+      // Recréer les thèmes avec les nouvelles couleurs
+      const darkTheme = createDynamicTheme(settings, 'algorithm-dark');
+      const lightTheme = createDynamicTheme(settings, 'algorithm-light');
+      monacoRef.current.editor.defineTheme('algorithm-dark', darkTheme);
+      monacoRef.current.editor.defineTheme('algorithm-light', lightTheme);
+
+      // Appliquer le thème actuel
+      const themeName = settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light';
+      monacoRef.current.editor.setTheme(themeName);
+    }
+  }, [settings.theme, settings.colorKeywords, settings.colorTypes, settings.colorNumbers, settings.colorStrings, settings.colorComments, settings.colorBooleans, settings.colorArrow]);
+
+  /**
+   * Mettre à jour les options de l'éditeur Monaco quand les settings changent
+   */
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.updateOptions({
+        fontSize: settings.fontSize,
+        tabSize: settings.tabSize,
+      });
+    }
+  }, [settings.fontSize, settings.tabSize]);
 
   /**
    * Démarre l'exécution asynchrone avec gestion dynamique des entrées
@@ -268,8 +303,28 @@ Fin`);
    * Formate le code automatiquement
    */
   const handleFormat = () => {
-    const formatted = formatCode(code, settings.tabSize);
-    setCode(formatted);
+    if (editorRef.current) {
+      const formatted = formatCode(code, settings.tabSize);
+      const editor = editorRef.current;
+
+      // Sauvegarder la position du curseur
+      const position = editor.getPosition();
+
+      // Appliquer le formatage
+      editor.setValue(formatted);
+
+      // Restaurer la position du curseur (approximativement)
+      if (position) {
+        editor.setPosition(position);
+      }
+
+      // Focus sur l'éditeur
+      editor.focus();
+    } else {
+      // Fallback si Monaco n'est pas encore monté
+      const formatted = formatCode(code, settings.tabSize);
+      setCode(formatted);
+    }
   };
 
   /**
@@ -380,25 +435,8 @@ Fin`);
   }, []);
 
 
-  // Définir les couleurs selon le thème
+  // Définir le thème
   const isDarkTheme = settings.theme === 'dark';
-  const editorColors = isDarkTheme
-    ? {
-        background: '#111827',
-        lineNumberBg: '#1f2937',
-        lineNumberText: '#6b7280',
-        lineNumberBorder: '#374151',
-        text: '#e5e7eb',
-        caret: 'white'
-      }
-    : {
-        background: '#ffffff',
-        lineNumberBg: '#f9fafb',
-        lineNumberText: '#9ca3af',
-        lineNumberBorder: '#e5e7eb',
-        text: '#1f2937',
-        caret: '#1f2937'
-      };
 
   // Classes CSS pour les boutons selon le thème
   const buttonClasses = isDarkTheme
@@ -423,51 +461,37 @@ Fin`);
           <span>Éditeur</span>
         </h2>
       </div>
-      <div className="flex-1 flex overflow-hidden" style={{ backgroundColor: editorColors.background }}>
-        <div className="flex-1 overflow-auto flex">
-          {/* Numéros de ligne */}
-          <div
-            className="select-none border-r"
-            style={{
-              backgroundColor: editorColors.lineNumberBg,
-              color: editorColors.lineNumberText,
-              borderColor: editorColors.lineNumberBorder,
-              fontSize: settings.fontSize,
-              lineHeight: 1.5,
-              paddingTop: 20,
-              paddingBottom: 20,
-              paddingLeft: 10,
-              paddingRight: 10,
-              textAlign: 'right',
-              minWidth: '50px'
-            }}
-          >
-            {code.split('\n').map((_, index) => (
-              <div key={index} style={{ height: `${settings.fontSize * 1.5}px` }}>
-                {index + 1}
-              </div>
-            ))}
-          </div>
-
-          {/* Éditeur de code */}
-          <div className="flex-1">
-            <Editor
+      <div className="flex-1 flex overflow-hidden">
+        {/* Éditeur de code Monaco */}
+        <div className="flex-1">
+            <MonacoEditor
+              height="100%"
+              defaultLanguage="algorithmique"
               value={code}
-              onValueChange={code => setCode(code)}
-              highlight={highlightSyntax}
-              padding={20}
-              tabSize={settings.tabSize}
-              insertSpaces={true}
-              style={{
-                fontFamily: '"Fira code", "Fira Mono", monospace',
-                fontSize: settings.fontSize,
-                lineHeight: 1.5,
-                backgroundColor: editorColors.background,
-                color: editorColors.text,
-                caretColor: editorColors.caret
+              onChange={(value) => setCode(value || '')}
+              theme={settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light'}
+              options={getMonacoOptions(settings)}
+              onMount={(editor, monaco) => {
+                editorRef.current = editor;
+                monacoRef.current = monaco;
+
+                // Enregistrer le langage algorithmique
+                monaco.languages.register({ id: 'algorithmique' });
+                monaco.languages.setMonarchTokensProvider('algorithmique', algorithmLanguageDefinition);
+
+                // Créer et enregistrer les thèmes dynamiques avec les couleurs des settings
+                const darkTheme = createDynamicTheme(settings, 'algorithm-dark');
+                const lightTheme = createDynamicTheme(settings, 'algorithm-light');
+                monaco.editor.defineTheme('algorithm-dark', darkTheme);
+                monaco.editor.defineTheme('algorithm-light', lightTheme);
+
+                // Configurer l'autocomplétion
+                setupCompletionProvider(monaco);
+
+                // Focus sur l'éditeur
+                editor.focus();
               }}
             />
-          </div>
         </div>
       </div>
     </div>

@@ -2,9 +2,10 @@
  * Hook personnalisé pour la coloration syntaxique du langage algorithmique
  *
  * Transforme le code source en JSX avec coloration syntaxique
+ * OPTIMISÉ pour de meilleures performances
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { AppSettings } from '../contexts/SettingsContext';
 
 /**
@@ -14,6 +15,33 @@ import type { AppSettings } from '../contexts/SettingsContext';
  * @returns Fonction de coloration syntaxique
  */
 export function useHighlightSyntax(settings: AppSettings) {
+  // Créer une regex optimisée pour tous les mots-clés
+  const keywordPattern = useMemo(() => {
+    const keywords = [
+      'Algorithme', 'Variables', 'Constantes', 'Debut', 'Fin',
+      'DebutAlgorithme', 'FinAlgorithme',
+      'DebutFonction', 'FinFonction',
+      'DebutProcedure', 'FinProcedure',
+      'Si', 'Alors', 'Sinon', 'FinSi',
+      'Pour', 'De', 'À', 'Faire', 'FinPour',
+      'TantQue', 'FinTantQue', 'Repeter', 'Jusqua',
+      'Selon', 'Cas', 'Defaut', 'FinSelon',
+      'Fonction', 'Procedure', 'Retourner',
+      'Structure', 'Enregistrement', 'FinStructure', 'FinEnregistrement',
+      'Lire', 'Ecrire', 'ET', 'OU', 'NON'
+    ];
+    return new RegExp(`\\b(${keywords.join('|')})\\b`, 'gi');
+  }, []);
+
+  const typePattern = useMemo(() => {
+    const types = ['Entier', 'Reel', 'Chaine', 'Caractere', 'Booleen', 'Tableau'];
+    return new RegExp(`\\b(${types.join('|')})\\b`, 'gi');
+  }, []);
+
+  const valuePattern = useMemo(() => {
+    return /\b(Vrai|Faux)\b/gi;
+  }, []);
+
   const highlightSyntax = useCallback((code: string) => {
     // Si la coloration est désactivée, retourner le code tel quel
     if (!settings.syntaxHighlighting) {
@@ -223,7 +251,7 @@ export function useHighlightSyntax(settings: AppSettings) {
         })}
       </span>
     );
-  }, [settings]);
+  }, [settings, keywordPattern, typePattern, valuePattern]);
 
   return highlightSyntax;
 }
