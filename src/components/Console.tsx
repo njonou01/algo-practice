@@ -6,10 +6,16 @@
  * - Erreurs : Messages d'erreur détaillés
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, AlertCircle, CheckCircle, Trash2, Loader2 } from 'lucide-react';
 
 type ConsolePosition = 'right' | 'left' | 'top' | 'bottom';
+
+interface InputRequest {
+  prompt: string;
+  variables: string[];
+  has_prompt: boolean;
+}
 
 interface ConsoleProps {
   output: string[];
@@ -20,6 +26,10 @@ interface ConsoleProps {
   position: ConsolePosition;
   onPositionChange: (position: ConsolePosition) => void;
   theme: 'dark' | 'light';
+  // Nouvelles props pour le mode console
+  inputRequest: InputRequest | null;
+  onInputSubmit: (values: string[]) => void;
+  onInputCancel: () => void;
 }
 
 type TabType = 'output' | 'errors';
@@ -44,11 +54,74 @@ function Console({
   position,
   onPositionChange,
   theme,
+  inputRequest,
+  onInputSubmit,
+  onInputCancel,
 }: ConsoleProps) {
   const [activeTab, setActiveTab] = useState<TabType>('output');
   const [isPositionMenuOpen, setIsPositionMenuOpen] = useState(false);
 
+  // États pour le mode console
+  const [inputValues, setInputValues] = useState<string[]>([]);
+  const [currentInputIndex, setCurrentInputIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const isDarkTheme = theme === 'dark';
+
+  // Initialiser les valeurs d'entrée quand une requête arrive
+  useEffect(() => {
+    if (inputRequest) {
+      setInputValues(new Array(inputRequest.variables.length).fill(''));
+      setCurrentInputIndex(0);
+      // Focus automatique sur le champ d'entrée et scroll vers le bas
+      setTimeout(() => {
+        inputRef.current?.focus();
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  }, [inputRequest]);
+
+  /**
+   * Gère la soumission d'une valeur dans la console
+   */
+  const handleInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!inputRequest || !inputValues[currentInputIndex]?.trim()) return;
+
+    // Passer à la variable suivante
+    if (currentInputIndex < inputRequest.variables.length - 1) {
+      setCurrentInputIndex(currentInputIndex + 1);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    } else {
+      // Toutes les valeurs ont été entrées, soumettre TOUTES au backend
+      onInputSubmit(inputValues);
+      setInputValues([]);
+      setCurrentInputIndex(0);
+    }
+  };
+
+  /**
+   * Gère l'annulation de l'entrée (Échap)
+   */
+  const handleInputCancel = () => {
+    onInputCancel();
+    setInputValues([]);
+    setCurrentInputIndex(0);
+  };
+
+  /**
+   * Gère les touches spéciales dans le champ d'entrée
+   */
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      handleInputCancel();
+    }
+  };
 
   /**
    * Ferme le menu de position quand on clique ailleurs
@@ -177,10 +250,10 @@ function Console({
       </div>
 
       {/* Contenu des onglets */}
-      <div className="flex-1 overflow-auto p-4">
+      <div ref={scrollRef} className="flex-1 overflow-auto p-4">
         {/* Onglet Sortie */}
         {activeTab === 'output' && (
-          <div className="space-y-2">
+          <div className="space-y-0">
             {isRunning && (
               <div className={`flex items-center gap-2 px-3 py-2 ${isDarkTheme ? 'text-blue-400 bg-blue-900/50' : 'text-blue-600 bg-blue-50'}`}>
                 <Loader2 className="animate-spin" size={16} />
@@ -188,7 +261,7 @@ function Console({
               </div>
             )}
 
-            {output.length === 0 && !isRunning && (
+            {output.length === 0 && !isRunning && !inputRequest && (
               <div className={`text-center py-8 ${isDarkTheme ? 'text-gray-500' : 'text-gray-400'}`}>
                 <p className="text-sm">La sortie de l'algorithme apparaîtra ici</p>
                 <p className="text-xs mt-2">Appuyez sur Ctrl+Enter pour exécuter</p>
@@ -198,13 +271,42 @@ function Console({
             {output.map((line, index) => (
               <div
                 key={index}
-                className={`font-mono text-sm px-3 py-1 border-l-2 ${isDarkTheme ? 'text-gray-200 bg-gray-700 border-gray-600' : 'text-gray-800 bg-gray-50 border-gray-300'}`}
+                className={`font-mono text-sm px-2 leading-relaxed ${isDarkTheme ? 'text-gray-200' : 'text-gray-800'}`}
+                style={{ paddingTop: '0.125rem', paddingBottom: '0.125rem' }}
               >
                 {line}
               </div>
             ))}
 
-            {!isRunning && output.length > 0 && executionTime !== undefined && (
+            {/* Champ d'entrée intégré dans le flux (comme un vrai terminal) */}
+            {inputRequest && (
+              <div className={`font-mono text-sm px-2 py-0.5 border-l-2 animate-pulse ${isDarkTheme ? 'text-gray-200 bg-gray-700 border-indigo-500' : 'text-gray-800 bg-gray-50 border-indigo-500'}`}>
+                <form onSubmit={handleInputSubmit} className="flex items-center gap-2">
+                  <span className={`animate-pulse ${isDarkTheme ? 'text-indigo-400' : 'text-indigo-600'}`}>{'>'}</span>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputValues[currentInputIndex] || ''}
+                    onChange={(e) => {
+                      const newValues = [...inputValues];
+                      newValues[currentInputIndex] = e.target.value;
+                      setInputValues(newValues);
+                    }}
+                    onKeyDown={handleInputKeyDown}
+                    className={`flex-1 bg-transparent border-none outline-none font-mono ${isDarkTheme ? 'text-gray-200 placeholder-gray-500' : 'text-gray-800 placeholder-gray-400'}`}
+                    placeholder={inputRequest.variables[currentInputIndex]}
+                    autoComplete="off"
+                  />
+                </form>
+                {inputRequest.variables.length > 1 && (
+                  <div className={`text-xs mt-1 ${isDarkTheme ? 'text-gray-500' : 'text-gray-500'}`}>
+                    ({currentInputIndex + 1}/{inputRequest.variables.length}) • Entrée pour valider • Échap pour annuler
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!isRunning && output.length > 0 && executionTime !== undefined && !inputRequest && (
               <div className={`mt-4 flex items-center gap-2 px-3 py-2 border-l-4 ${isDarkTheme ? 'text-green-400 bg-green-900/50 border-green-500' : 'text-green-600 bg-green-50 border-green-500'}`}>
                 <CheckCircle size={16} />
                 <span className="text-sm font-medium">Exécuté avec succès en {executionTime.toFixed(3)}s</span>

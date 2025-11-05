@@ -36,9 +36,12 @@ function Settings() {
   const handleUpdateLocalSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setLocalSettings(prev => ({ ...prev, [key]: value }));
 
-    // Appliquer immédiatement le changement de thème
+    // Appliquer immédiatement certains changements
     if (key === 'theme') {
       updateSetting('theme', value as 'dark' | 'light');
+    }
+    if (key === 'inputMode') {
+      updateSetting('inputMode', value as 'modal' | 'console');
     }
   };
 
@@ -409,6 +412,53 @@ function Settings() {
                       }`}
                   />
                 </button>
+              </div>
+
+              {/* Mode d'entrée */}
+              <div>
+                <label className={`block text-sm font-medium mb-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Mode d'entrée (Lire/Écrire)
+                </label>
+                <p className={`text-xs mb-3 ${isDarkTheme ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Choisissez comment afficher les entrées utilisateur
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => handleUpdateLocalSetting('inputMode', 'modal')}
+                    className={`
+                      p-4 border-2 rounded-lg transition-all
+                      ${localSettings.inputMode === 'modal'
+                        ? (isDarkTheme ? 'border-indigo-500 bg-indigo-900 shadow-md' : 'border-indigo-600 bg-indigo-50 shadow-md')
+                        : (isDarkTheme ? 'border-gray-600 bg-gray-700 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400 bg-white')
+                      }
+                    `}
+                  >
+                    <div className="text-left">
+                      <div className={`font-semibold ${localSettings.inputMode === 'modal' ? (isDarkTheme ? 'text-indigo-300' : 'text-indigo-900') : (isDarkTheme ? 'text-gray-300' : 'text-gray-900')}`}>
+                        Fenêtre popup
+                      </div>
+                      <div className={`text-xs mt-1 ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>Afficher dans une modal</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleUpdateLocalSetting('inputMode', 'console')}
+                    className={`
+                      p-4 border-2 rounded-lg transition-all
+                      ${localSettings.inputMode === 'console'
+                        ? (isDarkTheme ? 'border-indigo-500 bg-indigo-900 shadow-md' : 'border-indigo-600 bg-indigo-50 shadow-md')
+                        : (isDarkTheme ? 'border-gray-600 bg-gray-700 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400 bg-white')
+                      }
+                    `}
+                  >
+                    <div className="text-left">
+                      <div className={`font-semibold ${localSettings.inputMode === 'console' ? (isDarkTheme ? 'text-indigo-300' : 'text-indigo-900') : (isDarkTheme ? 'text-gray-300' : 'text-gray-900')}`}>
+                        Dans la console
+                      </div>
+                      <div className={`text-xs mt-1 ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>Comme un vrai langage</div>
+                    </div>
+                  </button>
+                </div>
               </div>
             </div>
           </section>

@@ -43,6 +43,8 @@ pub struct InputRequest {
     pub variables: Vec<String>,
     /// true si un Ecrire() précède le Lire()
     pub has_prompt: bool,
+    /// Output accumulé jusqu'à ce point (pour affichage en temps réel)
+    pub current_output: Vec<String>,
 }
 
 /// État de l'exécution partagé entre les threads
@@ -145,12 +147,13 @@ async fn execute_algorithm_async(
         };
 
         // Phase 3 : Interprétation et exécution avec gestion dynamique des entrées
-        let mut interpreter = Interpreter::new_with_callback(Box::new(move |prompt, variables, has_prompt| {
-            // Émettre une requête d'entrée vers le frontend
+        let mut interpreter = Interpreter::new_with_callback(Box::new(move |prompt, variables, has_prompt, current_output| {
+            // Émettre une requête d'entrée vers le frontend avec l'output actuel
             let request = InputRequest {
                 prompt: prompt.to_string(),
                 variables: variables.to_vec(),
                 has_prompt,
+                current_output: current_output.to_vec(),
             };
 
             if app_for_callback.emit("input-request", request).is_err() {

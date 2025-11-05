@@ -103,7 +103,7 @@ impl Value {
 /// Type de callback pour demander des entrées de manière dynamique
 ///
 /// Arguments: (prompt, variables, has_prompt) -> Result<Vec<String>, String>
-type InputCallback = Box<dyn FnMut(&str, &[String], bool) -> Result<Vec<String>, String> + Send>;
+type InputCallback = Box<dyn FnMut(&str, &[String], bool, &[String]) -> Result<Vec<String>, String> + Send>;
 
 /// Interpréteur d'algorithmes
 ///
@@ -510,8 +510,8 @@ impl Interpreter {
                     // Réinitialiser le texte écrit après utilisation
                     self.last_written_text.clear();
 
-                    // Appeler le callback pour obtenir les valeurs
-                    callback(&prompt, &var_names, has_prompt)?
+                    // Appeler le callback pour obtenir les valeurs, en passant aussi l'output actuel
+                    callback(&prompt, &var_names, has_prompt, &self.output)?
                 } else {
                     // Mode synchrone : utiliser les valeurs pré-fournies
                     let mut result = Vec::new();

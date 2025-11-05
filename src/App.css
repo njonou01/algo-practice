@@ -7,6 +7,14 @@
 :root {
   --font-display: "Inter", sans-serif;
   --font-body: "Open Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* Appliquer JetBrains Mono à tous les éléments monospace */
+.font-mono,
+code,
+pre {
+  font-family: "JetBrains Mono", monospace !important;
 }
 
 

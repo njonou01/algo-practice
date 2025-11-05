@@ -35,6 +35,7 @@ interface InputRequest {
   prompt: string;        // Texte du dernier Ecrire()
   variables: string[];   // Noms des variables à lire
   has_prompt: boolean;   // true si un Ecrire() précède
+  current_output: string[];  // Output accumulé jusqu'à ce point
 }
 
 /**
@@ -156,10 +157,11 @@ FinAlgorithme`);
   };
 
   /**
-   * Gère la soumission d'une modal d'entrée
+   * Gère la soumission des entrées (modal ou console)
    */
-  const handleModalSubmit = async (values: string[]) => {
+  const handleInputSubmit = async (values: string[]) => {
     setIsModalOpen(false);
+    setCurrentInputRequest(null);
 
     try {
       // Envoyer les valeurs au backend
@@ -173,8 +175,9 @@ FinAlgorithme`);
   /**
    * Annule l'exécution
    */
-  const handleModalCancel = () => {
+  const handleInputCancel = () => {
     setIsModalOpen(false);
+    setCurrentInputRequest(null);
     setIsRunning(false);
     setError("Exécution annulée par l'utilisateur");
   };
@@ -336,8 +339,18 @@ Fin`);
     // Écouter les requêtes d'entrée
     const unlistenInputRequest = listen<InputRequest>('input-request', (event) => {
       console.log('Requête d\'entrée reçue:', event.payload);
-      setCurrentInputRequest(event.payload);
-      setIsModalOpen(true);
+      const request = event.payload;
+
+      // Afficher l'output accumulé jusqu'à ce point
+      setOutput(request.current_output);
+
+      setCurrentInputRequest(request);
+
+      // Ouvrir la modal seulement si le mode est 'modal'
+      if (settings.inputMode === 'modal') {
+        setIsModalOpen(true);
+      }
+      // En mode 'console', le champ d'entrée s'affichera directement dans la console
     });
 
     // Écouter les résultats d'exécution
@@ -470,6 +483,9 @@ Fin`);
       position={consolePosition}
       onPositionChange={setConsolePosition}
       theme={settings.theme}
+      inputRequest={settings.inputMode === 'console' ? currentInputRequest : null}
+      onInputSubmit={handleInputSubmit}
+      onInputCancel={handleInputCancel}
     />
   );
 
@@ -588,14 +604,14 @@ Fin`);
         />
       </div>
 
-      {/* Modal pour les entrées interactives */}
-      {isModalOpen && currentInputRequest && (
+      {/* Modal pour les entrées interactives (mode modal uniquement) */}
+      {isModalOpen && currentInputRequest && settings.inputMode === 'modal' && (
         <InputModal
           isOpen={isModalOpen}
           prompt={currentInputRequest.prompt || "Entrez les valeurs"}
           variables={currentInputRequest.variables}
-          onSubmit={handleModalSubmit}
-          onCancel={handleModalCancel}
+          onSubmit={handleInputSubmit}
+          onCancel={handleInputCancel}
         />
       )}
     </div>
