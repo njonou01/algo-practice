@@ -311,6 +311,7 @@ impl Lexer {
             "et" => Token::Et,
             "ou" => Token::Ou,
             "non" => Token::Non,
+            "mod" => Token::Modulo,
             "lire" => Token::Lire,
             "ecrire" | "écrire" | "afficher" => Token::Ecrire,
             "vrai" => Token::Vrai,

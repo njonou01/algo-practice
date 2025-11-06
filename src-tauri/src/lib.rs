@@ -9,6 +9,7 @@
 pub mod lexer;
 pub mod parser;
 pub mod interpreter;
+pub mod native_functions;
 
 use lexer::Lexer;
 use parser::Parser;
@@ -45,6 +46,15 @@ pub struct InputRequest {
     pub has_prompt: bool,
     /// Output accumulé jusqu'à ce point (pour affichage en temps réel)
     pub current_output: Vec<String>,
+}
+
+/// Mise à jour de l'output envoyée au frontend
+///
+/// Structure émise via événement après chaque Ecrire() pour affichage en temps réel
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct OutputUpdate {
+    /// Output actuel complet (toutes les lignes)
+    pub output: Vec<String>,
 }
 
 /// État de l'exécution partagé entre les threads
@@ -146,26 +156,43 @@ async fn execute_algorithm_async(
             }
         };
 
-        // Phase 3 : Interprétation et exécution avec gestion dynamique des entrées
-        let mut interpreter = Interpreter::new_with_callback(Box::new(move |prompt, variables, has_prompt, current_output| {
-            // Émettre une requête d'entrée vers le frontend avec l'output actuel
-            let request = InputRequest {
-                prompt: prompt.to_string(),
-                variables: variables.to_vec(),
-                has_prompt,
-                current_output: current_output.to_vec(),
-            };
+        // Phase 3 : Interprétation et exécution avec callbacks pour entrées et sorties
+        let app_for_output = app_for_callback.clone();
 
-            if app_for_callback.emit("input-request", request).is_err() {
-                return Err("Impossible d'émettre la requête d'entrée".to_string());
-            }
+        let mut interpreter = Interpreter::new_with_callbacks(
+            // Input callback
+            Box::new(move |prompt, variables, has_prompt, current_output| {
+                // Émettre une requête d'entrée vers le frontend avec l'output actuel
+                let request = InputRequest {
+                    prompt: prompt.to_string(),
+                    variables: variables.to_vec(),
+                    has_prompt,
+                    current_output: current_output.to_vec(),
+                };
 
-            // Attendre la réponse du frontend
-            match rx.recv() {
-                Ok(values) => Ok(values),
-                Err(_) => Err("Timeout ou canal fermé en attente des valeurs".to_string()),
-            }
-        }));
+                if app_for_callback.emit("input-request", request).is_err() {
+                    return Err("Impossible d'émettre la requête d'entrée".to_string());
+                }
+
+                // Attendre la réponse du frontend
+                match rx.recv() {
+                    Ok(values) => Ok(values),
+                    Err(_) => Err("Timeout ou canal fermé en attente des valeurs".to_string()),
+                }
+            }),
+            // Output callback - envoi en temps réel après chaque Ecrire()
+            Box::new(move |output| {
+                let update = OutputUpdate {
+                    output: output.to_vec(),
+                };
+
+                if app_for_output.emit("output-update", update).is_err() {
+                    return Err("Impossible d'émettre la mise à jour de l'output".to_string());
+                }
+
+                Ok(())
+            })
+        );
 
         match interpreter.run(algorithm) {
             Ok(output) => {

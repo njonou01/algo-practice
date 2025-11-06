@@ -21,6 +21,8 @@ pub enum Value {
     Reel(f64),
     /// Chaîne de caractères
     Chaine(String),
+    /// Caractère unique
+    Caractere(char),
     /// Valeur booléenne
     Booleen(bool),
     /// Tableau (stocké linéairement, même pour 2D)
@@ -38,6 +40,7 @@ impl Value {
             Value::Entier(n) => n.to_string(),
             Value::Reel(f) => f.to_string(),
             Value::Chaine(s) => s.clone(),
+            Value::Caractere(c) => c.to_string(),
             Value::Booleen(b) => if *b { "Vrai" } else { "Faux" }.to_string(),
             Value::Tableau(arr) => {
                 let elements: Vec<String> = arr.iter().map(|v| v.to_string()).collect();
@@ -105,6 +108,11 @@ impl Value {
 /// Arguments: (prompt, variables, has_prompt) -> Result<Vec<String>, String>
 type InputCallback = Box<dyn FnMut(&str, &[String], bool, &[String]) -> Result<Vec<String>, String> + Send>;
 
+/// Callback pour envoyer l'output en temps réel au frontend
+///
+/// Arguments: (output_lines) -> Result<(), String>
+type OutputCallback = Box<dyn FnMut(&[String]) -> Result<(), String> + Send>;
+
 /// Interpréteur d'algorithmes
 ///
 /// Maintient l'état d'exécution : variables, tableaux, fonctions, entrées/sorties.
@@ -130,6 +138,8 @@ pub struct Interpreter {
     input_index: usize,
     /// Callback pour demander des entrées (mode asynchrone)
     input_callback: Option<InputCallback>,
+    /// Callback pour envoyer l'output en temps réel
+    output_callback: Option<OutputCallback>,
     /// Dernière ligne écrite (pour associer aux Lire())
     last_written_text: String,
     /// Valeur de retour d'une fonction
@@ -164,6 +174,7 @@ impl Interpreter {
             input_values,
             input_index: 0,
             input_callback: None,
+            output_callback: None,
             last_written_text: String::new(),
             return_value: None,
             has_returned: false,
@@ -191,6 +202,36 @@ impl Interpreter {
             input_values: Vec::new(),
             input_index: 0,
             input_callback: Some(callback),
+            output_callback: None,
+            last_written_text: String::new(),
+            return_value: None,
+            has_returned: false,
+            current_statement_line: 1,
+            start_time: Instant::now(),
+            max_execution_time: Duration::from_secs(30),
+            operation_count: 0,
+        }
+    }
+
+    /// Crée un nouvel interpréteur avec callbacks pour entrées et sorties (mode asynchrone interactif)
+    ///
+    /// # Arguments
+    ///
+    /// * `input_callback` - Fonction appelée quand l'interpréteur a besoin d'entrées
+    /// * `output_callback` - Fonction appelée après chaque Ecrire() pour envoyer l'output en temps réel
+    pub fn new_with_callbacks(input_callback: InputCallback, output_callback: OutputCallback) -> Self {
+        Interpreter {
+            struct_defs: HashMap::new(),
+            functions: HashMap::new(),
+            variables: HashMap::new(),
+            constants: HashSet::new(),
+            array_dimensions: HashMap::new(),
+            output: Vec::new(),
+            current_line: String::new(),
+            input_values: Vec::new(),
+            input_index: 0,
+            input_callback: Some(input_callback),
+            output_callback: Some(output_callback),
             last_written_text: String::new(),
             return_value: None,
             has_returned: false,
@@ -592,6 +633,16 @@ impl Interpreter {
                     }
                 }
 
+                // Envoyer l'output en temps réel si callback présent
+                if let Some(ref mut callback) = self.output_callback {
+                    // Créer un snapshot de l'output actuel (lignes complètes + ligne courante)
+                    let mut current_output = self.output.clone();
+                    if !self.current_line.is_empty() {
+                        current_output.push(self.current_line.clone());
+                    }
+                    callback(&current_output)?;
+                }
+
                 Ok(())
             }
             Statement::If {
@@ -855,15 +906,24 @@ impl Interpreter {
                     Ok(Value::Reel(left_f / right_f))
                 }
             },
-            BinaryOperator::Modulo => match (left, right) {
-                (Value::Entier(a), Value::Entier(b)) => {
-                    if *b == 0 {
-                        Err("Modulo par zéro".to_string())
-                    } else {
-                        Ok(Value::Entier(a % b))
-                    }
+            BinaryOperator::Modulo => {
+                // Convertir les valeurs en entiers si nécessaire
+                let a = match left {
+                    Value::Entier(n) => *n,
+                    Value::Reel(f) => *f as i64,
+                    _ => return Err(format!("Modulo invalide: l'opérande gauche doit être un nombre, reçu {:?}", left)),
+                };
+                let b = match right {
+                    Value::Entier(n) => *n,
+                    Value::Reel(f) => *f as i64,
+                    _ => return Err(format!("Modulo invalide: l'opérande droit doit être un nombre, reçu {:?}", right)),
+                };
+
+                if b == 0 {
+                    Err("Modulo par zéro".to_string())
+                } else {
+                    Ok(Value::Entier(a % b))
                 }
-                _ => Err(format!("Modulo invalide entre {:?} et {:?}", left, right)),
             },
             BinaryOperator::Equal => {
                 Ok(Value::Booleen(self.compare_values(left, right)? == std::cmp::Ordering::Equal))
@@ -979,7 +1039,13 @@ impl Interpreter {
     /// * `Ok(None)` - Procédure sans retour
     /// * `Err(String)` - Erreur d'appel ou d'exécution
     fn call_function(&mut self, func_name: &str, arguments: Vec<Value>) -> Result<Option<Value>, String> {
-        // Récupérer la définition de la fonction
+        // Vérifier d'abord si c'est une fonction native
+        if crate::native_functions::is_native(func_name) {
+            let result = crate::native_functions::call(func_name, arguments)?;
+            return Ok(Some(result));
+        }
+
+        // Sinon, récupérer la définition de la fonction utilisateur
         let function = self.functions.get(func_name)
             .ok_or_else(|| format!("Fonction '{}' non définie", func_name))?
             .clone(); // Clone pour éviter les conflits d'emprunt
