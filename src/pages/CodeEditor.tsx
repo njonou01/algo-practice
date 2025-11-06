@@ -10,11 +10,12 @@ import { listen } from "@tauri-apps/api/event";
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { Editor as MonacoEditor } from '@monaco-editor/react';
-import { Code, File, FolderOpen, Loader2, Maximize2, Minimize2, Play, Save, Wand2 } from 'lucide-react';
+import { File, FolderOpen, Loader2, Maximize2, Minimize2, Play, Save, Wand2 } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
 import Console from '../components/Console';
 import InputModal from '../components/InputModal';
 import SplitPane from '../components/SplitPane';
+import FileTabs from '../components/FileTabs';
 import { useSettings } from '../contexts/SettingsContext';
 import { useEditor } from '../contexts/EditorContext';
 import { formatCode } from '../utils/codeFormatter';
@@ -60,7 +61,23 @@ interface OutputUpdate {
 function CodeEditor() {
   // Récupérer les paramètres et l'état de l'éditeur depuis les contextes
   const { settings } = useSettings();
-  const { code, setCode, isMonacoReady, setMonacoReady } = useEditor();
+  const {
+    files,
+    activeFileId,
+    createNewFile,
+    openFile,
+    closeFile,
+    setActiveFile,
+    renameFile,
+    updateFileCode,
+    markFileSaved,
+    isMonacoReady,
+    setMonacoReady,
+    getActiveFile,
+  } = useEditor();
+
+  // Fichier actif
+  const activeFile = getActiveFile();
 
   // Référence à l'éditeur Monaco
   const editorRef = useRef<any>(null);
@@ -121,14 +138,16 @@ function CodeEditor() {
    * Démarre l'exécution asynchrone avec gestion dynamique des entrées
    */
   const executeAlgorithm = async () => {
+    if (!activeFile) return;
+
     setOutput([]);
     setError(null);
     setIsRunning(true);
 
     try {
-      // Lancer l'exécution asynchrone
+      // Lancer l'exécution asynchrone avec le code du fichier actif
       await invoke("execute_algorithm_async", {
-        code: code,
+        code: activeFile.code,
       });
     } catch (err) {
       setError(`Erreur lors du lancement: ${err}`);
@@ -163,14 +182,24 @@ function CodeEditor() {
   };
 
   /**
-   * Sauvegarde le code actuel dans un fichier .algo
+   * Sauvegarde le fichier actif dans un fichier .algo
    * Extrait automatiquement le nom de l'algorithme pour proposer un nom de fichier par défaut
    */
-  const saveFile = async () => {
+  const saveCurrentFile = async () => {
+    if (!activeFile) return;
+
     try {
+      // Si le fichier a déjà un chemin, sauvegarder directement
+      if (activeFile.path) {
+        await writeTextFile(activeFile.path, activeFile.code);
+        markFileSaved(activeFile.id, activeFile.path);
+        return;
+      }
+
+      // Sinon, demander où sauvegarder (Save As)
       // Extraire le nom de l'algorithme du code (après "Algorithme")
-      const algoNameMatch = code.match(/Algorithme\s+(\w+)/i);
-      const defaultName = algoNameMatch ? algoNameMatch[1] : 'MonAlgorithme';
+      const algoNameMatch = activeFile.code.match(/Algorithme\s+(\w+)/i);
+      const defaultName = algoNameMatch ? algoNameMatch[1] : activeFile.name.replace('.algo', '');
 
       // Ouvrir le dialog de sauvegarde
       const filePath = await save({
@@ -183,7 +212,8 @@ function CodeEditor() {
 
       // Écrire le fichier si un chemin a été sélectionné
       if (filePath) {
-        await writeTextFile(filePath, code);
+        await writeTextFile(filePath, activeFile.code);
+        markFileSaved(activeFile.id, filePath);
       }
     } catch (err) {
       setError(`Erreur lors de la sauvegarde: ${err}`);
@@ -191,10 +221,10 @@ function CodeEditor() {
   };
 
   /**
-   * Ouvre un fichier .algo et charge son contenu dans l'éditeur
+   * Ouvre un fichier .algo dans un nouvel onglet
    * Réinitialise les sorties et erreurs précédentes
    */
-  const openFile = async () => {
+  const openFileDialog = async () => {
     try {
       // Ouvrir le dialog de sélection de fichier
       const selected = await open({
@@ -208,7 +238,8 @@ function CodeEditor() {
       // Charger le contenu du fichier si un fichier a été sélectionné
       if (selected && typeof selected === 'string') {
         const fileContent = await readTextFile(selected);
-        setCode(fileContent);
+        const fileName = selected.split('/').pop() || selected.split('\\').pop() || 'fichier.algo';
+        openFile(selected, fileContent, fileName);
         setOutput([]);
         setError(null);
       }
@@ -218,20 +249,10 @@ function CodeEditor() {
   };
 
   /**
-   * Crée un nouvel algorithme vide
+   * Crée un nouvel algorithme vide dans un nouvel onglet
    */
-  const newFile = () => {
-    setCode(`Algorithme NouvelAlgorithme
-Constantes
-  // Ajoutez vos constantes ici (ex: PI <- 3.14159)
-
-Variables
-  // Ajoutez vos variables ici (ex: x, y : Entier)
-
-Debut
-  // Votre code ici
-
-Fin`);
+  const handleNewFile = () => {
+    createNewFile();
     setOutput([]);
     setError(null);
   };
@@ -245,11 +266,13 @@ Fin`);
   };
 
   /**
-   * Formate le code automatiquement
+   * Formate le code du fichier actif automatiquement
    */
   const handleFormat = () => {
+    if (!activeFile) return;
+
     if (editorRef.current) {
-      const formatted = formatCode(code, settings.tabSize);
+      const formatted = formatCode(activeFile.code, settings.tabSize);
       const editor = editorRef.current;
 
       // Sauvegarder la position du curseur
@@ -257,6 +280,9 @@ Fin`);
 
       // Appliquer le formatage
       editor.setValue(formatted);
+
+      // Mettre à jour le fichier avec le code formaté
+      updateFileCode(activeFile.id, formatted);
 
       // Restaurer la position du curseur (approximativement)
       if (position) {
@@ -267,8 +293,8 @@ Fin`);
       editor.focus();
     } else {
       // Fallback si Monaco n'est pas encore monté
-      const formatted = formatCode(code, settings.tabSize);
-      setCode(formatted);
+      const formatted = formatCode(activeFile.code, settings.tabSize);
+      updateFileCode(activeFile.id, formatted);
     }
   };
 
@@ -311,6 +337,25 @@ Fin`);
   }, []);
 
   /**
+   * Gestion des raccourcis clavier
+   */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S (ou Cmd+S sur Mac) pour sauvegarder
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveCurrentFile();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeFile]); // Dépendre de activeFile pour avoir la bonne closure dans saveCurrentFile
+
+  /**
    * Charge un exemple depuis localStorage si disponible
    * (utilisé quand l'utilisateur clique sur "Utiliser cet exemple" depuis la page Exemples)
    */
@@ -319,7 +364,9 @@ Fin`);
     if (loadedExample) {
       try {
         const example = JSON.parse(loadedExample);
-        setCode(example.code);
+        // Créer un nouveau fichier avec le code de l'exemple
+        const fileName = example.title ? `${example.title}.algo` : 'Exemple.algo';
+        openFile('', example.code, fileName);
         setOutput([]);
         setError(null);
         // Nettoyer le localStorage après chargement
@@ -485,30 +532,115 @@ Fin`);
   // Définir les panneaux éditeur et console
   const editorPanel = (
     <div className={`h-full flex flex-col ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-50'}`}>
-      <div className={`px-6 py-3 border-b ${isDarkTheme ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-200'}`}>
-        <h2 className={`text-sm font-semibold flex items-center gap-2 ${isDarkTheme ? 'text-gray-200' : 'text-gray-900'}`}>
-          <Code size={16} />
-          <span>Éditeur</span>
-        </h2>
-      </div>
+      {/* Barre d'onglets des fichiers */}
+      {files.length > 0 && (
+        <FileTabs
+          files={files}
+          activeFileId={activeFileId}
+          onTabClick={setActiveFile}
+          onTabClose={closeFile}
+          onTabRename={renameFile}
+          theme={settings.theme}
+        />
+      )}
+
+      {/* Zone de l'éditeur */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Skeleton loader (affiché pendant le chargement) */}
-        {isMonacoLoading && (
+        {isMonacoLoading && activeFile && (
           <div className="absolute inset-0 z-10">
             {editorSkeleton}
           </div>
         )}
 
+        {/* Écran d'accueil quand aucun fichier n'est ouvert */}
+        {!activeFile && (
+          <div className={`flex-1 flex items-center justify-center ${isDarkTheme ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <div className="text-center max-w-2xl px-8">
+              {/* Icône */}
+              <div className={`mb-6 ${isDarkTheme ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                <svg className="w-24 h-24 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+
+              {/* Titre */}
+              <h2 className={`text-2xl font-bold mb-3 ${isDarkTheme ? 'text-gray-100' : 'text-gray-900'}`}>
+                Commencez à coder
+              </h2>
+
+              {/* Description */}
+              <p className={`text-base mb-8 ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>
+                Créez un nouveau fichier ou ouvrez un algorithme existant pour commencer
+              </p>
+
+              {/* Boutons d'action */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={handleNewFile}
+                  className={`
+                    px-6 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2
+                    ${isDarkTheme
+                      ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'
+                    }
+                  `}
+                >
+                  <File size={20} />
+                  <span>Nouveau fichier</span>
+                </button>
+
+                <button
+                  onClick={openFileDialog}
+                  className={`
+                    px-6 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2
+                    ${isDarkTheme
+                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                    }
+                  `}
+                >
+                  <FolderOpen size={20} />
+                  <span>Ouvrir un fichier</span>
+                </button>
+              </div>
+
+              {/* Raccourcis clavier */}
+              <div className={`mt-8 pt-8 border-t ${isDarkTheme ? 'border-gray-800' : 'border-gray-200'}`}>
+                <p className={`text-sm mb-3 ${isDarkTheme ? 'text-gray-500' : 'text-gray-500'}`}>
+                  Raccourcis clavier
+                </p>
+                <div className="flex flex-wrap gap-4 justify-center text-sm">
+                  <div className={`flex items-center gap-2 ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <kbd className={`px-2 py-1 rounded ${isDarkTheme ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>Ctrl</kbd>
+                    <span>+</span>
+                    <kbd className={`px-2 py-1 rounded ${isDarkTheme ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>N</kbd>
+                    <span>Nouveau</span>
+                  </div>
+                  <div className={`flex items-center gap-2 ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <kbd className={`px-2 py-1 rounded ${isDarkTheme ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>Ctrl</kbd>
+                    <span>+</span>
+                    <kbd className={`px-2 py-1 rounded ${isDarkTheme ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>O</kbd>
+                    <span>Ouvrir</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Éditeur de code Monaco */}
-        <div className={`flex-1 ${isMonacoLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+        {activeFile && (
+          <div className={`flex-1 ${isMonacoLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
             <MonacoEditor
               height="100%"
               defaultLanguage="algorithmique"
-              value={code}
-              onChange={(value) => setCode(value || '')}
+              value={activeFile.code}
+              onChange={(value) => updateFileCode(activeFile.id, value || '')}
               theme={settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light'}
               options={getMonacoOptions(settings)}
               loading={<div></div>}
+              key={activeFile.id}
               onMount={(editor, monaco) => {
                 editorRef.current = editor;
                 monacoRef.current = monaco;
@@ -533,7 +665,8 @@ Fin`);
                 setTimeout(() => setMonacoReady(true), 100);
               }}
             />
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -570,9 +703,9 @@ Fin`);
           <div className="flex items-center gap-2">
             <button
               onClick={executeAlgorithm}
-              disabled={isRunning}
+              disabled={isRunning || !activeFile}
               className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white disabled:text-gray-500 text-sm font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
-              title="Exécuter (Ctrl+Enter)"
+              title={isRunning ? "Une exécution est déjà en cours..." : !activeFile ? "Aucun fichier ouvert" : "Exécuter (Ctrl+Enter)"}
             >
               {isRunning ? (
                 <>
@@ -590,7 +723,7 @@ Fin`);
             <div className={`h-6 w-px ${dividerClasses}`}></div>
 
             <button
-              onClick={newFile}
+              onClick={handleNewFile}
               className={`px-4 py-2 text-sm transition-colors flex items-center gap-2 ${buttonClasses}`}
               title="Nouveau (Ctrl+N)"
             >
@@ -599,7 +732,7 @@ Fin`);
             </button>
 
             <button
-              onClick={openFile}
+              onClick={openFileDialog}
               className={`px-4 py-2 text-sm transition-colors flex items-center gap-2 ${buttonClasses}`}
               title="Ouvrir (Ctrl+O)"
             >
@@ -608,7 +741,7 @@ Fin`);
             </button>
 
             <button
-              onClick={saveFile}
+              onClick={saveCurrentFile}
               className={`px-4 py-2 text-sm transition-colors flex items-center gap-2 ${buttonClasses}`}
               title="Sauvegarder (Ctrl+S)"
             >

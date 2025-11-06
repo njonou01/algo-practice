@@ -15,7 +15,7 @@ export const algorithmLanguageDefinition: any = {
     'DebutFonction', 'FinFonction',
     'DebutProcedure', 'FinProcedure',
     'Si', 'Alors', 'Sinon', 'FinSi',
-    'Pour', 'De', 'À', 'a', 'Faire', 'FinPour',
+    'Pour', 'De', 'À', 'Faire', 'FinPour',
     'TantQue', 'FinTantQue', 'Repeter', 'Jusqua',
     'Selon', 'Cas', 'Defaut', 'FinSelon',
     'Fonction', 'Procedure', 'Retourner',
