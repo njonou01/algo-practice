@@ -477,11 +477,11 @@ Fin`);
   useEffect(() => {
     let startTime = performance.now();
 
-    // Écouter les mises à jour d'output en temps réel
+    // Écouter les mises à jour d'output en temps réel (delta streaming)
     const unlistenOutputUpdate = listen<OutputUpdate>('output-update', (event) => {
-      console.log('Mise à jour output:', event.payload);
-      // Afficher l'output en temps réel après chaque Ecrire()
-      setOutput(event.payload.output);
+      console.log('Mise à jour output (delta):', event.payload);
+      // Append les nouvelles lignes (delta streaming)
+      setOutput(prev => [...prev, ...event.payload.output]);
     });
 
     // Écouter les requêtes d'entrée

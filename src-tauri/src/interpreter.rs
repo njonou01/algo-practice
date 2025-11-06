@@ -140,6 +140,12 @@ pub struct Interpreter {
     input_callback: Option<InputCallback>,
     /// Callback pour envoyer l'output en temps réel
     output_callback: Option<OutputCallback>,
+    /// Index de la dernière ligne envoyée au frontend (pour delta streaming)
+    last_sent_index: usize,
+    /// Timestamp du dernier flush d'output (pour batching)
+    last_flush_time: Instant,
+    /// Intervalle minimum entre deux flush (batching)
+    flush_interval: Duration,
     /// Dernière ligne écrite (pour associer aux Lire())
     last_written_text: String,
     /// Valeur de retour d'une fonction
@@ -175,6 +181,9 @@ impl Interpreter {
             input_index: 0,
             input_callback: None,
             output_callback: None,
+            last_sent_index: 0,
+            last_flush_time: Instant::now(),
+            flush_interval: Duration::from_millis(100),
             last_written_text: String::new(),
             return_value: None,
             has_returned: false,
@@ -203,6 +212,9 @@ impl Interpreter {
             input_index: 0,
             input_callback: Some(callback),
             output_callback: None,
+            last_sent_index: 0,
+            last_flush_time: Instant::now(),
+            flush_interval: Duration::from_millis(100),
             last_written_text: String::new(),
             return_value: None,
             has_returned: false,
@@ -232,6 +244,9 @@ impl Interpreter {
             input_index: 0,
             input_callback: Some(input_callback),
             output_callback: Some(output_callback),
+            last_sent_index: 0,
+            last_flush_time: Instant::now(),
+            flush_interval: Duration::from_millis(100),
             last_written_text: String::new(),
             return_value: None,
             has_returned: false,
@@ -378,9 +393,13 @@ impl Interpreter {
             self.output.push(self.current_line.clone());
         }
 
-        // Envoyer l'output final si callback présent
+        // Envoyer l'output final (delta) si callback présent
         if let Some(ref mut callback) = self.output_callback {
-            callback(&self.output)?;
+            // Envoyer seulement les lignes non encore envoyées
+            let remaining_lines = &self.output[self.last_sent_index..];
+            if !remaining_lines.is_empty() {
+                callback(remaining_lines)?;
+            }
         }
 
         Ok(self.output.clone())
@@ -628,24 +647,46 @@ impl Interpreter {
                 self.last_written_text = clean_text.trim().to_string();
 
                 // Traiter le texte caractère par caractère pour gérer \n
+                let mut has_newline = false;
                 for ch in text.chars() {
                     if ch == '\n' {
                         // Nouvelle ligne : flush le buffer actuel
                         self.output.push(self.current_line.clone());
                         self.current_line.clear();
+                        has_newline = true;
                     } else {
                         self.current_line.push(ch);
                     }
                 }
 
-                // Envoyer l'output en temps réel si callback présent
+                // Envoyer l'output en temps réel si callback présent (avec batching + delta streaming)
                 if let Some(ref mut callback) = self.output_callback {
-                    // Créer un snapshot de l'output actuel (lignes complètes + ligne courante)
-                    let mut current_output = self.output.clone();
-                    if !self.current_line.is_empty() {
-                        current_output.push(self.current_line.clone());
+                    let now = Instant::now();
+                    let elapsed = now.duration_since(self.last_flush_time);
+
+                    // Flush si :
+                    // 1. Il y a un \n (ligne complète) OU
+                    // 2. Le temps écoulé dépasse l'intervalle de batching
+                    let should_flush = has_newline || elapsed >= self.flush_interval;
+
+                    if should_flush {
+                        // Delta streaming : envoyer seulement les nouvelles lignes
+                        let new_lines = &self.output[self.last_sent_index..];
+
+                        if !new_lines.is_empty() || !self.current_line.is_empty() {
+                            let mut delta = new_lines.to_vec();
+                            // Ajouter la ligne courante si non vide
+                            if !self.current_line.is_empty() {
+                                delta.push(self.current_line.clone());
+                            }
+
+                            callback(&delta)?;
+
+                            // Mettre à jour l'index et le timestamp
+                            self.last_sent_index = self.output.len();
+                            self.last_flush_time = now;
+                        }
                     }
-                    callback(&current_output)?;
                 }
 
                 Ok(())
