@@ -4,70 +4,9 @@
  * Formate automatiquement le code avec indentation correcte
  */
 
-interface FormatRule {
-  // Mots-clés qui augmentent l'indentation sur la ligne suivante
-  increaseIndent: string[];
-  // Mots-clés qui diminuent l'indentation sur la ligne courante
-  decreaseIndent: string[];
-  // Mots-clés qui diminuent puis augmentent (comme Sinon)
-  decreaseThenIncrease: string[];
-  // Mots-clés de début de structure (pas d'indentation, niveau 0)
-  structureStart: string[];
-  // Mots-clés au niveau 0 qui augmentent l'indentation suivante
-  zeroLevelIncrease: string[];
-}
-
-const formatRules: FormatRule = {
-  increaseIndent: [
-    'Debut', 'Alors', 'Sinon', 'Faire',
-    'Fonction', 'Procedure',
-    'Enregistrement', 'Structure'
-  ],
-  decreaseIndent: [
-    'FinSi', 'FinPour', 'FinTantQue', 'FinSelon',
-    'FinFonction', 'FinProcedure',
-    'FinEnregistrement', 'FinStructure'
-  ],
-  decreaseThenIncrease: [
-    'Sinon', 'SinonSi'
-  ],
-  structureStart: [
-    'Algorithme', 'Algo'
-  ],
-  zeroLevelIncrease: [
-    'Variables', 'Constantes', 'Debut', 'Fin'
-  ]
-};
-
-/**
- * Vérifie si une ligne commence par un mot-clé donné
- */
-function startsWithKeyword(line: string, keywords: string[]): boolean {
-  const trimmed = line.trim();
-  return keywords.some(keyword => {
-    const regex = new RegExp(`^${keyword}\\b`, 'i');
-    return regex.test(trimmed);
-  });
-}
-
-/**
- * Type de bloc pour la pile d'indentation
- */
-type BlockType =
-  | 'algorithm'      // DebutAlgorithme...FinAlgorithme
-  | 'struct'         // Enregistrement...FinEnregistrement
-  | 'function'       // DebutFonction...FinFonction
-  | 'procedure'      // DebutProcedure...FinProcedure
-  | 'variables'      // Variables/Constantes
-  | 'if'             // Si...Alors...FinSi
-  | 'else'           // Sinon
-  | 'loop'           // Pour/TantQue...Faire...FinPour/FinTantQue
-  | 'match';         // Selon...FinSelon
-
-interface Block {
-  type: BlockType;
-  indent: number;  // Niveau d'indentation du bloc
-}
+// Note: Les types et fonctions suivants sont conservés pour référence future
+// mais ne sont pas utilisés dans l'implémentation actuelle du formateur.
+// L'algorithme de formatage a été simplifié pour être plus robuste.
 
 /**
  * Formate le code algorithmique avec indentation correcte
@@ -78,9 +17,56 @@ interface Block {
  * @returns Le code formaté
  */
 export function formatCode(code: string, tabSize: number = 2): string {
-  const lines = code.split('\n');
+  // Première passe : fusionner tous les appels de fonctions multi-lignes
+  let processedCode = code;
+
+  // Fusionner tous les appels de fonctions sur une seule ligne
+  // Recherche : NomFonction( ... contenu sur plusieurs lignes ... )
+  let inFunctionCall = false;
+  let functionBuffer = '';
+  let parenDepth = 0;
+  let result = '';
+
+  for (let i = 0; i < processedCode.length; i++) {
+    const char = processedCode[i];
+    const nextChars = processedCode.substring(i, i + 10);
+
+    // Détecter le début d'un appel de fonction (identifiant suivi de '(')
+    if (!inFunctionCall && /^[a-zA-Zéèêàâùûôîïç_][a-zA-Zéèêàâùûôîïç0-9_]*\s*\(/.test(nextChars)) {
+      inFunctionCall = true;
+      parenDepth = 0;
+      functionBuffer = '';
+    }
+
+    if (inFunctionCall) {
+      if (char === '(') parenDepth++;
+      if (char === ')') parenDepth--;
+
+      // Remplacer les retours à la ligne par des espaces, mais garder le contenu
+      if (char === '\n' || char === '\r') {
+        functionBuffer += ' ';
+      } else {
+        functionBuffer += char;
+      }
+
+      // Fin de l'appel de fonction
+      if (parenDepth === 0 && char === ')') {
+        // Nettoyer les espaces multiples
+        const cleaned = functionBuffer.replace(/\s+/g, ' ').trim();
+        result += cleaned;
+        inFunctionCall = false;
+        functionBuffer = '';
+      }
+    } else {
+      result += char;
+    }
+  }
+
+  processedCode = result;
+
+  const lines = processedCode.split('\n');
   const formattedLines: string[] = [];
-  const blockStack: Block[] = []; // Pile des blocs ouverts
+  let currentIndent = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -92,95 +78,86 @@ export function formatCode(code: string, tabSize: number = 2): string {
       continue;
     }
 
-    // Ignorer les commentaires seuls (au niveau actuel)
+    // Gestion des commentaires (conserver indentation actuelle)
     if (trimmed.startsWith('//')) {
-      formattedLines.push(' '.repeat(blockStack.length * tabSize) + trimmed);
+      formattedLines.push(' '.repeat(currentIndent * tabSize) + trimmed);
       continue;
     }
 
-    // === GESTION DES FERMETURES (pop de la pile) ===
-
-    if (trimmed.match(/^FinAlgorithme\b/i)) {
-      if (blockStack.length > 0) blockStack.pop();
-    }
-    else if (trimmed.match(/^FinFonction\b/i)) {
-      if (blockStack.length > 0) blockStack.pop();
-    }
-    else if (trimmed.match(/^FinProcedure\b/i)) {
-      if (blockStack.length > 0) blockStack.pop();
-    }
-    else if (trimmed.match(/^Fin(Si|Pour|TantQue|Selon|Enregistrement|Structure)\b/i)) {
-      if (blockStack.length > 0) blockStack.pop();
-    }
-    // Sinon/SinonSi : ferme le bloc 'if'
-    else if (trimmed.match(/^(Sinon|SinonSi)\b/i)) {
-      if (blockStack.length > 0 && blockStack[blockStack.length - 1].type === 'if') {
-        blockStack.pop();
-      }
+    // === Niveau 0 : structures principales et leurs fermetures ===
+    if (trimmed.match(/^(Algorithme|Algo|Enregistrement|Structure|Fonction|Procedure|Constantes|Variables|DebutAlgorithme|DebutFonction|DebutProcedure|FinAlgorithme|FinFonction|FinProcedure|FinEnregistrement|FinStructure)\b/i)) {
+      currentIndent = 0;
     }
 
-    // === CALCULER INDENTATION ===
-    let indentLevel = blockStack.length;
-
-    // Forcer niveau 0 pour structures principales au niveau global
-    if (trimmed.match(/^(Algorithme|Algo)\b/i)) {
-      blockStack.length = 0; // Reset complet
-      indentLevel = 0;
+    // === FERMETURES : revenir au niveau du début correspondant ===
+    // FinSi doit être au même niveau que Si
+    else if (trimmed.match(/^(FinSi|FinPour|FinTantQue|FinSelon)\b/i)) {
+      currentIndent = Math.max(0, currentIndent - 1);
     }
-    // Niveau 0 si on est au niveau global (pile vide ou juste algorithm)
-    else if (blockStack.length === 0 || (blockStack.length === 1 && blockStack[0].type === 'algorithm')) {
-      if (trimmed.match(/^(Enregistrement|Structure|Fonction|Procedure|Variables|Constantes|DebutAlgorithme)\b/i)) {
-        indentLevel = 0;
-      }
+    // Sinon : même niveau que Si
+    else if (trimmed.match(/^Sinon\b/i)) {
+      currentIndent = Math.max(0, currentIndent - 1);
+    }
+    // Jusqua : même niveau que Repeter
+    else if (trimmed.match(/^Jusqua\b/i)) {
+      currentIndent = Math.max(0, currentIndent - 1);
+    }
+    // Cas/Defaut : revenir au niveau de Selon (diminuer d'abord si on était dans un cas précédent)
+    else if (trimmed.match(/^(Cas|Defaut)\b/i)) {
+      // Si on était dans un cas précédent (currentIndent > niveau du Selon)
+      // On revient au niveau du Selon
+      currentIndent = Math.max(0, currentIndent - 1);
     }
 
     // === AFFICHAGE ===
-    const indent = ' '.repeat(indentLevel * tabSize);
+    const indent = ' '.repeat(currentIndent * tabSize);
     formattedLines.push(indent + trimmed);
 
-    // === GESTION DES OUVERTURES (push sur la pile) ===
+    // === OUVERTURES : augmenter l'indentation APRÈS affichage pour le contenu ===
 
-    if (trimmed.match(/^(Algorithme|Algo)\b/i)) {
-      blockStack.push({ type: 'algorithm', indent: 0 });
+    // Structures de niveau 0 qui indent leur contenu
+    if (trimmed.match(/^(Enregistrement|Structure|Constantes|Variables)\b/i)) {
+      currentIndent += 1;
     }
-    else if (trimmed.match(/^(Enregistrement|Structure)\b/i)) {
-      blockStack.push({ type: 'struct', indent: indentLevel });
+    // Fonction/Procedure : indent leur contenu
+    else if (trimmed.match(/^(Fonction|Procedure)\b/i)) {
+      currentIndent += 1;
     }
-    else if (trimmed.match(/^Fonction\b/i)) {
-      blockStack.push({ type: 'function', indent: indentLevel });
-    }
-    else if (trimmed.match(/^Procedure\b/i)) {
-      blockStack.push({ type: 'procedure', indent: indentLevel });
-    }
-    else if (trimmed.match(/^(Variables|Constantes)\b/i)) {
-      blockStack.push({ type: 'variables', indent: indentLevel });
-    }
+    // DebutAlgorithme/DebutFonction/DebutProcedure : indent le corps
     else if (trimmed.match(/^(DebutAlgorithme|DebutFonction|DebutProcedure)\b/i)) {
-      // Ferme le bloc variables si présent
-      if (blockStack.length > 0 && blockStack[blockStack.length - 1].type === 'variables') {
-        blockStack.pop();
-      }
-      // On n'ajoute rien à la pile, le bloc est déjà sur la pile (algorithm, function ou procedure)
+      currentIndent += 1;
     }
-    else if (trimmed.match(/^Si\b/i) || trimmed.match(/^Alors\b/i)) {
-      // Si...Alors
-      const hasIfAtThisLevel = blockStack.some(b => b.type === 'if' && b.indent === indentLevel);
-      if (!hasIfAtThisLevel) {
-        blockStack.push({ type: 'if', indent: indentLevel });
-      }
+    // Si...Alors : indent le contenu
+    else if (trimmed.match(/^Si\b.*Alors\b/i)) {
+      currentIndent += 1;
     }
-    else if (trimmed.match(/^(Sinon|SinonSi)\b/i)) {
-      blockStack.push({ type: 'else', indent: indentLevel });
+    // Sinon : indent le contenu (déjà décrémenté avant, on ré-incrémente)
+    else if (trimmed.match(/^Sinon\b/i)) {
+      currentIndent += 1;
     }
-    else if (trimmed.match(/^(Pour|TantQue)\b/i) || trimmed.match(/^Faire\b/i)) {
-      // Pour...Faire ou TantQue...Faire
-      const hasLoopAtThisLevel = blockStack.some(b => b.type === 'loop' && b.indent === indentLevel);
-      if (!hasLoopAtThisLevel) {
-        blockStack.push({ type: 'loop', indent: indentLevel });
-      }
+    // Pour...Faire : indent le contenu
+    else if (trimmed.match(/^Pour\b.*Faire\b/i)) {
+      currentIndent += 1;
     }
+    // TantQue...Faire : indent le contenu
+    else if (trimmed.match(/^TantQue\b.*Faire\b/i)) {
+      currentIndent += 1;
+    }
+    // Repeter : indent le contenu
+    else if (trimmed.match(/^Repeter\b/i)) {
+      currentIndent += 1;
+    }
+    // Selon : indent le contenu
     else if (trimmed.match(/^Selon\b/i)) {
-      blockStack.push({ type: 'match', indent: indentLevel });
+      currentIndent += 1;
+    }
+    // Cas : indent le contenu du cas
+    else if (trimmed.match(/^Cas\b.*:/)) {
+      currentIndent += 1;
+    }
+    // Defaut : indent le contenu
+    else if (trimmed.match(/^Defaut\b.*:/i)) {
+      currentIndent += 1;
     }
   }
 
