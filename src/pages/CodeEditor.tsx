@@ -229,6 +229,9 @@ FinAlgorithme
   type ConsolePosition = 'right' | 'left' | 'top' | 'bottom';
   const [consolePosition, setConsolePosition] = useState<ConsolePosition>('bottom');
 
+  // État pour le chargement de Monaco
+  const [isMonacoLoading, setIsMonacoLoading] = useState(true);
+
   /**
    * Mettre à jour le thème Monaco quand les settings changent
    */
@@ -546,6 +549,83 @@ Fin`);
   const hintTextClasses = isDarkTheme ? 'text-gray-400' : 'text-gray-500';
   const hintCodeClasses = isDarkTheme ? 'bg-gray-700 text-gray-300' : 'bg-gray-100';
 
+  // Skeleton loader pour Monaco - ressemble à du vrai code
+  const editorSkeleton = (
+    <div className={`h-full w-full relative ${isDarkTheme ? 'bg-[#1e1e1e]' : 'bg-white'}`}>
+      {/* Contenu de l'éditeur simulé */}
+      <div className={`h-full w-full p-4 font-mono text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'} opacity-50`}>
+        <div className="flex gap-4">
+          {/* Numéros de ligne */}
+          <div className={`select-none text-right ${isDarkTheme ? 'text-gray-600' : 'text-gray-400'}`}>
+            <div className="leading-relaxed">1</div>
+            <div className="leading-relaxed">2</div>
+            <div className="leading-relaxed">3</div>
+            <div className="leading-relaxed">4</div>
+            <div className="leading-relaxed">5</div>
+            <div className="leading-relaxed">6</div>
+            <div className="leading-relaxed">7</div>
+            <div className="leading-relaxed">8</div>
+            <div className="leading-relaxed">9</div>
+            <div className="leading-relaxed">10</div>
+            <div className="leading-relaxed">11</div>
+            <div className="leading-relaxed">12</div>
+            <div className="leading-relaxed">13</div>
+            <div className="leading-relaxed">14</div>
+            <div className="leading-relaxed">15</div>
+          </div>
+
+          {/* Code simulé avec vraies couleurs */}
+          <div className="flex-1 leading-relaxed">
+            <div><span className={isDarkTheme ? 'text-purple-400' : 'text-purple-600'}>Algorithme</span> MonAlgorithme</div>
+            <div className={isDarkTheme ? 'text-gray-600' : 'text-gray-400'}>// Commentaire</div>
+            <div></div>
+            <div><span className={isDarkTheme ? 'text-purple-400' : 'text-purple-600'}>Variables</span></div>
+            <div className="pl-4">x, y : <span className={isDarkTheme ? 'text-blue-400' : 'text-blue-600'}>Entier</span></div>
+            <div className="pl-4">nom : <span className={isDarkTheme ? 'text-blue-400' : 'text-blue-600'}>Chaine</span></div>
+            <div></div>
+            <div><span className={isDarkTheme ? 'text-purple-400' : 'text-purple-600'}>Debut</span></div>
+            <div className="pl-4"><span className={isDarkTheme ? 'text-purple-400' : 'text-purple-600'}>Ecrire</span>(<span className={isDarkTheme ? 'text-green-400' : 'text-green-600'}>"Bonjour"</span>)</div>
+            <div className="pl-4">x <span className={isDarkTheme ? 'text-orange-400' : 'text-orange-600'}>←</span> <span className={isDarkTheme ? 'text-yellow-400' : 'text-yellow-600'}>42</span></div>
+            <div className="pl-4"><span className={isDarkTheme ? 'text-purple-400' : 'text-purple-600'}>Lire</span>(nom)</div>
+            <div></div>
+            <div><span className={isDarkTheme ? 'text-purple-400' : 'text-purple-600'}>Fin</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Message de chargement centré avec design moderne */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className={`relative px-8 py-6 rounded-xl shadow-2xl backdrop-blur-md ${isDarkTheme ? 'bg-gray-900/90 border border-gray-700' : 'bg-white/90 border border-gray-200'}`}>
+          {/* Effet de brillance */}
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10"></div>
+
+          <div className="relative flex flex-col items-center gap-4">
+            {/* Spinner avec cercle décoratif */}
+            <div className="relative">
+              <div className={`absolute inset-0 rounded-full blur-xl ${isDarkTheme ? 'bg-indigo-500/30' : 'bg-indigo-400/30'}`}></div>
+              <Loader2 className={`relative animate-spin ${isDarkTheme ? 'text-indigo-400' : 'text-indigo-600'}`} size={40} strokeWidth={2.5} />
+            </div>
+
+            {/* Texte de chargement */}
+            <div className="text-center">
+              <div className={`text-base font-semibold mb-1 ${isDarkTheme ? 'text-gray-100' : 'text-gray-900'}`}>
+                Chargement de l'éditeur
+              </div>
+              <div className={`text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>
+                Initialisation de Monaco Editor
+              </div>
+            </div>
+
+            {/* Barre de progression animée */}
+            <div className={`w-48 h-1 rounded-full overflow-hidden ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-200'}`}>
+              <div className={`h-full rounded-full animate-pulse ${isDarkTheme ? 'bg-gradient-to-r from-indigo-500 to-purple-500' : 'bg-gradient-to-r from-indigo-600 to-purple-600'}`} style={{ width: '60%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   // Définir les panneaux éditeur et console
   const editorPanel = (
     <div className={`h-full flex flex-col ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-50'}`}>
@@ -555,9 +635,16 @@ Fin`);
           <span>Éditeur</span>
         </h2>
       </div>
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Skeleton loader (affiché pendant le chargement) */}
+        {isMonacoLoading && (
+          <div className="absolute inset-0 z-10">
+            {editorSkeleton}
+          </div>
+        )}
+
         {/* Éditeur de code Monaco */}
-        <div className="flex-1">
+        <div className={`flex-1 ${isMonacoLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
             <MonacoEditor
               height="100%"
               defaultLanguage="algorithmique"
@@ -565,6 +652,7 @@ Fin`);
               onChange={(value) => setCode(value || '')}
               theme={settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light'}
               options={getMonacoOptions(settings)}
+              loading={<div></div>}
               onMount={(editor, monaco) => {
                 editorRef.current = editor;
                 monacoRef.current = monaco;
@@ -584,6 +672,9 @@ Fin`);
 
                 // Focus sur l'éditeur
                 editor.focus();
+
+                // Marquer Monaco comme chargé
+                setTimeout(() => setIsMonacoLoading(false), 100);
               }}
             />
         </div>
