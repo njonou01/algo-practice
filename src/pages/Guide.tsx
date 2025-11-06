@@ -801,10 +801,206 @@ function Guide() {
             </div>
           </section>
 
+          {/* Fonctions natives */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
+              14. Fonctions natives
+            </h2>
+            <p className={`${isDarkTheme ? 'text-gray-300' : 'text-gray-700'} leading-relaxed mb-4`}>
+              AlgoGénie fournit des fonctions natives qui permettent d'accéder à des fonctionnalités système impossibles à implémenter en pur algorithme.
+            </p>
+
+            {/* Mathématiques */}
+            <div className="mb-6">
+              <h3 className={`text-xl font-semibold ${isDarkTheme ? 'text-indigo-400' : 'text-indigo-700'} mb-3`}>
+                14.1. Mathématiques
+              </h3>
+              <table className={`w-full border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} mb-4`}>
+                <thead className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                  <tr>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Fonction</th>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Description</th>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Exemple</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className={isDarkTheme ? 'bg-gray-800' : 'bg-white'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">Racine(x)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Racine carrée</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Racine(16) → 4.0</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">Puissance(b, e)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>b élevé à la puissance e</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Puissance(2, 3) → 8.0</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-800' : 'bg-white'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">Sin(angle)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Sinus (angle en radians)</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Sin(3.14159/2) → 1.0</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">Cos(angle)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Cosinus (angle en radians)</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Cos(0) → 1.0</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-800' : 'bg-white'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">Tan(angle)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Tangente (angle en radians)</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Tan(0) → 0.0</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">Log(x)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Logarithme naturel (base e)</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Log(2.71828) → 1.0</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-800' : 'bg-white'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">Exp(x)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Exponentielle (e^x)</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Exp(1) → 2.71828</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Aléatoire */}
+            <div className="mb-6">
+              <h3 className={`text-xl font-semibold ${isDarkTheme ? 'text-indigo-400' : 'text-indigo-700'} mb-3`}>
+                14.2. Nombres aléatoires
+              </h3>
+              <table className={`w-full border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} mb-4`}>
+                <thead className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                  <tr>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Fonction</th>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Description</th>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Exemple</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className={isDarkTheme ? 'bg-gray-800' : 'bg-white'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">Aleatoire(min, max)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Entier aléatoire entre min et max</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Aleatoire(1, 6) → 4</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">AleatoireReel()</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Réel aléatoire entre 0.0 et 1.0</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>AleatoireReel() → 0.742</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Date/Temps */}
+            <div className="mb-6">
+              <h3 className={`text-xl font-semibold ${isDarkTheme ? 'text-indigo-400' : 'text-indigo-700'} mb-3`}>
+                14.3. Date et heure
+              </h3>
+              <table className={`w-full border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} mb-4`}>
+                <thead className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                  <tr>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Fonction</th>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Description</th>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Exemple</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className={isDarkTheme ? 'bg-gray-800' : 'bg-white'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">DateActuelle()</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Date au format JJ/MM/AAAA</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>"05/11/2025"</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">HeureActuelle()</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Heure au format HH:MM:SS</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>"14:32:18"</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-800' : 'bg-white'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">TimestampActuel()</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Secondes depuis 1970</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>1730816000</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">JourSemaine()</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Jour de la semaine en français</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>"Mardi"</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Conversion */}
+            <div className="mb-6">
+              <h3 className={`text-xl font-semibold ${isDarkTheme ? 'text-indigo-400' : 'text-indigo-700'} mb-3`}>
+                14.4. Conversions de types
+              </h3>
+              <table className={`w-full border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} mb-4`}>
+                <thead className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                  <tr>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Fonction</th>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Description</th>
+                    <th className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 text-left font-semibold ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>Exemple</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className={isDarkTheme ? 'bg-gray-800' : 'bg-white'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">EnTexte(valeur)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Convertit en chaîne</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>EnTexte(42) → "42"</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">EnEntier(chaine)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Convertit en entier</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>EnEntier("42") → 42</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-800' : 'bg-white'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">EnReel(chaine)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Convertit en réel</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>EnReel("3.14") → 3.14</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-700' : 'bg-gray-50'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">EnTableauCaracteres(texte)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Chaîne → tableau de caractères</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>"Hi" → ['H', 'i']</td>
+                  </tr>
+                  <tr className={isDarkTheme ? 'bg-gray-800' : 'bg-white'}>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm`}><code className="text-indigo-600">EnChaineCaracteres(tableau)</code></td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>Tableau de caractères → chaîne</td>
+                    <td className={`border ${isDarkTheme ? 'border-gray-700' : 'border-gray-200'} px-4 py-3 font-mono text-sm ${isDarkTheme ? 'text-gray-300' : 'text-gray-700'}`}>['H', 'i'] → "Hi"</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Exemple d'utilisation */}
+            <div className={`${isDarkTheme ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border p-6 font-mono text-sm mb-4`}>
+              <div className={isDarkTheme ? 'text-gray-200' : 'text-gray-700'}>
+                <div className={`${isDarkTheme ? 'text-gray-500' : 'text-gray-500'}`}>// Exemple d'utilisation de fonctions natives</div>
+                <div><span className="text-indigo-600 font-semibold">Algorithme</span> DemoFonctionsNatives</div>
+                <div><span className="text-indigo-600 font-semibold">Variables</span></div>
+                <div className="ml-4">de : Entier</div>
+                <div className="ml-4">resultat : Reel</div>
+                <div className="ml-4">date, jour : Chaine</div>
+                <div className="mt-2"><span className="text-indigo-600 font-semibold">DebutAlgorithme</span></div>
+                <div className="ml-4 mt-2"><span className={`${isDarkTheme ? 'text-gray-500' : 'text-gray-500'}`}>// Lancer un dé</span></div>
+                <div className="ml-4">de <span className="text-pink-600">←</span> Aleatoire(1, 6)</div>
+                <div className="ml-4">Ecrire("Dé: ", de, "\n")</div>
+                <div className="ml-4 mt-2"><span className={`${isDarkTheme ? 'text-gray-500' : 'text-gray-500'}`}>// Calculs mathématiques</span></div>
+                <div className="ml-4">resultat <span className="text-pink-600">←</span> Racine(16) + Puissance(2, 3)</div>
+                <div className="ml-4">Ecrire("Résultat: ", resultat, "\n")</div>
+                <div className="ml-4 mt-2"><span className={`${isDarkTheme ? 'text-gray-500' : 'text-gray-500'}`}>// Date et heure</span></div>
+                <div className="ml-4">date <span className="text-pink-600">←</span> DateActuelle()</div>
+                <div className="ml-4">jour <span className="text-pink-600">←</span> JourSemaine()</div>
+                <div className="ml-4">Ecrire("Aujourd'hui, ", jour, " ", date, "\n")</div>
+                <div><span className="text-indigo-600 font-semibold">FinAlgorithme</span></div>
+              </div>
+            </div>
+          </section>
+
           {/* Exemple complet */}
           <section>
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
-              14. Exemple complet
+              15. Exemple complet
             </h2>
             <div className={`${isDarkTheme ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} border p-6 font-mono text-sm`}>
               <div className={isDarkTheme ? 'text-gray-200' : 'text-gray-700'}>

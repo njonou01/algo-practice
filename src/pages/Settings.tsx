@@ -365,6 +365,23 @@ function Settings() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Fonctions */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span style={{ color: localSettings.colorFunctions }} className="font-semibold italic">MaFonction()</span>
+                      <span className={`text-sm ${isDarkTheme ? 'text-gray-400' : 'text-gray-600'}`}>Appels de fonctions</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={localSettings.colorFunctions}
+                        onChange={(e) => handleUpdateLocalSetting('colorFunctions', e.target.value)}
+                        className={`w-10 h-8 border cursor-pointer rounded ${isDarkTheme ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
+                        title="Choisir la couleur"
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

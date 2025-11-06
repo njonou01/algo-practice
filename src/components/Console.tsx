@@ -69,6 +69,13 @@ function Console({
 
   const isDarkTheme = theme === 'dark';
 
+  // Auto-scroll vers le bas quand l'output change ou à la fin de l'exécution
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [output, isRunning]);
+
   // Initialiser les valeurs d'entrée quand une requête arrive
   useEffect(() => {
     if (inputRequest) {

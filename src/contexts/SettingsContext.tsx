@@ -25,6 +25,7 @@ export interface AppSettings {
   colorComments: string;
   colorBooleans: string;
   colorArrow: string;
+  colorFunctions: string;
 
   // Exécution
   autoSave: boolean;
@@ -50,6 +51,7 @@ export const defaultSettings: AppSettings = {
   colorComments: '#6b7280',       // Gris
   colorBooleans: '#ec4899',       // Rose
   colorArrow: '#f97316',          // Orange
+  colorFunctions: '#DCDCAA',      // Jaune doré (mode dark par défaut)
   autoSave: false,
   confirmBeforeRun: false,
   inputMode: 'console',

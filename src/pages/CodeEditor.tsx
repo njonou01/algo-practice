@@ -44,6 +44,13 @@ interface InputRequest {
 }
 
 /**
+ * Événement de mise à jour de l'output en temps réel
+ */
+interface OutputUpdate {
+  output: string[];      // Output complet à ce point de l'exécution
+}
+
+/**
  * Composant principal de l'interpréteur AlgoGénie
  *
  * Gère l'éditeur de code, l'exécution des algorithmes, les entrées/sorties,
@@ -58,72 +65,151 @@ function CodeEditor() {
   const monacoRef = useRef<any>(null);
 
   // État du code de l'algorithme (avec exemple par défaut)
-  const [code, setCode] = useState(`Algorithme DemonstrationAlgoGenie
-Enregistrement Point
-  x : Reel
-  y : Reel
+  const [code, setCode] = useState(`Algorithme DemonstrationCompleteAlgoGenie
+// Démonstration de toutes les fonctionnalités d'AlgoGénie
+
+Enregistrement Joueur
+  nom : Chaine
+  score : Entier
+  niveau : Reel
 FinEnregistrement
 
-Fonction CalculerDistance(p1 : Point, p2 : Point) : Reel
+Fonction CalculerExperience(score : Entier) : Reel
 DebutFonction
-  Retourner (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y)
+  Retourner Log(score + 1) * 100
 FinFonction
 
-Procedure AfficherPoint(p : Point, nom : Chaine)
+Procedure AfficherJoueur(j : Joueur)
 DebutProcedure
-  Ecrire(nom, " = (", p.x, ", ", p.y, ")\\n")
+  Ecrire("Joueur: ", j.nom, " - Score: ", j.score, " - Niveau: ", j.niveau, "\n")
 FinProcedure
 
 Constantes
   PI <- 3.14159
-  MAX <- 10
+  VERSION <- "1.0"
+  MAX_JOUEURS <- 5
 
 Variables
-  rayon, surface : Reel
-  i, somme : Entier
-  p1, p2 : Point
-  distance : Reel
+  joueur : Joueur
+  nom : Chaine
+  resultatDe, score, i, choix, styleJeu : Entier
+  angle, experience : Reel
+  chars : Tableau[100] de Caractere
+  date, jour : Chaine
+  continuer : Booleen
 
 DebutAlgorithme
-  Ecrire("=== Bienvenue dans AlgoGénie ! ===\\n\\n")
+  Ecrire("========================================\n")
+  Ecrire("  Bienvenue dans AlgoGénie v", VERSION, "\n")
+  Ecrire("========================================\n\n")
 
-  // Démonstration des constantes
-  Ecrire("Constante PI = ", PI, "\\n")
+  // 1. Fonctions Date/Temps natives
+  date <- DateActuelle()
+  jour <- JourSemaine()
+  Ecrire("Nous sommes ", jour, ", le ", date, "\n")
+  Ecrire("Heure: ", HeureActuelle(), "\n\n")
 
-  // Calcul de surface avec entrée utilisateur
-  Ecrire("\\nEntrez le rayon du cercle:\\n")
-  Lire(rayon)
+  // 2. Entrée utilisateur + Conversion
+  Ecrire("Quel est votre nom ?\n")
+  Lire(nom)
+  joueur.nom <- nom
 
-  Si rayon > 0 Alors
-    surface <- PI * rayon * rayon
-    Ecrire("Surface du cercle: ", surface, "\\n")
+  // 3. Fonction aléatoire
+  Ecrire("\nLancer de dé pour le score initial...\n")
+  resultatDe <- Aleatoire(1, 6)
+  score <- resultatDe * 10
+  joueur.score <- score
+  Ecrire("Résultat: ", resultatDe, " -> Score de départ: ", score, "\n")
+
+  // 4. Fonctions mathématiques natives
+  Ecrire("\nCalculs mathématiques:\n")
+  angle <- PI / 4
+  Ecrire("• Sin(PI/4) = ", Sin(angle), "\n")
+  Ecrire("• Racine(score) = ", Racine(score), "\n")
+  Ecrire("• Puissance(2, 5) = ", Puissance(2, 5), "\n")
+
+  experience <- CalculerExperience(score)
+  joueur.niveau <- experience / 100
+  Ecrire("• Expérience (Log) = ", experience, "\n")
+
+  // 5. Structure conditionnelle
+  Ecrire("\nÉvaluation du niveau:\n")
+  Si joueur.niveau < 1.5 Alors
+    Ecrire("-> Débutant\n")
   Sinon
-    Ecrire("Rayon invalide!\\n")
+    Si joueur.niveau < 2.5 Alors
+      Ecrire("-> Intermédiaire\n")
+    Sinon
+      Ecrire("-> Expert\n")
+    FinSi
   FinSi
 
-  // Démonstration de boucle et calcul
-  Ecrire("\\nSomme des nombres de 1 à ", MAX, ":\\n")
-  somme <- 0
-  Pour i De 1 À MAX Faire
-    somme <- somme + i
+  // 6. Boucle Pour + Tableau
+  Ecrire("\nGénération de bonus aléatoires:\n")
+  Pour i De 1 À 3 Faire
+    resultatDe <- Aleatoire(5, 15)
+    joueur.score <- joueur.score + resultatDe
+    Ecrire("  Bonus ", i, ": +", resultatDe, " points\n")
   FinPour
-  Ecrire("Résultat: ", somme, "\\n")
+  Ecrire("Score final: ", joueur.score, "\n")
 
-  // Démonstration Structure, Fonction et Procédure
-  Ecrire("\\nDémonstration avec Points:\\n")
-  p1.x <- 0.0
-  p1.y <- 0.0
-  p2.x <- 3.0
-  p2.y <- 4.0
+  // 7. Manipulation de chaînes - Conversion en tableau de caractères
+  Ecrire("\nManipulation du nom:\n")
+  chars <- EnTableauCaracteres(joueur.nom)
+  Ecrire("Nom converti en tableau de caractères\n")
 
-  AfficherPoint(p1, "Point 1")
-  AfficherPoint(p2, "Point 2")
+  // 8. Boucle TantQue
+  Ecrire("\nMini-jeu: Devinez le nombre (1-10)\n")
+  resultatDe <- Aleatoire(1, 10)
+  continuer <- Vrai
+  i <- 0
 
-  distance <- CalculerDistance(p1, p2)
-  Ecrire("Distance² entre les points: ", distance, "\\n")
+  TantQue continuer ET i < 3 Faire
+    Ecrire("Tentative ", i + 1, "/3 - Votre choix:\n")
+    Lire(choix)
 
-  Ecrire("\\nEssayez le bouton Formater!\\n")
-FinAlgorithme`);
+    Si choix = resultatDe Alors
+      Ecrire("Bravo! Vous avez trouvé!\n")
+      joueur.score <- joueur.score + 50
+      continuer <- Faux
+    Sinon
+      Si choix < resultatDe Alors
+        Ecrire("Plus grand!\n")
+      Sinon
+        Ecrire("Plus petit!\n")
+      FinSi
+      i <- i + 1
+    FinSi
+  FinTantQue
+
+  Si continuer Alors
+    Ecrire("Perdu! C'était: ", resultatDe, "\n")
+  FinSi
+
+  // 9. Appel de procédure + Structure
+  Ecrire("\nRécapitulatif final:\n")
+  AfficherJoueur(joueur)
+
+  // 10. Switch/Selon
+  Ecrire("\nStyle de jeu:\n")
+  styleJeu <- (joueur.score / 10) MOD 3
+  Selon styleJeu
+    Cas 0 :
+      Ecrire("-> Stratégique\n")
+    Cas 1 :
+      Ecrire("-> Agressif\n")
+    Cas 2 :
+      Ecrire("-> Défensif\n")
+  FinSelon
+
+  Ecrire("\nMerci d'avoir testé AlgoGénie!\n")
+  Ecrire("Essayez le bouton Formater pour un code propre!\n")
+FinAlgorithme
+`);
+
+
+
+
 
   // États pour l'exécution
   const [output, setOutput] = useState<string[]>([]);                // Sorties de l'algorithme
@@ -149,8 +235,8 @@ FinAlgorithme`);
   useEffect(() => {
     if (monacoRef.current && editorRef.current) {
       // Recréer les thèmes avec les nouvelles couleurs
-      const darkTheme = createDynamicTheme(settings, 'algorithm-dark');
-      const lightTheme = createDynamicTheme(settings, 'algorithm-light');
+      const darkTheme = createDynamicTheme(settings, 'dark');
+      const lightTheme = createDynamicTheme(settings, 'light');
       monacoRef.current.editor.defineTheme('algorithm-dark', darkTheme);
       monacoRef.current.editor.defineTheme('algorithm-light', lightTheme);
 
@@ -158,7 +244,7 @@ FinAlgorithme`);
       const themeName = settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light';
       monacoRef.current.editor.setTheme(themeName);
     }
-  }, [settings.theme, settings.colorKeywords, settings.colorTypes, settings.colorNumbers, settings.colorStrings, settings.colorComments, settings.colorBooleans, settings.colorArrow]);
+  }, [settings.theme, settings.colorKeywords, settings.colorTypes, settings.colorNumbers, settings.colorStrings, settings.colorComments, settings.colorBooleans, settings.colorArrow, settings.colorFunctions]);
 
   /**
    * Mettre à jour les options de l'éditeur Monaco quand les settings changent
@@ -391,6 +477,13 @@ Fin`);
   useEffect(() => {
     let startTime = performance.now();
 
+    // Écouter les mises à jour d'output en temps réel
+    const unlistenOutputUpdate = listen<OutputUpdate>('output-update', (event) => {
+      console.log('Mise à jour output:', event.payload);
+      // Afficher l'output en temps réel après chaque Ecrire()
+      setOutput(event.payload.output);
+    });
+
     // Écouter les requêtes d'entrée
     const unlistenInputRequest = listen<InputRequest>('input-request', (event) => {
       console.log('Requête d\'entrée reçue:', event.payload);
@@ -429,6 +522,7 @@ Fin`);
 
     // Nettoyer les listeners au démontage
     return () => {
+      unlistenOutputUpdate.then(fn => fn());
       unlistenInputRequest.then(fn => fn());
       unlistenExecutionComplete.then(fn => fn());
     };
@@ -480,8 +574,8 @@ Fin`);
                 monaco.languages.setMonarchTokensProvider('algorithmique', algorithmLanguageDefinition);
 
                 // Créer et enregistrer les thèmes dynamiques avec les couleurs des settings
-                const darkTheme = createDynamicTheme(settings, 'algorithm-dark');
-                const lightTheme = createDynamicTheme(settings, 'algorithm-light');
+                const darkTheme = createDynamicTheme(settings, 'dark');
+                const lightTheme = createDynamicTheme(settings, 'light');
                 monaco.editor.defineTheme('algorithm-dark', darkTheme);
                 monaco.editor.defineTheme('algorithm-light', lightTheme);
 
