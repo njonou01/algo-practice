@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Store } from '@tauri-apps/plugin-store';
 
 export interface AppSettings {
   // Apparence
@@ -68,34 +69,94 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [store, setStore] = useState<Store | null>(null);
 
-  // Charger les paramètres au démarrage
+  // Initialiser le store et charger les paramètres au démarrage
   useEffect(() => {
-    const savedSettings = localStorage.getItem('appSettings');
-    if (savedSettings) {
+    async function initStore() {
       try {
-        const parsed = JSON.parse(savedSettings);
-        setSettings({ ...defaultSettings, ...parsed });
+        const storeInstance = await Store.load('settings.json');
+        setStore(storeInstance);
+
+        // Migrer depuis localStorage si nécessaire (première migration)
+        const oldSettings = localStorage.getItem('appSettings');
+        if (oldSettings) {
+          try {
+            const parsed = JSON.parse(oldSettings);
+            // Sauvegarder dans le store
+            for (const [key, value] of Object.entries(parsed)) {
+              await storeInstance.set(key, value);
+            }
+            await storeInstance.save();
+            // Supprimer de localStorage après migration
+            localStorage.removeItem('appSettings');
+            console.log('✅ Migration de localStorage vers tauri-plugin-store terminée');
+          } catch (e) {
+            console.error('Erreur lors de la migration:', e);
+          }
+        }
+
+        // Charger tous les settings depuis le store
+        const loadedSettings: Partial<AppSettings> = {};
+        for (const key of Object.keys(defaultSettings)) {
+          const value = await storeInstance.get(key);
+          if (value !== null) {
+            loadedSettings[key as keyof AppSettings] = value as any;
+          }
+        }
+
+        // Fusionner avec les defaults
+        setSettings({ ...defaultSettings, ...loadedSettings });
       } catch (e) {
-        console.error('Erreur lors du chargement des paramètres:', e);
+        console.error('Erreur lors de l\'initialisation du store:', e);
       }
     }
+
+    initStore();
   }, []);
 
-  const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+  const updateSetting = async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
-    localStorage.setItem('appSettings', JSON.stringify(newSettings));
+
+    if (store) {
+      try {
+        await store.set(key, value);
+        await store.save();
+      } catch (e) {
+        console.error('Erreur lors de la sauvegarde:', e);
+      }
+    }
   };
 
-  const updateAllSettings = (newSettings: AppSettings) => {
+  const updateAllSettings = async (newSettings: AppSettings) => {
     setSettings(newSettings);
-    localStorage.setItem('appSettings', JSON.stringify(newSettings));
+
+    if (store) {
+      try {
+        for (const [key, value] of Object.entries(newSettings)) {
+          await store.set(key, value);
+        }
+        await store.save();
+      } catch (e) {
+        console.error('Erreur lors de la sauvegarde:', e);
+      }
+    }
   };
 
-  const resetSettings = () => {
+  const resetSettings = async () => {
     setSettings(defaultSettings);
-    localStorage.setItem('appSettings', JSON.stringify(defaultSettings));
+
+    if (store) {
+      try {
+        for (const [key, value] of Object.entries(defaultSettings)) {
+          await store.set(key, value);
+        }
+        await store.save();
+      } catch (e) {
+        console.error('Erreur lors de la réinitialisation:', e);
+      }
+    }
   };
 
   return (

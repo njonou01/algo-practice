@@ -378,6 +378,11 @@ impl Interpreter {
             self.output.push(self.current_line.clone());
         }
 
+        // Envoyer l'output final si callback présent
+        if let Some(ref mut callback) = self.output_callback {
+            callback(&self.output)?;
+        }
+
         Ok(self.output.clone())
     }
 

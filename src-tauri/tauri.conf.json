@@ -29,7 +29,18 @@
             "dialog:allow-save",
             "fs:allow-read-text-file",
             "fs:allow-write-text-file",
-            "fs:default"
+            "fs:default",
+            "store:allow-get",
+            "store:allow-set",
+            "store:allow-save",
+            "store:allow-load",
+            "store:allow-has",
+            "store:allow-delete",
+            "store:allow-clear",
+            "store:allow-reset",
+            "store:allow-keys",
+            "store:allow-values",
+            "store:allow-entries"
           ]
         }
       ]
