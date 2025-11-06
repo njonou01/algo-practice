@@ -147,6 +147,15 @@ function Console({
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isPositionMenuOpen]);
 
+  /**
+   * Mettre le focus sur le champ d'entrée quand on clique sur la console
+   */
+  const handleConsoleClick = () => {
+    if (inputRequest && inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   return (
     <div className={`flex flex-col h-full border-l ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       {/* Barre d'onglets */}
@@ -257,7 +266,11 @@ function Console({
       </div>
 
       {/* Contenu des onglets */}
-      <div ref={scrollRef} className="flex-1 overflow-auto p-4">
+      <div
+        ref={scrollRef}
+        className={`flex-1 overflow-auto p-4 ${inputRequest ? 'cursor-text' : ''}`}
+        onClick={handleConsoleClick}
+      >
         {/* Onglet Sortie */}
         {activeTab === 'output' && (
           <div className="space-y-0">
