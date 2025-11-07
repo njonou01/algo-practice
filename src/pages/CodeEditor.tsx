@@ -49,7 +49,8 @@ interface InputRequest {
  * Événement de mise à jour de l'output en temps réel
  */
 interface OutputUpdate {
-  output: string[];      // Output complet à ce point de l'exécution
+  output: string[];      // Lignes complètes (avec \n)
+  current_line: string;  // Ligne courante incomplète (sans \n)
 }
 
 /**
@@ -382,55 +383,69 @@ function CodeEditor() {
    */
   useEffect(() => {
     let startTime = performance.now();
+    let unlistenFunctions: (() => void)[] = [];
 
-    // Écouter les mises à jour d'output en temps réel (delta streaming)
-    const unlistenOutputUpdate = listen<OutputUpdate>('output-update', (event) => {
-      console.log('Mise à jour output (delta):', event.payload);
-      // Append les nouvelles lignes (delta streaming)
-      setOutput(prev => [...prev, ...event.payload.output]);
-    });
+    // Fonction async pour setup les listeners
+    const setupListeners = async () => {
+      // Écouter les mises à jour d'output en temps réel
+      const unlistenOutputUpdate = await listen<OutputUpdate>('output-update', (event) => {
+        const { output: completeLines, current_line } = event.payload;
 
-    // Écouter les requêtes d'entrée
-    const unlistenInputRequest = listen<InputRequest>('input-request', (event) => {
-      console.log('Requête d\'entrée reçue:', event.payload);
-      const request = event.payload;
+        // Construire l'output : lignes complètes + ligne courante si non vide
+        const fullOutput = [...completeLines];
+        if (current_line) {
+          fullOutput.push(current_line);
+        }
 
-      // Afficher l'output accumulé jusqu'à ce point
-      setOutput(request.current_output);
+        setOutput(fullOutput);
+      });
+      unlistenFunctions.push(unlistenOutputUpdate);
 
-      setCurrentInputRequest(request);
+      // Écouter les requêtes d'entrée
+      const unlistenInputRequest = await listen<InputRequest>('input-request', (event) => {
+        console.log('Requête d\'entrée reçue:', event.payload);
+        const request = event.payload;
 
-      // Ouvrir la modal seulement si le mode est 'modal'
-      if (settings.inputMode === 'modal') {
-        setIsModalOpen(true);
-      }
-      // En mode 'console', le champ d'entrée s'affichera directement dans la console
-    });
+        // Afficher l'output accumulé jusqu'à ce point
+        setOutput(request.current_output);
 
-    // Écouter les résultats d'exécution
-    const unlistenExecutionComplete = listen<ExecutionResult>('execution-complete', (event) => {
-      console.log('Exécution terminée:', event.payload);
-      const result = event.payload;
-      const endTime = performance.now();
-      setExecutionTime((endTime - startTime) / 1000);
+        setCurrentInputRequest(request);
 
-      if (result.success) {
-        setOutput(result.output);
-        setError(null);
-      } else {
-        setError(result.error || "Erreur inconnue");
-        setOutput([]);
-      }
+        // Ouvrir la modal seulement si le mode est 'modal'
+        if (settings.inputMode === 'modal') {
+          setIsModalOpen(true);
+        }
+        // En mode 'console', le champ d'entrée s'affichera directement dans la console
+      });
+      unlistenFunctions.push(unlistenInputRequest);
 
-      setIsRunning(false);
-      startTime = performance.now(); // Réinitialiser pour la prochaine exécution
-    });
+      // Écouter les résultats d'exécution
+      const unlistenExecutionComplete = await listen<ExecutionResult>('execution-complete', (event) => {
+        console.log('Exécution terminée:', event.payload);
+        const result = event.payload;
+        const endTime = performance.now();
+        setExecutionTime((endTime - startTime) / 1000);
+
+        if (result.success) {
+          setOutput(result.output);
+          setError(null);
+        } else {
+          setError(result.error || "Erreur inconnue");
+          setOutput([]);
+        }
+
+        setIsRunning(false);
+        startTime = performance.now(); // Réinitialiser pour la prochaine exécution
+      });
+      unlistenFunctions.push(unlistenExecutionComplete);
+
+    };
+
+    setupListeners();
 
     // Nettoyer les listeners au démontage
     return () => {
-      unlistenOutputUpdate.then(fn => fn());
-      unlistenInputRequest.then(fn => fn());
-      unlistenExecutionComplete.then(fn => fn());
+      unlistenFunctions.forEach(fn => fn());
     };
   }, []);
 

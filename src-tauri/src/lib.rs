@@ -53,8 +53,10 @@ pub struct InputRequest {
 /// Structure émise via événement après chaque Ecrire() pour affichage en temps réel
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OutputUpdate {
-    /// Output actuel complet (toutes les lignes)
+    /// Lignes complètes (avec \n)
     pub output: Vec<String>,
+    /// Ligne courante incomplète (sans \n terminal)
+    pub current_line: String,
 }
 
 /// État de l'exécution partagé entre les threads
@@ -120,12 +122,8 @@ async fn execute_algorithm_async(
         *sender_lock = Some(tx);
     }
 
-    // Lancer l'exécution dans un thread séparé
-    std::thread::spawn(move || {
-        // Cloner app pour l'utiliser à la fois dans le callback et après
-        let app_for_callback = app.clone();
-        let app_for_result = app;
-
+    // Exécuter dans l'async runtime de Tauri
+    tauri::async_runtime::spawn(async move {
         // Phase 1 : Analyse lexicale (tokenisation)
         let mut lexer = Lexer::new(code);
         let tokens = match lexer.tokenize() {
@@ -136,7 +134,7 @@ async fn execute_algorithm_async(
                     output: vec![],
                     error: Some(format!("Erreur lexicale: {}", e)),
                 };
-                let _ = app_for_result.emit("execution-complete", result);
+                let _ = app.emit("execution-complete", result);
                 return;
             }
         };
@@ -151,15 +149,19 @@ async fn execute_algorithm_async(
                     output: vec![],
                     error: Some(format!("Erreur de syntaxe: {}", e)),
                 };
-                let _ = app_for_result.emit("execution-complete", result);
+                let _ = app.emit("execution-complete", result);
                 return;
             }
         };
 
         // Phase 3 : Interprétation et exécution avec callbacks pour entrées et sorties
-        let app_for_output = app_for_callback.clone();
+        let app_for_callback = app.clone();
+        let app_for_output = app.clone();
+        let app_for_result = app.clone();
 
-        let mut interpreter = Interpreter::new_with_callbacks(
+        // Exécuter l'interpréteur dans spawn_blocking (code synchrone bloquant)
+        let _ = tauri::async_runtime::spawn_blocking(move || {
+            let mut interpreter = Interpreter::new_with_callbacks(
             // Input callback
             Box::new(move |prompt, variables, has_prompt, current_output| {
                 // Émettre une requête d'entrée vers le frontend avec l'output actuel
@@ -181,37 +183,41 @@ async fn execute_algorithm_async(
                 }
             }),
             // Output callback - envoi en temps réel après chaque Ecrire()
-            Box::new(move |output| {
+            Box::new(move |complete_lines, current_line| {
                 let update = OutputUpdate {
-                    output: output.to_vec(),
+                    output: complete_lines.to_vec(),
+                    current_line: current_line.to_string(),
                 };
 
-                if app_for_output.emit("output-update", update).is_err() {
-                    return Err("Impossible d'émettre la mise à jour de l'output".to_string());
-                }
+                // Émettre l'événement vers le frontend
+                app_for_output.emit("output-update", update)
+                    .map_err(|_| "Impossible d'émettre la mise à jour de l'output".to_string())?;
 
+                // Petit délai pour permettre au frontend de traiter l'événement
+                std::thread::sleep(std::time::Duration::from_millis(1));
                 Ok(())
             })
         );
 
-        match interpreter.run(algorithm) {
-            Ok(output) => {
-                let result = ExecutionResult {
-                    success: true,
-                    output,
-                    error: None,
-                };
-                let _ = app_for_result.emit("execution-complete", result);
+            match interpreter.run(algorithm) {
+                Ok(output) => {
+                    let result = ExecutionResult {
+                        success: true,
+                        output,
+                        error: None,
+                    };
+                    let _ = app_for_result.emit("execution-complete", result);
+                }
+                Err(e) => {
+                    let result = ExecutionResult {
+                        success: false,
+                        output: vec![],
+                        error: Some(format!("Erreur d'exécution: {}", e)),
+                    };
+                    let _ = app_for_result.emit("execution-complete", result);
+                }
             }
-            Err(e) => {
-                let result = ExecutionResult {
-                    success: false,
-                    output: vec![],
-                    error: Some(format!("Erreur d'exécution: {}", e)),
-                };
-                let _ = app_for_result.emit("execution-complete", result);
-            }
-        }
+        }).await; // Attendre la fin du spawn_blocking
     });
 
     Ok(())

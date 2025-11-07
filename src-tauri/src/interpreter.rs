@@ -7,7 +7,7 @@
 use crate::parser::{Algorithm, BinaryOperator, Expression, Function, LValue, Statement, StatementWithLine, StructDefinition, Type, UnaryOperator};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 /// Valeur runtime d'une variable ou expression
 ///
@@ -110,8 +110,8 @@ type InputCallback = Box<dyn FnMut(&str, &[String], bool, &[String]) -> Result<V
 
 /// Callback pour envoyer l'output en temps réel au frontend
 ///
-/// Arguments: (output_lines) -> Result<(), String>
-type OutputCallback = Box<dyn FnMut(&[String]) -> Result<(), String> + Send>;
+/// Arguments: (complete_lines, current_line) -> Result<(), String>
+type OutputCallback = Box<dyn FnMut(&[String], &str) -> Result<(), String> + Send>;
 
 /// Interpréteur d'algorithmes
 ///
@@ -140,12 +140,8 @@ pub struct Interpreter {
     input_callback: Option<InputCallback>,
     /// Callback pour envoyer l'output en temps réel
     output_callback: Option<OutputCallback>,
-    /// Index de la dernière ligne envoyée au frontend (pour delta streaming)
-    last_sent_index: usize,
-    /// Timestamp du dernier flush d'output (pour batching)
+    /// Timestamp du dernier flush d'output
     last_flush_time: Instant,
-    /// Intervalle minimum entre deux flush (batching)
-    flush_interval: Duration,
     /// Dernière ligne écrite (pour associer aux Lire())
     last_written_text: String,
     /// Valeur de retour d'une fonction
@@ -154,12 +150,6 @@ pub struct Interpreter {
     has_returned: bool,
     /// Numéro de ligne de l'instruction courante (pour erreurs d'exécution)
     current_statement_line: usize,
-    /// Temps de démarrage de l'exécution (pour timeout)
-    start_time: Instant,
-    /// Durée maximale d'exécution autorisée
-    max_execution_time: Duration,
-    /// Compteur d'opérations (pour vérifier timeout périodiquement)
-    operation_count: usize,
 }
 
 impl Interpreter {
@@ -181,16 +171,11 @@ impl Interpreter {
             input_index: 0,
             input_callback: None,
             output_callback: None,
-            last_sent_index: 0,
             last_flush_time: Instant::now(),
-            flush_interval: Duration::from_millis(100),
             last_written_text: String::new(),
             return_value: None,
             has_returned: false,
             current_statement_line: 1,
-            start_time: Instant::now(),
-            max_execution_time: Duration::from_secs(30),
-            operation_count: 0,
         }
     }
 
@@ -212,16 +197,11 @@ impl Interpreter {
             input_index: 0,
             input_callback: Some(callback),
             output_callback: None,
-            last_sent_index: 0,
             last_flush_time: Instant::now(),
-            flush_interval: Duration::from_millis(100),
             last_written_text: String::new(),
             return_value: None,
             has_returned: false,
             current_statement_line: 1,
-            start_time: Instant::now(),
-            max_execution_time: Duration::from_secs(30),
-            operation_count: 0,
         }
     }
 
@@ -244,48 +224,17 @@ impl Interpreter {
             input_index: 0,
             input_callback: Some(input_callback),
             output_callback: Some(output_callback),
-            last_sent_index: 0,
             last_flush_time: Instant::now(),
-            flush_interval: Duration::from_millis(100),
             last_written_text: String::new(),
             return_value: None,
             has_returned: false,
             current_statement_line: 1,
-            start_time: Instant::now(),
-            max_execution_time: Duration::from_secs(30),
-            operation_count: 0,
         }
     }
 
     /// Formate un message d'erreur avec le numéro de ligne
     fn error(&self, msg: &str) -> String {
         format!("Erreur ligne {}: {}", self.current_statement_line, msg)
-    }
-
-    /// Vérifie si le timeout d'exécution est dépassé
-    ///
-    /// Cette méthode est appelée périodiquement pour éviter les boucles infinies.
-    /// Elle vérifie tous les 1000 opérations si le temps d'exécution maximal est dépassé.
-    ///
-    /// # Retour
-    ///
-    /// * `Ok(())` - Exécution dans les temps
-    /// * `Err(String)` - Timeout dépassé
-    fn check_timeout(&mut self) -> Result<(), String> {
-        self.operation_count += 1;
-
-        // Vérifier le timeout tous les 1000 opérations pour limiter l'overhead
-        if self.operation_count % 1000 == 0 {
-            let elapsed = self.start_time.elapsed();
-            if elapsed > self.max_execution_time {
-                return Err(self.error(&format!(
-                    "Temps d'exécution maximal dépassé ({}s). Boucle infinie possible ?",
-                    self.max_execution_time.as_secs()
-                )));
-            }
-        }
-
-        Ok(())
     }
 
     /// Retourne la valeur par défaut pour un type donné
@@ -391,15 +340,12 @@ impl Interpreter {
         // Finaliser la dernière ligne si elle n'est pas vide
         if !self.current_line.is_empty() {
             self.output.push(self.current_line.clone());
+            self.current_line.clear();
         }
 
-        // Envoyer l'output final (delta) si callback présent
+        // Envoyer l'output final si callback présent
         if let Some(ref mut callback) = self.output_callback {
-            // Envoyer seulement les lignes non encore envoyées
-            let remaining_lines = &self.output[self.last_sent_index..];
-            if !remaining_lines.is_empty() {
-                callback(remaining_lines)?;
-            }
+            callback(&self.output, &self.current_line)?;
         }
 
         Ok(self.output.clone())
@@ -498,8 +444,29 @@ impl Interpreter {
                     _ => Err("Accès aux champs imbriqués trop profonds non supporté".to_string())
                 }
             }
-            LValue::ArrayElement { .. } => {
-                Err("Accès aux champs dans les éléments de tableau non encore supporté".to_string())
+            LValue::ArrayElement { name, indices } => {
+                // Accès à un champ dans un élément de tableau : arr[i].field
+                let flat_index = self.calculate_flat_index(name, indices)?;
+                if let Some(Value::Tableau(arr)) = self.variables.get_mut(name) {
+                    if flat_index < arr.len() {
+                        // Obtenir l'élément du tableau (qui doit être une structure)
+                        if let Value::Struct(type_name, fields) = &mut arr[flat_index] {
+                            if fields.contains_key(field) {
+                                fields.insert(field.to_string(), value);
+                                Ok(())
+                            } else {
+                                let type_name = type_name.clone();
+                                Err(format!("Erreur ligne {}: Champ '{}' introuvable dans la structure '{}'", line, field, type_name))
+                            }
+                        } else {
+                            Err(format!("Erreur ligne {}: L'élément du tableau '{}' n'est pas une structure", line, name))
+                        }
+                    } else {
+                        Err(format!("Erreur ligne {}: Index {} hors limites pour le tableau '{}'", line, flat_index, name))
+                    }
+                } else {
+                    Err(format!("Erreur ligne {}: '{}' n'est pas un tableau", line, name))
+                }
             }
         }
     }
@@ -519,9 +486,6 @@ impl Interpreter {
     fn execute_statement(&mut self, stmt_with_line: &StatementWithLine) -> Result<(), String> {
         // Mettre à jour le numéro de ligne courant pour les messages d'erreur
         self.current_statement_line = stmt_with_line.line;
-
-        // Vérifier le timeout pour éviter les boucles infinies
-        self.check_timeout()?;
 
         match &stmt_with_line.statement {
             Statement::Assignment { var_name, value } => {
@@ -575,8 +539,14 @@ impl Interpreter {
                     // Réinitialiser le texte écrit après utilisation
                     self.last_written_text.clear();
 
-                    // Appeler le callback pour obtenir les valeurs, en passant aussi l'output actuel
-                    callback(&prompt, &var_names, has_prompt, &self.output)?
+                    // Construire l'output complet incluant la ligne courante
+                    let mut complete_output = self.output.clone();
+                    if !self.current_line.is_empty() {
+                        complete_output.push(self.current_line.clone());
+                    }
+
+                    // Appeler le callback pour obtenir les valeurs, en passant l'output complet
+                    callback(&prompt, &var_names, has_prompt, &complete_output)?
                 } else {
                     // Mode synchrone : utiliser les valeurs pré-fournies
                     let mut result = Vec::new();
@@ -647,46 +617,21 @@ impl Interpreter {
                 self.last_written_text = clean_text.trim().to_string();
 
                 // Traiter le texte caractère par caractère pour gérer \n
-                let mut has_newline = false;
                 for ch in text.chars() {
                     if ch == '\n' {
                         // Nouvelle ligne : flush le buffer actuel
                         self.output.push(self.current_line.clone());
                         self.current_line.clear();
-                        has_newline = true;
                     } else {
                         self.current_line.push(ch);
                     }
                 }
 
-                // Envoyer l'output en temps réel si callback présent (avec batching + delta streaming)
+                // Envoyer l'output en temps réel si callback présent (flush immédiat après chaque Ecrire)
                 if let Some(ref mut callback) = self.output_callback {
-                    let now = Instant::now();
-                    let elapsed = now.duration_since(self.last_flush_time);
-
-                    // Flush si :
-                    // 1. Il y a un \n (ligne complète) OU
-                    // 2. Le temps écoulé dépasse l'intervalle de batching
-                    let should_flush = has_newline || elapsed >= self.flush_interval;
-
-                    if should_flush {
-                        // Delta streaming : envoyer seulement les nouvelles lignes
-                        let new_lines = &self.output[self.last_sent_index..];
-
-                        if !new_lines.is_empty() || !self.current_line.is_empty() {
-                            let mut delta = new_lines.to_vec();
-                            // Ajouter la ligne courante si non vide
-                            if !self.current_line.is_empty() {
-                                delta.push(self.current_line.clone());
-                            }
-
-                            callback(&delta)?;
-
-                            // Mettre à jour l'index et le timestamp
-                            self.last_sent_index = self.output.len();
-                            self.last_flush_time = now;
-                        }
-                    }
+                    // Envoyer les lignes complètes et la ligne courante séparément
+                    callback(&self.output, &self.current_line)?;
+                    self.last_flush_time = Instant::now();
                 }
 
                 Ok(())

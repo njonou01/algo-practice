@@ -95,15 +95,61 @@ export const algorithmLanguageDefinition: any = {
  */
 export function setupCompletionProvider(monaco: any): void {
   monaco.languages.registerCompletionItemProvider('algorithmique', {
-    provideCompletionItems: () => {
+    provideCompletionItems: (model: any, position: any) => {
+      // Récupérer le code actuel pour analyser les variables déclarées
+      const textUntilPosition = model.getValueInRange({
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column,
+      });
+
+      // Extraire les variables déclarées
+      const declaredVariables = extractDeclaredVariables(textUntilPosition);
+
       const suggestions = [
-        // Structure de base
+        // Structure de base - Plusieurs variantes
         {
-          label: 'Algorithme',
-          kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: 'Algorithme ${1:NomAlgo}\nVariables\n    ${2:variable} : ${3:Type}\nDebut\n    $0\nFin',
+          label: 'algo',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Algorithme ${1:NomAlgo}\nVariables\n    ${2:x} : ${3:Entier}\nDebutAlgorithme\n    $0\nFinAlgorithme',
           insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          documentation: 'Structure de base d\'un algorithme'
+          documentation: '🟢 Algorithme simple - débutant'
+        },
+        {
+          label: 'AlgoAvecProcedure',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Algorithme ${1:NomAlgo}\n\nProcedure ${2:MaProcedure}(${3:param} : ${4:Type})\nVariables\n    ${5:variable} : ${6:Type}\nDebutProcedure\n    ${7:// Instructions}\nFinProcedure\n\nVariables\n    ${8:x} : ${9:Entier}\n\nDebutAlgorithme\n    ${2:MaProcedure}(${10:valeur})\nFinAlgorithme',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: '🟡 Algorithme avec procédure - intermédiaire'
+        },
+        {
+          label: 'AlgoAvecFonction',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Algorithme ${1:NomAlgo}\n\nFonction ${2:MaFonction}(${3:param} : ${4:Type}) : ${5:TypeRetour}\nVariables\n    ${6:resultat} : ${5:TypeRetour}\nDebutFonction\n    ${7:// Calculs}\n    Retourner ${6:resultat}\nFinFonction\n\nVariables\n    ${8:x} : ${9:Entier}\n\nDebutAlgorithme\n    ${8:x} <- ${2:MaFonction}(${10:valeur})\nFinAlgorithme',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: '🟡 Algorithme avec fonction - intermédiaire'
+        },
+        {
+          label: 'AlgoAvecStructure',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Algorithme ${1:NomAlgo}\nStructure ${2:NomStructure}\n    ${3:champ1} : ${4:Type1}\n    ${5:champ2} : ${6:Type2}\nFinStructure\nVariables\n    ${7:objet} : ${2:NomStructure}\n\nDebutAlgorithme\n    ${7:objet}.${3:champ1} <- ${8:valeur}\n    $0\nFinAlgorithme',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: '🔴 Algorithme avec structure - avancé'
+        },
+        {
+          label: 'AlgoAvecEnregistrement',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Algorithme ${1:NomAlgo}\nEnregistrement ${2:NomEnregistrement}\n    ${3:champ1} : ${4:Type1}\n    ${5:champ2} : ${6:Type2}\nFinEnregistrement\nVariables\n    ${7:objet} : ${2:NomEnregistrement}\n\nDebutAlgorithme\n    ${7:objet}.${3:champ1} <- ${8:valeur}\n    $0\nFinAlgorithme',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: '🔴 Algorithme avec enregistrement - avancé'
+        },
+        {
+          label: 'AlgoComplet',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Algorithme ${1:NomAlgo}\nStructure ${2:NomStructure}\n    ${3:champ1} : ${4:Type1}\n    ${5:champ2} : ${6:Type2}\nFinStructure\nFonction ${7:Calculer}(${8:param} : ${9:Type}) : ${10:TypeRetour}\nDebutFonction\n    Retourner ${11:resultat}\nFinFonction\nProcedure ${12:Afficher}(${13:data} : ${2:NomStructure})\nDebutProcedure\n    Ecrire(${13:data}.${3:champ1})\nFinProcedure\nVariables\n    ${14:obj} : ${2:NomStructure}\n    ${15:x} : Entier\n\nDebutAlgorithme\n    $0\nFinAlgorithme',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: '⚫ Algorithme complet (Structure + Fonction + Procédure) - expert'
         },
         {
           label: 'Si',
@@ -143,14 +189,14 @@ export function setupCompletionProvider(monaco: any): void {
         {
           label: 'Fonction',
           kind: monaco.languages.CompletionItemKind.Snippet,
-          insertText: 'Fonction ${1:NomFonction}(${2:params}) : ${3:Type}\nVariables\n    ${4:variables}\nDebut\n    ${5:instructions}\n    Retourner ${6:valeur}\nFin',
+          insertText: 'Fonction ${1:NomFonction}(${2:params}) : ${3:Type}\nVariables\n    ${4:variables}\nDebutFonction\n    ${5:instructions}\n    Retourner ${6:valeur}\nFinFonction',
           insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           documentation: 'Déclaration de fonction'
         },
         {
           label: 'Procedure',
           kind: monaco.languages.CompletionItemKind.Snippet,
-          insertText: 'Procedure ${1:NomProcedure}(${2:params})\nVariables\n    ${3:variables}\nDebut\n    ${4:instructions}\nFin',
+          insertText: 'Procedure ${1:NomProcedure}(${2:params})\nVariables\n    ${3:variables}\nDebutProcedure\n    ${4:instructions}\nFinProcedure',
           insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           documentation: 'Déclaration de procédure'
         },
@@ -167,6 +213,64 @@ export function setupCompletionProvider(monaco: any): void {
           insertText: 'Structure ${1:NomStructure}\n    ${2:champ1} : ${3:Type1}\n    ${4:champ2} : ${5:Type2}\nFinStructure',
           insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           documentation: 'Définition de structure'
+        },
+        {
+          label: 'Enregistrement',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Enregistrement ${1:NomEnregistrement}\n    ${2:champ1} : ${3:Type1}\n    ${4:champ2} : ${5:Type2}\nFinEnregistrement',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: 'Définition d\'enregistrement (synonyme de Structure)'
+        },
+        // Snippets de déclaration
+        {
+          label: 'Variables',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Variables\n    ${1:nom} : ${2:Type}',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: 'Section de déclaration de variables'
+        },
+        {
+          label: 'Constantes',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Constantes\n    ${1:NOM} = ${2:valeur}',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: 'Section de déclaration de constantes'
+        },
+        {
+          label: 'Tableau1D',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: '${1:tab} : Tableau[${2:10}] de ${3:Entier}',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: 'Déclaration de tableau à 1 dimension'
+        },
+        {
+          label: 'Tableau2D',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: '${1:matrice} : Tableau[${2:10}, ${3:10}] de ${4:Entier}',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: 'Déclaration de tableau à 2 dimensions'
+        },
+        // Snippets utiles pour lectures/écritures
+        {
+          label: 'Lire',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Lire(${1:variable});',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: 'Lire une valeur'
+        },
+        {
+          label: 'Ecrire',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Ecrire(${1:message});',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: 'Écrire un message'
+        },
+        {
+          label: 'EcrireLn',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: 'Ecrire(${1:message}, "\\n");',
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          documentation: 'Écrire avec retour à la ligne'
         },
         // Fonctions natives - Mathématiques
         {
@@ -305,11 +409,60 @@ export function setupCompletionProvider(monaco: any): void {
           kind: monaco.languages.CompletionItemKind.Class,
           insertText: type,
         })),
+        // Variables déclarées
+        ...declaredVariables.map((varInfo: { name: string; type: string }) => ({
+          label: varInfo.name,
+          kind: monaco.languages.CompletionItemKind.Variable,
+          insertText: varInfo.name,
+          detail: varInfo.type,
+          documentation: `Variable de type ${varInfo.type}`,
+        })),
       ];
 
       return { suggestions };
     }
   });
+}
+
+/**
+ * Extrait les variables déclarées du code
+ */
+function extractDeclaredVariables(code: string): Array<{ name: string; type: string }> {
+  const variables: Array<{ name: string; type: string }> = [];
+
+  // Regex pour capturer les déclarations de variables
+  // Format: nom1, nom2, nom3 : Type
+  const varDeclRegex = /^\s*([a-zA-Zéèêàâùûôîïç_][a-zA-Zéèêàâùûôîïç0-9_,\s]*)\s*:\s*(Entier|Reel|Réel|Chaine|Chaîne|Caractere|Caractère|Booleen|Booléen|Tableau.*|[A-Z][a-zA-Zéèêàâùûôîïç0-9_]*)/gm;
+
+  let match;
+  while ((match = varDeclRegex.exec(code)) !== null) {
+    const names = match[1].split(',').map(n => n.trim());
+    const type = match[2].trim();
+
+    names.forEach(name => {
+      if (name && !variables.find(v => v.name === name)) {
+        variables.push({ name, type });
+      }
+    });
+  }
+
+  // Capturer aussi les paramètres de fonctions
+  const functionParamRegex = /(?:Fonction|Procedure)\s+[a-zA-Zéèêàâùûôîïç_][a-zA-Zéèêàâùûôîïç0-9_]*\s*\(([^)]+)\)/g;
+  while ((match = functionParamRegex.exec(code)) !== null) {
+    const params = match[1].split(',');
+    params.forEach(param => {
+      const paramMatch = param.match(/([a-zA-Zéèêàâùûôîïç_][a-zA-Zéèêàâùûôîïç0-9_]*)\s*:\s*(.+)/);
+      if (paramMatch) {
+        const name = paramMatch[1].trim();
+        const type = paramMatch[2].trim();
+        if (!variables.find(v => v.name === name)) {
+          variables.push({ name, type });
+        }
+      }
+    });
+  }
+
+  return variables;
 }
 
 /**

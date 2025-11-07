@@ -350,6 +350,14 @@ impl Parser {
         }
     }
 
+    /// Consomme un point-virgule optionnel s'il est présent
+    fn skip_optional_semicolon(&mut self) {
+        self.skip_newlines();
+        if *self.current_token() == Token::PointVirgule {
+            self.advance();
+        }
+    }
+
     /// Vérifie et consomme le token attendu
     ///
     /// # Arguments
@@ -840,6 +848,7 @@ impl Parser {
                     }
 
                     self.expect(Token::ParentheseFerm)?;
+                    self.skip_optional_semicolon();
                     Statement::ProcedureCall { name, arguments }
                 }
                 // Check for array assignment
@@ -862,13 +871,54 @@ impl Parser {
 
                     self.expect(Token::CrochetFerm)?;
                     self.skip_newlines();
-                    self.expect(Token::Assignment)?;
-                    self.skip_newlines();
-                    let value = self.parse_expression()?;
-                    Statement::ArrayAssignment {
-                        var_name: name,
-                        indices,
-                        value,
+
+                    // Check if there's a field access after array indexing (e.g., arr[i].field)
+                    if *self.current_token() == Token::Point {
+                        // Build LValue starting with array element
+                        let mut lvalue = LValue::ArrayElement {
+                            name: name.clone(),
+                            indices,
+                        };
+
+                        // Parse field access chain
+                        while *self.current_token() == Token::Point {
+                            self.advance();
+                            self.skip_newlines();
+
+                            let field = if let Token::Identifiant(field_name) = self.current_token().clone() {
+                                self.advance();
+                                field_name
+                            } else {
+                                return Err(format!("Erreur ligne {}: Nom de champ attendu après '.'", self.current_line()));
+                            };
+
+                            lvalue = LValue::FieldAccess {
+                                object: Box::new(lvalue),
+                                field,
+                            };
+                            self.skip_newlines();
+                        }
+
+                        // Now expect assignment
+                        self.expect(Token::Assignment)?;
+                        self.skip_newlines();
+                        let value = self.parse_expression()?;
+                        self.skip_optional_semicolon();
+                        Statement::GeneralAssignment {
+                            target: lvalue,
+                            value,
+                        }
+                    } else {
+                        // Simple array assignment without field access
+                        self.expect(Token::Assignment)?;
+                        self.skip_newlines();
+                        let value = self.parse_expression()?;
+                        self.skip_optional_semicolon();
+                        Statement::ArrayAssignment {
+                            var_name: name,
+                            indices,
+                            value,
+                        }
                     }
                 }
                 // Check for field access assignment
@@ -897,6 +947,7 @@ impl Parser {
                     self.expect(Token::Assignment)?;
                     self.skip_newlines();
                     let value = self.parse_expression()?;
+                    self.skip_optional_semicolon();
                     Statement::GeneralAssignment {
                         target: lvalue,
                         value,
@@ -906,6 +957,7 @@ impl Parser {
                     self.expect(Token::Assignment)?;
                     self.skip_newlines();
                     let value = self.parse_expression()?;
+                    self.skip_optional_semicolon();
                     Statement::Assignment {
                         var_name: name,
                         value,
@@ -1027,6 +1079,7 @@ impl Parser {
                 }
 
                 self.expect(Token::ParentheseFerm)?;
+                self.skip_optional_semicolon();
                 Statement::Read { targets }
             }
             Token::Ecrire => {
@@ -1049,6 +1102,7 @@ impl Parser {
                 }
 
                 self.expect(Token::ParentheseFerm)?;
+                self.skip_optional_semicolon();
                 Statement::Write { expressions }
             }
             Token::Si => {
@@ -1168,13 +1222,14 @@ impl Parser {
                 // Check if there's a return value
                 let value = if matches!(
                     self.current_token(),
-                    Token::NouvelleLigne | Token::EOF | Token::Fin
+                    Token::NouvelleLigne | Token::EOF | Token::Fin | Token::PointVirgule
                 ) {
                     None
                 } else {
                     Some(self.parse_expression()?)
                 };
 
+                self.skip_optional_semicolon();
                 Statement::Return { value }
             }
             Token::Selon => {

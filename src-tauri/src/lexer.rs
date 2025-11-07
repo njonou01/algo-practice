@@ -57,7 +57,6 @@ pub enum Token {
     Fonction,
     Procedure,
     Retourner,
-    TypeDef,
     Enregistrement,
     FinEnregistrement,
 
@@ -94,6 +93,7 @@ pub enum Token {
     Virgule,           // ,
     DeuxPoints,        // :
     Point,             // .
+    PointVirgule,      // ;
     ParentheseOuv,     // (
     ParentheseFerm,    // )
     CrochetOuv,        // [
@@ -299,7 +299,6 @@ impl Lexer {
             "fonction" => Token::Fonction,
             "procedure" | "procédure" => Token::Procedure,
             "retourner" => Token::Retourner,
-            "type" => Token::TypeDef,
             "enregistrement" | "structure" => Token::Enregistrement,
             "finenregistrement" | "finstructure" => Token::FinEnregistrement,
             "entier" => Token::Entier,
@@ -467,6 +466,10 @@ impl Lexer {
                 }
                 '.' => {
                     tokens.push(TokenWithLocation::new(Token::Point, self.line_number));
+                    self.advance();
+                }
+                ';' => {
+                    tokens.push(TokenWithLocation::new(Token::PointVirgule, self.line_number));
                     self.advance();
                 }
                 '(' => {

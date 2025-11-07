@@ -365,6 +365,746 @@ FinAlgorithme`,
     input: ['42', '17', '88', '5', '31']
   },
   {
+    id: 'maze-explorer-game',
+    name: '🗺️ Explorateur de Labyrinthe',
+    description: 'Exploration d\'un labyrinthe avec trésors, monstres et sortie',
+    difficulty: 'advanced',
+    category: 'Jeux',
+    code: `Structure Joueur
+  x : Entier
+  y : Entier
+  tresor : Entier
+  vies : Entier
+  cles : Entier
+FinStructure
+
+Structure Case
+  type : Entier
+  visite : Entier
+FinStructure
+
+Algorithme ExplorateurLabyrinthe
+
+// ════════════════════════════════════
+// PROCÉDURE: Afficher la carte
+// ════════════════════════════════════
+Procedure AfficherCarte(carte : Tableau[8, 8] de Case, joueur : Joueur)
+Variables i, j : Entier
+DebutProcedure
+  Ecrire("\\n╔════════════════════════╗\\n")
+  Ecrire("║    🗺️  LABYRINTHE    ║\\n")
+  Ecrire("╠════════════════════════╣\\n")
+
+  Pour i De 0 À 7 Faire
+    Ecrire("║ ")
+    Pour j De 0 À 7 Faire
+      // Position du joueur
+      Si i = joueur.x ET j = joueur.y Alors
+        Ecrire("🧙")
+      Sinon
+        // Case non visitée
+        Si carte[i, j].visite = 0 Alors
+          Ecrire("▓▓")
+        Sinon
+          // Case visitée - afficher contenu
+          Selon carte[i, j].type
+            Cas 0:
+              Ecrire("  ")  // Vide
+            Cas 1:
+              Ecrire("██")  // Mur
+            Cas 2:
+              Ecrire("💎")  // Trésor
+            Cas 3:
+              Ecrire("👹")  // Monstre
+            Cas 4:
+              Ecrire("🚪")  // Sortie
+            Cas 5:
+              Ecrire("🔑")  // Clé
+            Defaut:
+              Ecrire("??")
+          FinSelon
+        FinSi
+      FinSi
+    FinPour
+    Ecrire(" ║\\n")
+  FinPour
+
+  Ecrire("╚════════════════════════╝\\n")
+  Ecrire("💰 Trésors: ", joueur.tresor, " | ❤️  Vies: ", joueur.vies, " | 🔑 Clés: ", joueur.cles, "\\n")
+FinProcedure
+
+// ════════════════════════════════════
+// FONCTION: Générer le labyrinthe
+// ════════════════════════════════════
+Fonction GenererLabyrinthe() : Tableau[8, 8] de Case
+Variables
+  carte : Tableau[8, 8] de Case
+  i, j, alea : Entier
+  c : Case
+DebutFonction
+  // Initialiser toutes les cases
+  Pour i De 0 À 7 Faire
+    Pour j De 0 À 7 Faire
+      c.visite <- 0
+
+      // Bordures = murs
+      Si i = 0 OU i = 7 OU j = 0 OU j = 7 Alors
+        c.type <- 1
+      Sinon
+        // Génération aléatoire du contenu
+        alea <- Aleatoire(1, 100)
+
+        Si alea <= 20 Alors
+          c.type <- 1  // 20% murs
+        Sinon
+          Si alea <= 35 Alors
+            c.type <- 2  // 15% trésors
+          Sinon
+            Si alea <= 50 Alors
+              c.type <- 3  // 15% monstres
+            Sinon
+              Si alea <= 60 Alors
+                c.type <- 5  // 10% clés
+              Sinon
+                c.type <- 0  // 40% vide
+              FinSi
+            FinSi
+          FinSi
+        FinSi
+      FinSi
+
+      carte[i, j] <- c
+    FinPour
+  FinPour
+
+  // Position de départ (en haut à gauche)
+  c.type <- 0
+  c.visite <- 1
+  carte[1, 1] <- c
+
+  // Sortie (en bas à droite)
+  c.type <- 4
+  c.visite <- 0
+  carte[6, 6] <- c
+
+  Retourner carte
+FinFonction
+
+// ════════════════════════════════════
+// FONCTION: Combat contre monstre
+// ════════════════════════════════════
+Fonction Combat() : Entier
+Variables chance : Entier
+DebutFonction
+  Ecrire("\\n⚔️  ═══════════════════════ ⚔️\\n")
+  Ecrire("   UN MONSTRE VOUS ATTAQUE!\\n")
+  Ecrire("⚔️  ═══════════════════════ ⚔️\\n\\n")
+
+  chance <- Aleatoire(1, 100)
+
+  Si chance <= 60 Alors
+    Ecrire("💪 Vous battez le monstre!\\n")
+    Retourner 1  // Victoire
+  Sinon
+    Ecrire("💔 Le monstre vous blesse! -1 vie\\n")
+    Retourner 0  // Défaite
+  FinSi
+FinFonction
+
+// ════════════════════════════════════
+// PROGRAMME PRINCIPAL
+// ════════════════════════════════════
+Variables
+  carte : Tableau[8, 8] de Case
+  hero : Joueur
+  direction : Entier
+  continuer, victoire : Entier
+  nouveauX, nouveauY : Entier
+  caseActuelle : Case
+
+DebutAlgorithme
+  // ═══════════════════════════════════
+  // INTRODUCTION
+  // ═══════════════════════════════════
+  Ecrire("╔══════════════════════════════════════╗\\n")
+  Ecrire("║   🗺️  EXPLORATEUR DE LABYRINTHE   ║\\n")
+  Ecrire("╚══════════════════════════════════════╝\\n\\n")
+
+  Ecrire("🏰 Vous êtes prisonnier d'un labyrinthe!\\n")
+  Ecrire("\\n🎯 OBJECTIF: Trouvez la sortie 🚪\\n")
+  Ecrire("\\n📜 LÉGENDE:\\n")
+  Ecrire("   🧙 = Vous\\n")
+  Ecrire("   ██ = Mur\\n")
+  Ecrire("   💎 = Trésor (+10 points)\\n")
+  Ecrire("   👹 = Monstre (combat!)\\n")
+  Ecrire("   🔑 = Clé (ouvre la sortie)\\n")
+  Ecrire("   🚪 = Sortie\\n")
+  Ecrire("   ▓▓ = Zone inexplorée\\n")
+  Ecrire("\\n💡 Vous devez trouver une clé 🔑\\n")
+  Ecrire("    pour ouvrir la sortie!\\n\\n")
+
+  Ecrire("Appuyez sur 1 pour commencer: ")
+  Lire(direction)
+
+  // ═══════════════════════════════════
+  // INITIALISATION
+  // ═══════════════════════════════════
+  carte <- GenererLabyrinthe()
+
+  hero.x <- 1
+  hero.y <- 1
+  hero.tresor <- 0
+  hero.vies <- 3
+  hero.cles <- 0
+
+  continuer <- 1
+  victoire <- 0
+
+  // Marquer case de départ comme visitée
+  carte[hero.x, hero.y].visite <- 1
+
+  // ═══════════════════════════════════
+  // BOUCLE PRINCIPALE
+  // ═══════════════════════════════════
+  TantQue continuer = 1 ET hero.vies > 0 Faire
+    AfficherCarte(carte, hero)
+
+    Ecrire("\\n🧭 DÉPLACEMENTS:\\n")
+    Ecrire("   8 = ⬆️  Haut\\n")
+    Ecrire("   2 = ⬇️  Bas\\n")
+    Ecrire("   4 = ⬅️  Gauche\\n")
+    Ecrire("   6 = ➡️  Droite\\n")
+    Ecrire("   0 = 🚪 Quitter\\n")
+    Ecrire("\\nVotre choix: ")
+    Lire(direction)
+    Ecrire("\\n")
+
+    // Calculer nouvelle position
+    nouveauX <- hero.x
+    nouveauY <- hero.y
+
+    Selon direction
+      Cas 8:  // Haut
+        nouveauX <- hero.x - 1
+      Cas 2:  // Bas
+        nouveauX <- hero.x + 1
+      Cas 4:  // Gauche
+        nouveauY <- hero.y - 1
+      Cas 6:  // Droite
+        nouveauY <- hero.y + 1
+      Cas 0:  // Quitter
+        continuer <- 0
+      Defaut:
+        Ecrire("❌ Direction invalide!\\n")
+    FinSelon
+
+    // Vérifier si déplacement valide
+    Si direction >= 2 ET direction <= 8 Alors
+      caseActuelle <- carte[nouveauX, nouveauY]
+
+      // Vérifier si c'est un mur
+      Si caseActuelle.type = 1 Alors
+        Ecrire("🚫 Il y a un mur!\\n")
+      Sinon
+        // Déplacement valide
+        hero.x <- nouveauX
+        hero.y <- nouveauY
+
+        // Marquer comme visité
+        carte[hero.x, hero.y].visite <- 1
+
+        // Gérer le contenu de la case
+        Selon caseActuelle.type
+          Cas 0:  // Vide
+            Ecrire("👣 Vous avancez...\\n")
+
+          Cas 2:  // Trésor
+            Ecrire("\\n✨ ════════════════════ ✨\\n")
+            Ecrire("   TRÉSOR TROUVÉ!\\n")
+            Ecrire("✨ ════════════════════ ✨\\n")
+            hero.tresor <- hero.tresor + 10
+            Ecrire("💰 +10 points! Total: ", hero.tresor, "\\n")
+            // Vider la case
+            caseActuelle.type <- 0
+            carte[hero.x, hero.y] <- caseActuelle
+
+          Cas 3:  // Monstre
+            Si Combat() = 0 Alors
+              hero.vies <- hero.vies - 1
+            FinSi
+            // Vider la case
+            caseActuelle.type <- 0
+            carte[hero.x, hero.y] <- caseActuelle
+
+          Cas 4:  // Sortie
+            Si hero.cles > 0 Alors
+              Ecrire("\\n🎉 ══════════════════════════ 🎉\\n")
+              Ecrire("   VOUS AVEZ TROUVÉ LA SORTIE!\\n")
+              Ecrire("   LE LABYRINTHE EST VAINCU!\\n")
+              Ecrire("🎉 ══════════════════════════ 🎉\\n\\n")
+              Ecrire("📊 SCORE FINAL:\\n")
+              Ecrire("   💰 Trésors: ", hero.tresor, " points\\n")
+              Ecrire("   ❤️  Vies restantes: ", hero.vies, "\\n")
+              continuer <- 0
+              victoire <- 1
+            Sinon
+              Ecrire("\\n🔒 La sortie est verrouillée!\\n")
+              Ecrire("🔑 Trouvez une clé pour sortir!\\n")
+            FinSi
+
+          Cas 5:  // Clé
+            Ecrire("\\n🔑 ════════════════════ 🔑\\n")
+            Ecrire("   CLÉ TROUVÉE!\\n")
+            Ecrire("🔑 ════════════════════ 🔑\\n")
+            hero.cles <- hero.cles + 1
+            Ecrire("Vous pouvez maintenant ouvrir la sortie!\\n")
+            // Vider la case
+            caseActuelle.type <- 0
+            carte[hero.x, hero.y] <- caseActuelle
+        FinSelon
+      FinSi
+    FinSi
+  FinTantQue
+
+  // ═══════════════════════════════════
+  // FIN DU JEU
+  // ═══════════════════════════════════
+  Si hero.vies <= 0 Alors
+    Ecrire("\\n💀 ═══════════════════════ 💀\\n")
+    Ecrire("      GAME OVER\\n")
+    Ecrire("   Vous êtes mort...\\n")
+    Ecrire("💀 ═══════════════════════ 💀\\n\\n")
+    Ecrire("Score final: ", hero.tresor, " points\\n")
+  FinSi
+
+  Si victoire = 0 ET hero.vies > 0 Alors
+    Ecrire("\\nÀ bientôt, explorateur! 🗺️\\n")
+  FinSi
+FinAlgorithme`,
+    input: ['1', '6', '6', '2', '2', '6', '2', '2', '6', '6', '2']
+  },
+  {
+    id: 'rpg-combat-game',
+    name: '⚔️ Aventure RPG',
+    description: 'Jeu de rôle complet avec combats, inventaire et boss',
+    difficulty: 'advanced',
+    category: 'Jeux',
+    code: `Algorithme AventureRPG
+
+Variables
+  // Stats du joueur
+  vie, vieMax, mana, manaMax, niveau : Entier
+  experience, gold, potions, superPotions : Entier
+  attaque, defense, esquive : Entier
+
+  // Stats ennemis
+  enemyVie, enemyVieMax, enemyAttaque : Entier
+  enemyNom : Chaine
+  enemyGold, enemyXP : Entier
+
+  // Variables de jeu
+  choix, tour, degats, combat : Entier
+  continuer, victoire : Entier
+  ennemyID, boss : Entier
+
+DebutAlgorithme
+  // ═══════════════════════════════════
+  // INITIALISATION DU HÉROS
+  // ═══════════════════════════════════
+  Ecrire("╔══════════════════════════════════════╗\\n")
+  Ecrire("║     ⚔️  AVENTURE RPG  ⚔️            ║\\n")
+  Ecrire("║   Le Donjon des Ombres Éternelles   ║\\n")
+  Ecrire("╚══════════════════════════════════════╝\\n\\n")
+
+  Ecrire("🏰 Bienvenue, brave aventurier!\\n\\n")
+  Ecrire("Vous entrez dans un donjon mystérieux...\\n")
+  Ecrire("Votre quête: vaincre le Boss final!\\n\\n")
+
+  // Stats initiales
+  vieMax <- 100
+  vie <- vieMax
+  manaMax <- 50
+  mana <- manaMax
+  attaque <- 15
+  defense <- 5
+  esquive <- 10
+  niveau <- 1
+  experience <- 0
+  gold <- 50
+  potions <- 2
+  superPotions <- 1
+
+  continuer <- 1
+  victoire <- 0
+  ennemyID <- 1
+
+  Ecrire("📊 VOS STATISTIQUES:\\n")
+  Ecrire("   ❤️  Vie: ", vie, "/", vieMax, "\\n")
+  Ecrire("   💙 Mana: ", mana, "/", manaMax, "\\n")
+  Ecrire("   ⚔️  Attaque: ", attaque, "\\n")
+  Ecrire("   🛡️  Défense: ", defense, "\\n")
+  Ecrire("   💰 Gold: ", gold, "\\n")
+  Ecrire("   🧪 Potions: ", potions, "\\n")
+  Ecrire("   ⭐ Super Potions: ", superPotions, "\\n\\n")
+
+  Ecrire("Appuyez sur 1 pour commencer l'aventure: ")
+  Lire(choix)
+  Ecrire("\\n")
+
+  // ═══════════════════════════════════
+  // BOUCLE PRINCIPALE DU JEU
+  // ═══════════════════════════════════
+  TantQue continuer = 1 ET vie > 0 Faire
+    Ecrire("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n")
+    Ecrire("🏰 SALLE ", ennemyID, " - Niveau ", niveau, " | XP: ", experience, "\\n")
+    Ecrire("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n")
+
+    // Génération de l'ennemi selon la salle
+    Selon ennemyID
+      Cas 1:
+        enemyNom <- "Gobelin"
+        enemyVieMax <- 30
+        enemyAttaque <- 8
+        enemyGold <- 15
+        enemyXP <- 20
+      Cas 2:
+        enemyNom <- "Squelette"
+        enemyVieMax <- 45
+        enemyAttaque <- 12
+        enemyGold <- 25
+        enemyXP <- 35
+      Cas 3:
+        enemyNom <- "Orc Guerrier"
+        enemyVieMax <- 60
+        enemyAttaque <- 15
+        enemyGold <- 40
+        enemyXP <- 50
+      Cas 4:
+        enemyNom <- "BOSS: Dragon"
+        enemyVieMax <- 150
+        enemyAttaque <- 25
+        enemyGold <- 200
+        enemyXP <- 200
+        boss <- 1
+      Defaut:
+        enemyNom <- "Inconnu"
+        enemyVieMax <- 50
+        enemyAttaque <- 10
+        enemyGold <- 20
+        enemyXP <- 30
+    FinSelon
+
+    enemyVie <- enemyVieMax
+
+    Si boss = 1 Alors
+      Ecrire("🐉 ════════════════════════════════ 🐉\\n")
+      Ecrire("     LE DRAGON APPARAÎT!\\n")
+      Ecrire("     COMBAT FINAL!\\n")
+      Ecrire("🐉 ════════════════════════════════ 🐉\\n\\n")
+    Sinon
+      Ecrire("⚠️  Un ", enemyNom, " apparaît!\\n\\n")
+    FinSi
+
+    // ═══════════════════════════════════
+    // COMBAT
+    // ═══════════════════════════════════
+    combat <- 1
+    tour <- 1
+
+    TantQue combat = 1 ET vie > 0 ET enemyVie > 0 Faire
+      Ecrire("┌─────────────── TOUR ", tour, " ───────────────┐\\n")
+      Ecrire("│ ❤️  VOUS: ", vie, "/", vieMax, " | 💙 Mana: ", mana, "/", manaMax, "  │\\n")
+      Ecrire("│ 👹 ", enemyNom, ": ", enemyVie, "/", enemyVieMax, "          │\\n")
+      Ecrire("└───────────────────────────────────────┘\\n\\n")
+
+      Ecrire("⚡ ACTIONS:\\n")
+      Ecrire("  1 - ⚔️  Attaque normale\\n")
+      Ecrire("  2 - 🔥 Attaque magique (20 mana, x2 dégâts)\\n")
+      Ecrire("  3 - 🛡️  Se défendre (+50%% défense ce tour)\\n")
+      Ecrire("  4 - 🧪 Potion de soin (+30 PV)\\n")
+      Ecrire("  5 - ⭐ Super Potion (+60 PV)\\n")
+      Ecrire("\\nVotre choix: ")
+      Lire(choix)
+      Ecrire("\\n")
+
+      // Tour du joueur
+      Selon choix
+        Cas 1:
+          // Attaque normale
+          degats <- attaque - (defense / 2)
+          Si degats < 5 Alors
+            degats <- 5
+          FinSi
+          enemyVie <- enemyVie - degats
+          Ecrire("⚔️  Vous attaquez! -", degats, " PV\\n")
+
+        Cas 2:
+          // Attaque magique
+          Si mana >= 20 Alors
+            mana <- mana - 20
+            degats <- attaque * 2
+            enemyVie <- enemyVie - degats
+            Ecrire("🔥 ATTAQUE MAGIQUE! -", degats, " PV\\n")
+          Sinon
+            Ecrire("❌ Pas assez de mana!\\n")
+          FinSi
+
+        Cas 3:
+          // Défense
+          defense <- defense + 5
+          Ecrire("🛡️  Vous vous préparez à encaisser!\\n")
+
+        Cas 4:
+          // Potion
+          Si potions > 0 Alors
+            potions <- potions - 1
+            vie <- vie + 30
+            Si vie > vieMax Alors
+              vie <- vieMax
+            FinSi
+            Ecrire("🧪 Potion utilisée! +30 PV\\n")
+          Sinon
+            Ecrire("❌ Plus de potions!\\n")
+          FinSi
+
+        Cas 5:
+          // Super Potion
+          Si superPotions > 0 Alors
+            superPotions <- superPotions - 1
+            vie <- vie + 60
+            Si vie > vieMax Alors
+              vie <- vieMax
+            FinSi
+            mana <- mana + 30
+            Si mana > manaMax Alors
+              mana <- manaMax
+            FinSi
+            Ecrire("⭐ SUPER POTION! +60 PV, +30 Mana\\n")
+          Sinon
+            Ecrire("❌ Plus de super potions!\\n")
+          FinSi
+
+        Defaut:
+          Ecrire("❌ Action invalide!\\n")
+      FinSelon
+
+      // Tour de l'ennemi (s'il est vivant)
+      Si enemyVie > 0 Alors
+        Ecrire("\\n")
+        degats <- enemyAttaque - defense
+        Si degats < 3 Alors
+          degats <- 3
+        FinSi
+        vie <- vie - degats
+        Ecrire("💥 ", enemyNom, " attaque! -", degats, " PV\\n")
+
+        // Reset défense
+        Si defense > 5 Alors
+          defense <- 5
+        FinSi
+      FinSi
+
+      // Régénération de mana
+      mana <- mana + 5
+      Si mana > manaMax Alors
+        mana <- manaMax
+      FinSi
+
+      Ecrire("\\n")
+      tour <- tour + 1
+
+      // Vérifier fin du combat
+      Si enemyVie <= 0 Alors
+        combat <- 0
+      FinSi
+    FinTantQue
+
+    // ═══════════════════════════════════
+    // FIN DU COMBAT
+    // ═══════════════════════════════════
+    Si vie > 0 Alors
+      Ecrire("\\n✨ ══════════════════════════════ ✨\\n")
+      Ecrire("      VICTOIRE!\\n")
+      Ecrire("✨ ══════════════════════════════ ✨\\n\\n")
+
+      // Récompenses
+      gold <- gold + enemyGold
+      experience <- experience + enemyXP
+      Ecrire("💰 +", enemyGold, " gold (Total: ", gold, ")\\n")
+      Ecrire("⭐ +", enemyXP, " XP (Total: ", experience, ")\\n")
+
+      // Level up
+      Si experience >= 100 Alors
+        niveau <- niveau + 1
+        experience <- experience - 100
+        vieMax <- vieMax + 20
+        vie <- vieMax
+        manaMax <- manaMax + 10
+        mana <- manaMax
+        attaque <- attaque + 5
+        defense <- defense + 2
+        Ecrire("\\n🎉 NIVEAU SUPÉRIEUR! Niveau ", niveau, "\\n")
+        Ecrire("   ❤️  Vie Max: ", vieMax, "\\n")
+        Ecrire("   ⚔️  Attaque: ", attaque, "\\n")
+        Ecrire("   🛡️  Défense: ", defense, "\\n")
+      FinSi
+
+      // Passer à la salle suivante ou finir
+      Si boss = 1 Alors
+        Ecrire("\\n")
+        Ecrire("👑 ══════════════════════════════════ 👑\\n")
+        Ecrire("   FÉLICITATIONS!\\n")
+        Ecrire("   VOUS AVEZ VAINCU LE DRAGON!\\n")
+        Ecrire("   LE DONJON EST LIBÉRÉ!\\n")
+        Ecrire("👑 ══════════════════════════════════ 👑\\n\\n")
+        Ecrire("📊 STATISTIQUES FINALES:\\n")
+        Ecrire("   Niveau: ", niveau, "\\n")
+        Ecrire("   Gold: ", gold, "\\n")
+        Ecrire("   Vie: ", vie, "/", vieMax, "\\n")
+        continuer <- 0
+        victoire <- 1
+      Sinon
+        ennemyID <- ennemyID + 1
+        Ecrire("\\n➡️  Continuer vers la salle suivante? (1=Oui, 0=Quitter): ")
+        Lire(continuer)
+        Ecrire("\\n")
+
+        // Repos entre les salles
+        Si continuer = 1 Alors
+          vie <- vie + 20
+          Si vie > vieMax Alors
+            vie <- vieMax
+          FinSi
+          Ecrire("😌 Vous vous reposez... +20 PV\\n\\n")
+        FinSi
+      FinSi
+    FinSi
+  FinTantQue
+
+  // ═══════════════════════════════════
+  // FIN DU JEU
+  // ═══════════════════════════════════
+  Si vie <= 0 Alors
+    Ecrire("\\n💀 ══════════════════════════════ 💀\\n")
+    Ecrire("      GAME OVER\\n")
+    Ecrire("      Vous êtes tombé au combat...\\n")
+    Ecrire("💀 ══════════════════════════════ 💀\\n\\n")
+    Ecrire("Niveau atteint: ", niveau, "\\n")
+    Ecrire("Gold accumulé: ", gold, "\\n")
+  FinSi
+
+  Ecrire("\\nMerci d'avoir joué! ⚔️\\n")
+FinAlgorithme`,
+    input: ['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1']
+  },
+  {
+    id: 'guess-number-game',
+    name: '🎮 Devine le nombre',
+    description: 'Jeu interactif avec tentatives limitées et score',
+    difficulty: 'intermediate',
+    category: 'Jeux',
+    code: `Algorithme DevineLeNombre
+
+Variables
+  nombreSecret, tentative, essais, maxEssais : Entier
+  score, difficulte : Entier
+  continuer : Entier
+
+DebutAlgorithme
+  Ecrire("╔════════════════════════════════╗\\n")
+  Ecrire("║   🎮 DEVINE LE NOMBRE 🎮      ║\\n")
+  Ecrire("╚════════════════════════════════╝\\n\\n")
+
+  Ecrire("Choisissez la difficulté:\\n")
+  Ecrire("1 - Facile (1-50, 10 essais)\\n")
+  Ecrire("2 - Moyen (1-100, 7 essais)\\n")
+  Ecrire("3 - Difficile (1-200, 5 essais)\\n")
+  Lire(difficulte)
+
+  // Configuration selon difficulté
+  Selon difficulte
+    Cas 1:
+      nombreSecret <- 25
+      maxEssais <- 10
+      Ecrire("\\n🟢 Mode FACILE: Devinez entre 1 et 50\\n\\n")
+    Cas 2:
+      nombreSecret <- 67
+      maxEssais <- 7
+      Ecrire("\\n🟡 Mode MOYEN: Devinez entre 1 et 100\\n\\n")
+    Cas 3:
+      nombreSecret <- 142
+      maxEssais <- 5
+      Ecrire("\\n🔴 Mode DIFFICILE: Devinez entre 1 et 200\\n\\n")
+    Defaut:
+      nombreSecret <- 67
+      maxEssais <- 7
+      Ecrire("\\n🟡 Mode MOYEN par défaut\\n\\n")
+  FinSelon
+
+  essais <- 0
+  score <- 100
+  continuer <- 1
+
+  // Boucle de jeu
+  TantQue continuer = 1 ET essais < maxEssais Faire
+    essais <- essais + 1
+    Ecrire("┌─────────────────────────────┐\\n")
+    Ecrire("│ Essai ", essais, "/", maxEssais, " - Score: ", score, " pts │\\n")
+    Ecrire("└─────────────────────────────┘\\n")
+    Ecrire("Votre nombre: ")
+    Lire(tentative)
+
+    Si tentative = nombreSecret Alors
+      // Victoire !
+      Ecrire("\\n🎉 ════════════════════════ 🎉\\n")
+      Ecrire("   BRAVO! Vous avez trouvé!\\n")
+      Ecrire("🎉 ════════════════════════ 🎉\\n\\n")
+      Ecrire("📊 Résultat:\\n")
+      Ecrire("   • Nombre: ", nombreSecret, "\\n")
+      Ecrire("   • Essais: ", essais, "/", maxEssais, "\\n")
+      Ecrire("   • Score final: ", score, " points\\n\\n")
+
+      Si score >= 90 Alors
+        Ecrire("🏆 Performance EXCEPTIONNELLE! 🏆\\n")
+      Sinon
+        Si score >= 70 Alors
+          Ecrire("⭐ Très bien joué! ⭐\\n")
+        Sinon
+          Ecrire("✅ Bon travail! ✅\\n")
+        FinSi
+      FinSi
+
+      continuer <- 0
+    Sinon
+      // Mauvaise réponse
+      Si tentative < nombreSecret Alors
+        Ecrire("📈 Trop petit! Essayez plus grand\\n\\n")
+      Sinon
+        Ecrire("📉 Trop grand! Essayez plus petit\\n\\n")
+      FinSi
+
+      // Pénalité de score
+      score <- score - 10
+      Si score < 0 Alors
+        score <- 0
+      FinSi
+    FinSi
+  FinTantQue
+
+  // Défaite
+  Si continuer = 1 Alors
+    Ecrire("\\n💀 ════════════════════════ 💀\\n")
+    Ecrire("   GAME OVER - Plus d'essais!\\n")
+    Ecrire("💀 ════════════════════════ 💀\\n\\n")
+    Ecrire("Le nombre était: ", nombreSecret, "\\n")
+    Ecrire("Réessayez pour faire mieux!\\n")
+  FinSi
+
+  Ecrire("\\nMerci d'avoir joué! 🎮\\n")
+FinAlgorithme`,
+    input: ['2', '50', '75', '60', '65', '67']
+  },
+  {
     id: 'structures',
     name: 'Structures/Enregistrements',
     description: 'Types de données composites avec champs',
