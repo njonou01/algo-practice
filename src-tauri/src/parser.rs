@@ -358,6 +358,114 @@ impl Parser {
         }
     }
 
+    /// Génère un message d'erreur amélioré avec suggestions
+    fn error_with_suggestion(&self, expected: &Token, found: &Token) -> String {
+        let line = self.current_line();
+        let mut message = format!("Erreur ligne {}: ", line);
+
+        // Message principal
+        message.push_str(&format!("Attendu {}, trouvé {}\n",
+            self.token_name(expected),
+            self.token_name(found)
+        ));
+
+        // Suggestions contextuelles
+        match (expected, found) {
+            (Token::Assignment, Token::Identifiant(_)) => {
+                message.push_str("   💡 Conseil: Utilisez '<-' pour assigner une valeur (ex: x <- 5)");
+            },
+            (Token::DeuxPoints, _) => {
+                message.push_str("   💡 Conseil: N'oubliez pas le ':' après le nom de variable (ex: x : Entier)");
+            },
+            (Token::FinSi, _) => {
+                message.push_str("   💡 Conseil: Chaque 'Si' doit se terminer par 'FinSi'");
+            },
+            (Token::FinPour, _) => {
+                message.push_str("   💡 Conseil: Chaque 'Pour' doit se terminer par 'FinPour'");
+            },
+            (Token::FinTantQue, _) => {
+                message.push_str("   💡 Conseil: Chaque 'TantQue' doit se terminer par 'FinTantQue'");
+            },
+            (Token::FinSelon, _) => {
+                message.push_str("   💡 Conseil: Chaque 'Selon' doit se terminer par 'FinSelon'");
+            },
+            (Token::FinFonction, _) => {
+                message.push_str("   💡 Conseil: Chaque fonction doit se terminer par 'FinFonction'");
+            },
+            (Token::FinProcedure, _) => {
+                message.push_str("   💡 Conseil: Chaque procédure doit se terminer par 'FinProcedure'");
+            },
+            (Token::Alors, _) => {
+                message.push_str("   💡 Conseil: Après 'Si condition', utilisez 'Alors'");
+            },
+            (Token::Faire, _) => {
+                message.push_str("   💡 Conseil: Après la condition/boucle, utilisez 'Faire'");
+            },
+            (Token::ParentheseFerm, Token::ParentheseOuv) => {
+                message.push_str("   💡 Conseil: Vérifiez que toutes les parenthèses sont bien fermées");
+            },
+            (Token::CrochetFerm, Token::CrochetOuv) => {
+                message.push_str("   💡 Conseil: Vérifiez que tous les crochets sont bien fermés");
+            },
+            _ => {}
+        }
+
+        message
+    }
+
+    /// Retourne un nom lisible pour un token
+    fn token_name(&self, token: &Token) -> String {
+        match token {
+            Token::Algorithme => "'Algorithme'".to_string(),
+            Token::Variables => "'Variables'".to_string(),
+            Token::Constantes => "'Constantes'".to_string(),
+            Token::DebutAlgorithme => "'DebutAlgorithme'".to_string(),
+            Token::FinAlgorithme => "'FinAlgorithme' ou 'Fin'".to_string(),
+            Token::Si => "'Si'".to_string(),
+            Token::Alors => "'Alors'".to_string(),
+            Token::Sinon => "'Sinon'".to_string(),
+            Token::FinSi => "'FinSi'".to_string(),
+            Token::Pour => "'Pour'".to_string(),
+            Token::De => "'De'".to_string(),
+            Token::A => "'À'".to_string(),
+            Token::Faire => "'Faire'".to_string(),
+            Token::FinPour => "'FinPour'".to_string(),
+            Token::TantQue => "'TantQue'".to_string(),
+            Token::FinTantQue => "'FinTantQue'".to_string(),
+            Token::Assignment => "'<-' (flèche d'assignation)".to_string(),
+            Token::DeuxPoints => "':' (deux-points)".to_string(),
+            Token::Point => "'.' (point)".to_string(),
+            Token::PointVirgule => "';' (point-virgule)".to_string(),
+            Token::Virgule => "',' (virgule)".to_string(),
+            Token::ParentheseOuv => "'(' (parenthèse ouvrante)".to_string(),
+            Token::ParentheseFerm => "')' (parenthèse fermante)".to_string(),
+            Token::CrochetOuv => "'[' (crochet ouvrant)".to_string(),
+            Token::CrochetFerm => "']' (crochet fermant)".to_string(),
+            Token::Identifiant(name) => format!("identifiant '{}'", name),
+            Token::NombreEntier(n) => format!("nombre {}", n),
+            Token::Entier => "'Entier'".to_string(),
+            Token::Reel => "'Reel'".to_string(),
+            Token::Chaine => "'Chaine'".to_string(),
+            Token::Caractere => "'Caractere'".to_string(),
+            Token::Booleen => "'Booleen'".to_string(),
+            Token::Fonction => "'Fonction'".to_string(),
+            Token::Procedure => "'Procedure'".to_string(),
+            Token::DebutFonction => "'DebutFonction'".to_string(),
+            Token::FinFonction => "'FinFonction'".to_string(),
+            Token::DebutProcedure => "'DebutProcedure'".to_string(),
+            Token::FinProcedure => "'FinProcedure'".to_string(),
+            Token::Retourner => "'Retourner'".to_string(),
+            Token::Selon => "'Selon'".to_string(),
+            Token::Cas => "'Cas'".to_string(),
+            Token::Defaut => "'Defaut'".to_string(),
+            Token::FinSelon => "'FinSelon'".to_string(),
+            Token::Enregistrement => "'Enregistrement' ou 'Structure'".to_string(),
+            Token::FinEnregistrement => "'FinEnregistrement' ou 'FinStructure'".to_string(),
+            Token::EOF => "fin de fichier".to_string(),
+            _ => format!("{:?}", token),
+        }
+    }
+
     /// Vérifie et consomme le token attendu
     ///
     /// # Arguments
@@ -374,12 +482,7 @@ impl Parser {
             self.advance();
             Ok(())
         } else {
-            Err(format!(
-                "Erreur ligne {}: Attendu {:?}, trouvé {:?}",
-                self.current_line(),
-                expected,
-                self.current_token()
-            ))
+            Err(self.error_with_suggestion(&expected, self.current_token()))
         }
     }
 

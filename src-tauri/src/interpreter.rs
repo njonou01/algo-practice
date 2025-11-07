@@ -237,6 +237,22 @@ impl Interpreter {
         format!("Erreur ligne {}: {}", self.current_statement_line, msg)
     }
 
+    /// Trouve des variables similaires (distance de Levenshtein)
+    fn find_similar_variables(&self, name: &str) -> Vec<String> {
+        let mut similar = Vec::new();
+
+        for var_name in self.variables.keys() {
+            // Distance de Levenshtein simple
+            if levenshtein_distance(name, var_name) <= 2 {
+                similar.push(format!("'{}'", var_name));
+            }
+        }
+
+        similar.sort();
+        similar.truncate(3); // Max 3 suggestions
+        similar
+    }
+
     /// Retourne la valeur par défaut pour un type donné
     ///
     /// Utilise les définitions de structures pour initialiser correctement les champs
@@ -803,7 +819,20 @@ impl Interpreter {
                 .variables
                 .get(name)
                 .cloned()
-                .ok_or_else(|| self.error(&format!("Variable '{}' non définie", name))),
+                .ok_or_else(|| {
+                    let mut msg = format!("Variable '{}' non définie", name);
+
+                    // Suggérer des variables similaires
+                    let similar = self.find_similar_variables(name);
+                    if !similar.is_empty() {
+                        msg.push_str(&format!("\n   💡 Variables similaires: {}", similar.join(", ")));
+                    }
+
+                    // Rappel de la déclaration
+                    msg.push_str("\n   💡 N'oubliez pas de déclarer vos variables dans la section 'Variables'");
+
+                    self.error(&msg)
+                }),
             Expression::BinaryOp { left, op, right } => {
                 let left_val = self.evaluate_expression(left)?;
                 let right_val = self.evaluate_expression(right)?;
@@ -1159,4 +1188,42 @@ impl Interpreter {
             _ => false,
         }
     }
+}
+
+/// Calcule la distance de Levenshtein entre deux chaînes
+/// (nombre minimum d'éditions pour transformer s1 en s2)
+fn levenshtein_distance(s1: &str, s2: &str) -> usize {
+    let len1 = s1.chars().count();
+    let len2 = s2.chars().count();
+
+    if len1 == 0 {
+        return len2;
+    }
+    if len2 == 0 {
+        return len1;
+    }
+
+    let mut matrix = vec![vec![0; len2 + 1]; len1 + 1];
+
+    for i in 0..=len1 {
+        matrix[i][0] = i;
+    }
+    for j in 0..=len2 {
+        matrix[0][j] = j;
+    }
+
+    let s1_chars: Vec<char> = s1.chars().collect();
+    let s2_chars: Vec<char> = s2.chars().collect();
+
+    for i in 1..=len1 {
+        for j in 1..=len2 {
+            let cost = if s1_chars[i - 1] == s2_chars[j - 1] { 0 } else { 1 };
+            matrix[i][j] = std::cmp::min(
+                std::cmp::min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1),
+                matrix[i - 1][j - 1] + cost,
+            );
+        }
+    }
+
+    matrix[len1][len2]
 }
