@@ -30,6 +30,9 @@ pub enum Type {
     /// Type structure/enregistrement (nom de la structure)
     /// Ex: Personne, Etudiant
     Structure(String),
+    /// Type pointeur vers un autre type
+    /// Ex: Pointeur<Noeud>, Pointeur<Entier>
+    Pointeur(Box<Type>),
     /// Type vide pour les procédures sans retour
     Void,
 }
@@ -132,6 +135,16 @@ pub enum Expression {
         object: Box<Expression>,
         field: String,
     },
+    /// Déréférencement de pointeur (ex: ptr^, ptr^.champ)
+    Dereference {
+        pointer: Box<Expression>,
+    },
+    /// Allocation mémoire (ex: Allouer(Noeud))
+    Allocate {
+        type_name: String,
+    },
+    /// Pointeur nil/null
+    Nil,
 }
 
 /// Opérateurs binaires du langage
@@ -180,6 +193,10 @@ pub enum LValue {
     FieldAccess {
         object: Box<LValue>,
         field: String,
+    },
+    /// Déréférencement de pointeur (ex: ptr^, ptr^.champ)
+    Dereference {
+        pointer: Box<LValue>,
     },
 }
 
@@ -265,6 +282,10 @@ pub enum Statement {
         expression: Expression,
         cases: Vec<MatchCase>,
         default_case: Option<Vec<StatementWithLine>>,
+    },
+    /// Libération de mémoire (ex: Liberer(ptr))
+    Free {
+        pointer: Expression,
     },
 }
 
@@ -448,6 +469,7 @@ impl Parser {
             Token::Chaine => "'Chaine'".to_string(),
             Token::Caractere => "'Caractere'".to_string(),
             Token::Booleen => "'Booleen'".to_string(),
+            Token::Pointeur => "'Pointeur'".to_string(),
             Token::Fonction => "'Fonction'".to_string(),
             Token::Procedure => "'Procedure'".to_string(),
             Token::DebutFonction => "'DebutFonction'".to_string(),
@@ -461,6 +483,8 @@ impl Parser {
             Token::FinSelon => "'FinSelon'".to_string(),
             Token::Enregistrement => "'Enregistrement' ou 'Structure'".to_string(),
             Token::FinEnregistrement => "'FinEnregistrement' ou 'FinStructure'".to_string(),
+            Token::Nil => "'Nil'".to_string(),
+            Token::Chapeau => "'^' (déréférencement)".to_string(),
             Token::EOF => "fin de fichier".to_string(),
             _ => format!("{:?}", token),
         }
@@ -879,6 +903,21 @@ impl Parser {
                 self.advance();
                 Ok(Type::Structure(struct_name))
             }
+            Token::Pointeur => {
+                self.advance();
+                self.skip_newlines();
+
+                // Parse Pointeur<Type>
+                self.expect(Token::Inferieur)?;
+                self.skip_newlines();
+
+                let target_type = self.parse_type()?;
+                self.skip_newlines();
+
+                self.expect(Token::Superieur)?;
+
+                Ok(Type::Pointeur(Box::new(target_type)))
+            }
             Token::Tableau => {
                 self.advance();
                 self.skip_newlines();
@@ -932,27 +971,37 @@ impl Parser {
                 self.advance();
                 self.skip_newlines();
 
-                // Check for procedure call
+                // Check for procedure call or Liberer
                 if *self.current_token() == Token::ParentheseOuv {
                     self.advance();
                     self.skip_newlines();
 
-                    let mut arguments = Vec::new();
-                    if *self.current_token() != Token::ParentheseFerm {
-                        arguments.push(self.parse_expression()?);
+                    // Check si c'est Liberer (fonction spéciale)
+                    if name.to_lowercase() == "liberer" || name.to_lowercase() == "libérer" {
+                        let pointer = self.parse_expression()?;
                         self.skip_newlines();
-
-                        while *self.current_token() == Token::Virgule {
-                            self.advance();
-                            self.skip_newlines();
+                        self.expect(Token::ParentheseFerm)?;
+                        self.skip_optional_semicolon();
+                        Statement::Free { pointer }
+                    } else {
+                        // Appel de procédure normal
+                        let mut arguments = Vec::new();
+                        if *self.current_token() != Token::ParentheseFerm {
                             arguments.push(self.parse_expression()?);
                             self.skip_newlines();
-                        }
-                    }
 
-                    self.expect(Token::ParentheseFerm)?;
-                    self.skip_optional_semicolon();
-                    Statement::ProcedureCall { name, arguments }
+                            while *self.current_token() == Token::Virgule {
+                                self.advance();
+                                self.skip_newlines();
+                                arguments.push(self.parse_expression()?);
+                                self.skip_newlines();
+                            }
+                        }
+
+                        self.expect(Token::ParentheseFerm)?;
+                        self.skip_optional_semicolon();
+                        Statement::ProcedureCall { name, arguments }
+                    }
                 }
                 // Check for array assignment
                 else if *self.current_token() == Token::CrochetOuv {
@@ -1025,25 +1074,35 @@ impl Parser {
                     }
                 }
                 // Check for field access assignment
-                else if *self.current_token() == Token::Point {
-                    // Parse field access chain
+                else if *self.current_token() == Token::Point || *self.current_token() == Token::Chapeau {
+                    // Parse field access chain with dereference support
                     let mut lvalue = LValue::Variable(name);
-                    while *self.current_token() == Token::Point {
-                        self.advance();
-                        self.skip_newlines();
-
-                        let field = if let Token::Identifiant(field_name) = self.current_token().clone() {
+                    loop {
+                        if *self.current_token() == Token::Chapeau {
                             self.advance();
-                            field_name
-                        } else {
-                            return Err(format!("Erreur ligne {}: Nom de champ attendu après '.'", self.current_line()));
-                        };
+                            self.skip_newlines();
+                            lvalue = LValue::Dereference {
+                                pointer: Box::new(lvalue),
+                            };
+                        } else if *self.current_token() == Token::Point {
+                            self.advance();
+                            self.skip_newlines();
 
-                        lvalue = LValue::FieldAccess {
-                            object: Box::new(lvalue),
-                            field,
-                        };
-                        self.skip_newlines();
+                            let field = if let Token::Identifiant(field_name) = self.current_token().clone() {
+                                self.advance();
+                                field_name
+                            } else {
+                                return Err(format!("Erreur ligne {}: Nom de champ attendu après '.'", self.current_line()));
+                            };
+
+                            lvalue = LValue::FieldAccess {
+                                object: Box::new(lvalue),
+                                field,
+                            };
+                            self.skip_newlines();
+                        } else {
+                            break;
+                        }
                     }
 
                     // Now expect assignment
@@ -1583,30 +1642,51 @@ impl Parser {
                 self.advance();
                 Ok(Expression::Booleen(false))
             }
+            Token::Nil => {
+                self.advance();
+                Ok(Expression::Nil)
+            }
             Token::Identifiant(name) => {
                 self.advance();
                 self.skip_newlines();
 
-                // Check for function call
+                // Check for function call or Allouer
                 if *self.current_token() == Token::ParentheseOuv {
                     self.advance();
                     self.skip_newlines();
 
-                    let mut args = Vec::new();
-                    if *self.current_token() != Token::ParentheseFerm {
-                        args.push(self.parse_expression()?);
-                        self.skip_newlines();
-
-                        while *self.current_token() == Token::Virgule {
+                    // Check si c'est Allouer (fonction spéciale)
+                    if name.to_lowercase() == "allouer" || name.to_lowercase() == "nouveau" {
+                        // Parse le nom du type à allouer
+                        if let Token::Identifiant(type_name) = self.current_token().clone() {
                             self.advance();
                             self.skip_newlines();
+                            self.expect(Token::ParentheseFerm)?;
+                            Ok(Expression::Allocate { type_name })
+                        } else {
+                            Err(format!(
+                                "Erreur ligne {}: Type attendu après Allouer(",
+                                self.current_line()
+                            ))
+                        }
+                    } else {
+                        // Appel de fonction normal
+                        let mut args = Vec::new();
+                        if *self.current_token() != Token::ParentheseFerm {
                             args.push(self.parse_expression()?);
                             self.skip_newlines();
-                        }
-                    }
 
-                    self.expect(Token::ParentheseFerm)?;
-                    Ok(Expression::FunctionCall { name, args })
+                            while *self.current_token() == Token::Virgule {
+                                self.advance();
+                                self.skip_newlines();
+                                args.push(self.parse_expression()?);
+                                self.skip_newlines();
+                            }
+                        }
+
+                        self.expect(Token::ParentheseFerm)?;
+                        Ok(Expression::FunctionCall { name, args })
+                    }
                 }
                 // Check for array access
                 else if *self.current_token() == Token::CrochetOuv {
@@ -1657,28 +1737,41 @@ impl Parser {
         }
     }
 
-    /// Parse les accès aux champs (opérateur point)
-    /// Gère le chaînage : personne.nom, personne.adresse.ville, etc.
+    /// Parse les accès aux champs (opérateur point) et déréférencement (^)
+    /// Gère le chaînage : personne.nom, ptr^.champ, ptr^.adresse.ville, etc.
     fn parse_field_access(&mut self, mut expr: Expression) -> Result<Expression, String> {
         self.skip_newlines();
 
-        while *self.current_token() == Token::Point {
-            self.advance();
-            self.skip_newlines();
-
-            let field_name = if let Token::Identifiant(name) = self.current_token().clone() {
+        loop {
+            if *self.current_token() == Token::Chapeau {
+                // Déréférencement : ptr^
                 self.advance();
-                name
+                self.skip_newlines();
+
+                expr = Expression::Dereference {
+                    pointer: Box::new(expr),
+                };
+            } else if *self.current_token() == Token::Point {
+                // Accès aux champs : obj.champ
+                self.advance();
+                self.skip_newlines();
+
+                let field_name = if let Token::Identifiant(name) = self.current_token().clone() {
+                    self.advance();
+                    name
+                } else {
+                    return Err(format!("Erreur ligne {}: Nom de champ attendu après '.'", self.current_line()));
+                };
+
+                expr = Expression::FieldAccess {
+                    object: Box::new(expr),
+                    field: field_name,
+                };
+
+                self.skip_newlines();
             } else {
-                return Err(format!("Erreur ligne {}: Nom de champ attendu après '.'", self.current_line()));
-            };
-
-            expr = Expression::FieldAccess {
-                object: Box::new(expr),
-                field: field_name,
-            };
-
-            self.skip_newlines();
+                break;
+            }
         }
 
         Ok(expr)

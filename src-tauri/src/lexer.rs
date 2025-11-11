@@ -67,6 +67,7 @@ pub enum Token {
     Chaine,
     Booleen,
     Tableau,
+    Pointeur,
 
     // Opérateurs
     Assignment,        // <-
@@ -98,6 +99,7 @@ pub enum Token {
     ParentheseFerm,    // )
     CrochetOuv,        // [
     CrochetFerm,       // ]
+    Chapeau,           // ^ (déréférencement)
 
     // Valeurs
     Identifiant(String),
@@ -106,6 +108,7 @@ pub enum Token {
     ChaineDeCaracteres(String),
     Vrai,
     Faux,
+    Nil,
 
     // Fin de ligne / Fin de fichier
     NouvelleLigne,
@@ -307,6 +310,7 @@ impl Lexer {
             "chaine" | "chaîne" => Token::Chaine,
             "booleen" | "booléen" => Token::Booleen,
             "tableau" => Token::Tableau,
+            "pointeur" => Token::Pointeur,
             "et" => Token::Et,
             "ou" => Token::Ou,
             "non" => Token::Non,
@@ -315,6 +319,7 @@ impl Lexer {
             "ecrire" | "écrire" | "afficher" => Token::Ecrire,
             "vrai" => Token::Vrai,
             "faux" => Token::Faux,
+            "nil" | "nul" | "null" => Token::Nil,
             _ => Token::Identifiant(ident),
         }
     }
@@ -376,6 +381,14 @@ impl Lexer {
             // Assignment operator <-
             if ch == '<' && self.peek(1) == Some('-') {
                 tokens.push(TokenWithLocation::new(Token::Assignment, self.line_number));
+                self.advance();
+                self.advance();
+                continue;
+            }
+
+            // Different operator <>
+            if ch == '<' && self.peek(1) == Some('>') {
+                tokens.push(TokenWithLocation::new(Token::Different, self.line_number));
                 self.advance();
                 self.advance();
                 continue;
@@ -486,6 +499,10 @@ impl Lexer {
                 }
                 ']' => {
                     tokens.push(TokenWithLocation::new(Token::CrochetFerm, self.line_number));
+                    self.advance();
+                }
+                '^' => {
+                    tokens.push(TokenWithLocation::new(Token::Chapeau, self.line_number));
                     self.advance();
                 }
                 _ => {

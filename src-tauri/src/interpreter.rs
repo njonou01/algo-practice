@@ -29,6 +29,10 @@ pub enum Value {
     Tableau(Vec<Value>),
     /// Structure/Enregistrement (nom du type, champs)
     Struct(String, HashMap<String, Value>),
+    /// Pointeur (adresse mémoire)
+    Pointeur(usize),
+    /// Pointeur nil/null
+    Nil,
     /// Valeur nulle (pour procédures)
     Null,
 }
@@ -53,6 +57,8 @@ impl Value {
                     .collect();
                 format!("{}{{ {} }}", type_name, fields_str.join(", "))
             }
+            Value::Pointeur(addr) => format!("@{:x}", addr),
+            Value::Nil => "Nil".to_string(),
             Value::Null => "null".to_string(),
         }
     }
@@ -150,6 +156,10 @@ pub struct Interpreter {
     has_returned: bool,
     /// Numéro de ligne de l'instruction courante (pour erreurs d'exécution)
     current_statement_line: usize,
+    /// Heap (tas) pour stocker les objets alloués dynamiquement
+    heap: HashMap<usize, Value>,
+    /// Prochain identifiant d'adresse libre
+    next_address: usize,
 }
 
 impl Interpreter {
@@ -176,6 +186,8 @@ impl Interpreter {
             return_value: None,
             has_returned: false,
             current_statement_line: 1,
+            heap: HashMap::new(),
+            next_address: 1,
         }
     }
 
@@ -202,6 +214,8 @@ impl Interpreter {
             return_value: None,
             has_returned: false,
             current_statement_line: 1,
+            heap: HashMap::new(),
+            next_address: 1,
         }
     }
 
@@ -229,12 +243,38 @@ impl Interpreter {
             return_value: None,
             has_returned: false,
             current_statement_line: 1,
+            heap: HashMap::new(),
+            next_address: 1,
         }
     }
 
     /// Formate un message d'erreur avec le numéro de ligne
     fn error(&self, msg: &str) -> String {
         format!("Erreur ligne {}: {}", self.current_statement_line, msg)
+    }
+
+    /// Convertit un LValue en Expression pour pouvoir l'évaluer
+    fn lvalue_to_expression(&self, lvalue: &LValue) -> Result<Expression, String> {
+        match lvalue {
+            LValue::Variable(name) => Ok(Expression::Variable(name.clone())),
+            LValue::ArrayElement { name, indices } => Ok(Expression::ArrayAccess {
+                name: name.clone(),
+                indices: indices.clone(),
+            }),
+            LValue::FieldAccess { object, field } => {
+                let obj_expr = self.lvalue_to_expression(object)?;
+                Ok(Expression::FieldAccess {
+                    object: Box::new(obj_expr),
+                    field: field.clone(),
+                })
+            }
+            LValue::Dereference { pointer } => {
+                let ptr_expr = self.lvalue_to_expression(pointer)?;
+                Ok(Expression::Dereference {
+                    pointer: Box::new(ptr_expr),
+                })
+            }
+        }
     }
 
     /// Trouve des variables similaires (distance de Levenshtein)
@@ -293,6 +333,7 @@ impl Interpreter {
 
                 Ok(Value::Struct(type_name.clone(), fields))
             }
+            Type::Pointeur(_) => Ok(Value::Nil),
             Type::Void => Ok(Value::Null),
         }
     }
@@ -409,6 +450,26 @@ impl Interpreter {
                 // et modifier le champ dans la structure
                 self.assign_to_field(object, field, value)
             }
+            LValue::Dereference { pointer } => {
+                // Obtenir l'adresse du pointeur
+                let ptr_lvalue_expr = self.lvalue_to_expression(pointer)?;
+                let ptr_value = self.evaluate_expression(&ptr_lvalue_expr)?;
+
+                match ptr_value {
+                    Value::Pointeur(addr) => {
+                        if self.heap.contains_key(&addr) {
+                            self.heap.insert(addr, value);
+                            Ok(())
+                        } else {
+                            Err(self.error(&format!("Pointeur invalide @{:x} (mémoire libérée ou non allouée)", addr)))
+                        }
+                    }
+                    Value::Nil => {
+                        Err(self.error("Tentative d'assignation via un pointeur Nil"))
+                    }
+                    _ => Err(self.error(&format!("Tentative de déréférencement d'une valeur non-pointeur")))
+                }
+            }
         }
     }
 
@@ -484,6 +545,30 @@ impl Interpreter {
                     Err(format!("Erreur ligne {}: '{}' n'est pas un tableau", line, name))
                 }
             }
+            LValue::Dereference { pointer } => {
+                // Pour ptr^.field, on doit d'abord déréférencer, puis modifier le champ
+                let ptr_expr = self.lvalue_to_expression(pointer)?;
+                let ptr_value = self.evaluate_expression(&ptr_expr)?;
+
+                match ptr_value {
+                    Value::Pointeur(addr) => {
+                        if let Some(Value::Struct(type_name, fields)) = self.heap.get_mut(&addr) {
+                            if fields.contains_key(field) {
+                                fields.insert(field.to_string(), value);
+                                Ok(())
+                            } else {
+                                Err(format!("Erreur ligne {}: Champ '{}' introuvable dans la structure '{}'", line, field, type_name))
+                            }
+                        } else {
+                            Err(format!("Erreur ligne {}: Pointeur ne pointe pas vers une structure", line))
+                        }
+                    }
+                    Value::Nil => {
+                        Err(format!("Erreur ligne {}: Tentative d'accès à un champ via un pointeur Nil", line))
+                    }
+                    _ => Err(format!("Erreur ligne {}: Tentative de déréférencement d'une valeur non-pointeur", line))
+                }
+            }
         }
     }
 
@@ -540,6 +625,7 @@ impl Interpreter {
                         LValue::Variable(name) => name.clone(),
                         LValue::ArrayElement { name, .. } => format!("{}[...]", name),
                         LValue::FieldAccess { field, .. } => field.clone(),
+                        LValue::Dereference { .. } => "ptr^".to_string(),
                     }
                 }).collect();
 
@@ -793,6 +879,24 @@ impl Interpreter {
                 let val = self.evaluate_expression(value)?;
                 self.assign_to_lvalue(target, val)
             }
+            Statement::Free { pointer } => {
+                // Libérer la mémoire pointée
+                let ptr_value = self.evaluate_expression(pointer)?;
+                match ptr_value {
+                    Value::Pointeur(addr) => {
+                        if self.heap.remove(&addr).is_some() {
+                            Ok(())
+                        } else {
+                            Err(self.error(&format!("Tentative de libération d'un pointeur invalide @{:x}", addr)))
+                        }
+                    }
+                    Value::Nil => {
+                        // Libérer Nil est une no-op (comme free(NULL) en C)
+                        Ok(())
+                    }
+                    _ => Err(self.error("Tentative de libération d'une valeur non-pointeur"))
+                }
+            }
         }
     }
 
@@ -876,6 +980,44 @@ impl Interpreter {
                     }
                     _ => Err(format!("Tentative d'accès à un champ sur une non-structure"))
                 }
+            }
+            Expression::Dereference { pointer } => {
+                let ptr_value = self.evaluate_expression(pointer)?;
+                match ptr_value {
+                    Value::Pointeur(addr) => {
+                        self.heap.get(&addr)
+                            .cloned()
+                            .ok_or_else(|| self.error(&format!("Pointeur invalide @{:x} (mémoire libérée ou non allouée)", addr)))
+                    }
+                    Value::Nil => {
+                        Err(self.error("Tentative de déréférencement d'un pointeur Nil"))
+                    }
+                    _ => Err(self.error(&format!("Tentative de déréférencement d'une valeur non-pointeur: {:?}", ptr_value)))
+                }
+            }
+            Expression::Allocate { type_name } => {
+                // Allouer une nouvelle structure
+                let struct_def = self.struct_defs.get(type_name)
+                    .cloned()
+                    .ok_or_else(|| self.error(&format!("Type '{}' non défini", type_name)))?;
+
+                // Créer une instance avec valeurs par défaut
+                let mut fields = HashMap::new();
+                for field in &struct_def.fields {
+                    fields.insert(field.name.clone(), self.get_default_value_for_type(&field.var_type)?);
+                }
+
+                let value = Value::Struct(type_name.clone(), fields);
+
+                // Stocker dans le heap
+                let addr = self.next_address;
+                self.next_address += 1;
+                self.heap.insert(addr, value);
+
+                Ok(Value::Pointeur(addr))
+            }
+            Expression::Nil => {
+                Ok(Value::Nil)
             }
         }
     }
@@ -1170,6 +1312,11 @@ impl Interpreter {
             }
             (Value::Chaine(a), Value::Chaine(b)) => Ok(a.cmp(b)),
             (Value::Booleen(a), Value::Booleen(b)) => Ok(a.cmp(b)),
+            // Comparaisons de pointeurs
+            (Value::Pointeur(a), Value::Pointeur(b)) => Ok(a.cmp(b)),
+            (Value::Nil, Value::Nil) => Ok(std::cmp::Ordering::Equal),
+            (Value::Pointeur(_), Value::Nil) => Ok(std::cmp::Ordering::Greater),
+            (Value::Nil, Value::Pointeur(_)) => Ok(std::cmp::Ordering::Less),
             _ => Err(format!(
                 "Comparaison invalide entre {:?} et {:?}",
                 left, right
@@ -1185,6 +1332,9 @@ impl Interpreter {
             (Value::Reel(a), Value::Entier(b)) => (a - *b as f64).abs() < f64::EPSILON,
             (Value::Chaine(a), Value::Chaine(b)) => a == b,
             (Value::Booleen(a), Value::Booleen(b)) => a == b,
+            (Value::Pointeur(a), Value::Pointeur(b)) => a == b,
+            (Value::Nil, Value::Nil) => true,
+            (Value::Pointeur(_), Value::Nil) | (Value::Nil, Value::Pointeur(_)) => false,
             _ => false,
         }
     }

@@ -1156,6 +1156,72 @@ DebutAlgorithme
   Ecrire("\\nMeilleure moyenne: ", meilleur, "\\n")
 FinAlgorithme`,
     input: ['Alice', '20', '15.5', 'Bob', '22', '14.2']
+  },
+  {
+    id: 'linked-list',
+    name: 'Liste Chaînée avec Pointeurs',
+    description: 'Structure de données récursive utilisant des pointeurs',
+    difficulty: 'advanced',
+    category: 'Structures',
+    code: `Algorithme ListeChainee
+
+// Structure récursive maintenant possible avec les pointeurs !
+Structure Noeud
+  valeur : Entier
+  suivant : Pointeur<Noeud>
+FinStructure
+
+Variables
+  tete : Pointeur<Noeud>
+  courant : Pointeur<Noeud>
+  nouveau : Pointeur<Noeud>
+  i : Entier
+
+DebutAlgorithme
+  Ecrire("=== Liste Chaînée avec Pointeurs ===\\n")
+
+  // Créer le premier noeud
+  Ecrire("Création du premier noeud (10)...\\n")
+  tete <- Allouer(Noeud)
+  tete^.valeur <- 10
+  tete^.suivant <- Nil
+
+  // Ajouter un deuxième noeud
+  Ecrire("Ajout d'un deuxième noeud (20)...\\n")
+  nouveau <- Allouer(Noeud)
+  nouveau^.valeur <- 20
+  nouveau^.suivant <- Nil
+  tete^.suivant <- nouveau
+
+  // Ajouter un troisième noeud
+  Ecrire("Ajout d'un troisième noeud (30)...\\n")
+  nouveau <- Allouer(Noeud)
+  nouveau^.valeur <- 30
+  nouveau^.suivant <- Nil
+  tete^.suivant^.suivant <- nouveau
+
+  // Parcourir et afficher la liste
+  Ecrire("\\nContenu de la liste : ")
+  courant <- tete
+  i <- 1
+  TantQue courant <> Nil Faire
+    Ecrire(courant^.valeur)
+    courant <- courant^.suivant
+    Si courant <> Nil Alors
+      Ecrire(" -> ")
+    FinSi
+  FinTantQue
+  Ecrire("\\n")
+
+  // Libérer la mémoire (dans l'ordre)
+  Ecrire("\\nLibération de la mémoire...\\n")
+  Liberer(tete^.suivant^.suivant)
+  Liberer(tete^.suivant)
+  Liberer(tete)
+
+  Ecrire("Terminé !\\n")
+FinAlgorithme`,
+    input: []
   }
 ];
 

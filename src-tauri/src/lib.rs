@@ -59,6 +59,23 @@ pub struct OutputUpdate {
     pub current_line: String,
 }
 
+/// Mise à jour des variables envoyée au frontend
+///
+/// Structure émise après chaque instruction pour afficher l'état des variables
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VariablesUpdate {
+    /// Variables avec leurs valeurs formatées
+    pub variables: Vec<VariableInfo>,
+}
+
+/// Information sur une variable
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VariableInfo {
+    pub name: String,
+    pub value: String,
+    pub var_type: String,
+}
+
 /// État de l'exécution partagé entre les threads
 type ExecutionState = Arc<Mutex<Option<Sender<Vec<String>>>>>;
 

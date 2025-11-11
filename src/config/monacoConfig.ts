@@ -20,19 +20,19 @@ export const algorithmLanguageDefinition: any = {
     'Selon', 'Cas', 'Defaut', 'FinSelon',
     'Fonction', 'Procedure', 'Retourner',
     'Structure', 'Enregistrement', 'FinStructure', 'FinEnregistrement',
-    'Lire', 'Ecrire', 'ET', 'OU', 'NON', 'MOD'
+    'Lire', 'Ecrire', 'Allouer', 'Liberer', 'ET', 'OU', 'NON', 'MOD'
   ],
 
   typeKeywords: [
-    'Entier', 'Reel', 'Chaine', 'Caractere', 'Booleen', 'Tableau'
+    'Entier', 'Reel', 'Chaine', 'Caractere', 'Booleen', 'Tableau', 'Pointeur'
   ],
 
   booleans: [
-    'Vrai', 'Faux'
+    'Vrai', 'Faux', 'Nil'
   ],
 
   operators: [
-    '←', '<-', '+', '-', '*', '/', '%', 'MOD', '=', '≠', '!=', '<', '>', '≤', '<=', '≥', '>='
+    '←', '<-', '+', '-', '*', '/', '%', 'MOD', '=', '≠', '!=', '<>', '<', '>', '≤', '<=', '≥', '>='
   ],
 
   // Définition des règles de tokenisation
@@ -485,7 +485,7 @@ export function createDynamicTheme(
   const isDark = themeName === 'dark';
 
   // Fonction pour convertir #rrggbb en rrggbb (sans #)
-  const stripHash = (color: string) => color.replace('#', '');
+  const stripHash = (color: string | undefined) => color ? color.replace('#', '') : 'ffffff';
 
   return {
     base: isDark ? 'vs-dark' : 'vs',

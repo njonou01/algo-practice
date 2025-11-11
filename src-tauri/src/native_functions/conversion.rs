@@ -49,6 +49,8 @@ pub fn to_string(args: Vec<Value>) -> Result<Value, String> {
                 .collect();
             format!("{{{}}}", field_strs.join(", "))
         },
+        Value::Pointeur(addr) => format!("@{:x}", addr),
+        Value::Nil => "Nil".to_string(),
         Value::Null => "Null".to_string(),
     };
 
