@@ -6,8 +6,9 @@
  * Définition du langage algorithmique
  */
 export const algorithmLanguageDefinition: any = {
-  defaultToken: '',
+  defaultToken: 'identifier',
   tokenPostfix: '.algo',
+  ignoreCase: true,
 
   keywords: [
     'Algorithme', 'Variables', 'Constantes', 'Debut', 'Fin',
@@ -489,7 +490,7 @@ export function createDynamicTheme(
 
   return {
     base: isDark ? 'vs-dark' : 'vs',
-    inherit: false,
+    inherit: true,
     rules: [
       { token: 'comment', foreground: stripHash(settings.colorComments), fontStyle: 'italic' },
       { token: 'keyword', foreground: stripHash(settings.colorKeywords), fontStyle: 'bold' },

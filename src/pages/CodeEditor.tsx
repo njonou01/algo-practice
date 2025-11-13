@@ -20,10 +20,10 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useEditor } from '../contexts/EditorContext';
 import { formatCode } from '../utils/codeFormatter';
 import {
+  getMonacoOptions,
   algorithmLanguageDefinition,
   setupCompletionProvider,
-  createDynamicTheme,
-  getMonacoOptions
+  createDynamicTheme
 } from '../config/monacoConfig';
 
 /**
@@ -107,23 +107,6 @@ function CodeEditor() {
   const isMonacoLoading = !isMonacoReady;
 
   /**
-   * Mettre à jour le thème Monaco quand les settings changent
-   */
-  useEffect(() => {
-    if (monacoRef.current && editorRef.current) {
-      // Recréer les thèmes avec les nouvelles couleurs
-      const darkTheme = createDynamicTheme(settings, 'dark');
-      const lightTheme = createDynamicTheme(settings, 'light');
-      monacoRef.current.editor.defineTheme('algorithm-dark', darkTheme);
-      monacoRef.current.editor.defineTheme('algorithm-light', lightTheme);
-
-      // Appliquer le thème actuel
-      const themeName = settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light';
-      monacoRef.current.editor.setTheme(themeName);
-    }
-  }, [settings.theme, settings.colorKeywords, settings.colorTypes, settings.colorNumbers, settings.colorStrings, settings.colorComments, settings.colorBooleans, settings.colorArrow, settings.colorFunctions]);
-
-  /**
    * Mettre à jour les options de l'éditeur Monaco quand les settings changent
    */
   useEffect(() => {
@@ -134,6 +117,40 @@ function CodeEditor() {
       });
     }
   }, [settings.fontSize, settings.tabSize]);
+
+  /**
+   * Mettre à jour le thème Monaco quand les couleurs ou le thème changent
+   */
+  useEffect(() => {
+    // NE PAS mettre à jour si les couleurs ne sont pas encore chargées
+    if (!settings.colorKeywords || !settings.colorTypes) {
+      console.log('⏳ Settings pas encore chargés, skip mise à jour du thème');
+      return;
+    }
+
+    if (monacoRef.current && isMonacoReady) {
+      console.log('🎨 Mise à jour du thème suite au changement de settings...');
+      const darkTheme = createDynamicTheme(settings, 'dark');
+      const lightTheme = createDynamicTheme(settings, 'light');
+      monacoRef.current.editor.defineTheme('algorithm-dark', darkTheme);
+      monacoRef.current.editor.defineTheme('algorithm-light', lightTheme);
+
+      const themeName = settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light';
+      monacoRef.current.editor.setTheme(themeName);
+      console.log('✅ Thème mis à jour:', themeName);
+    }
+  }, [
+    settings.theme,
+    settings.colorKeywords,
+    settings.colorTypes,
+    settings.colorNumbers,
+    settings.colorStrings,
+    settings.colorComments,
+    settings.colorBooleans,
+    settings.colorArrow,
+    settings.colorFunctions,
+    isMonacoReady
+  ]);
 
   /**
    * Démarre l'exécution asynchrone avec gestion dynamique des entrées
@@ -264,6 +281,42 @@ function CodeEditor() {
   const clearConsole = () => {
     setOutput([]);
     setError(null);
+  };
+
+  /**
+   * Debug : Inspecter la tokenisation du code
+   */
+  const handleDebugTokens = () => {
+    if (!monacoRef.current || !editorRef.current) {
+      console.error('❌ Monaco ou Editor non disponible');
+      return;
+    }
+
+    const model = editorRef.current.getModel();
+    if (!model) {
+      console.error('❌ Pas de modèle disponible');
+      return;
+    }
+
+    console.log('🔍 === DEBUG TOKENISATION ===');
+    console.log('Langage du modèle:', model.getLanguageId());
+
+    const lineCount = Math.min(model.getLineCount(), 10);
+    for (let i = 1; i <= lineCount; i++) {
+      const lineContent = model.getLineContent(i);
+      const tokens = monacoRef.current.editor.tokenize(lineContent, 'algorithmique');
+      console.log(`Ligne ${i}: "${lineContent}"`);
+      console.log('Tokens:', tokens);
+    }
+
+    // Vérifier les langages enregistrés
+    const languages = monacoRef.current.languages.getLanguages();
+    console.log('Langages enregistrés:', languages.map((l: any) => l.id));
+
+    // Vérifier le thème actuel
+    console.log('Thème actuel:', settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light');
+
+    console.log('🔍 === FIN DEBUG ===');
   };
 
   /**
@@ -657,27 +710,43 @@ function CodeEditor() {
               loading={<div></div>}
               key={activeFile.id}
               onMount={(editor, monaco) => {
+                // Stocker les références
                 editorRef.current = editor;
                 monacoRef.current = monaco;
 
-                // Enregistrer le langage algorithmique
-                monaco.languages.register({ id: 'algorithmique' });
-                monaco.languages.setMonarchTokensProvider('algorithmique', algorithmLanguageDefinition);
+                console.log('🔧 onMount - Initialisation de Monaco pour ce fichier');
 
-                // Créer et enregistrer les thèmes dynamiques avec les couleurs des settings
+                // Vérifier si le langage est déjà enregistré
+                const languages = monaco.languages.getLanguages();
+                const algoLangExists = languages.some((lang: any) => lang.id === 'algorithmique');
+
+                if (!algoLangExists) {
+                  console.log('📝 Enregistrement du langage algorithmique...');
+                  monaco.languages.register({ id: 'algorithmique' });
+                  monaco.languages.setMonarchTokensProvider('algorithmique', algorithmLanguageDefinition);
+                  setupCompletionProvider(monaco);
+                  console.log('✅ Langage enregistré');
+                }
+
+                // Toujours recréer et appliquer les thèmes (pour supporter les changements de couleurs)
+                console.log('🎨 Définition des thèmes...');
                 const darkTheme = createDynamicTheme(settings, 'dark');
                 const lightTheme = createDynamicTheme(settings, 'light');
                 monaco.editor.defineTheme('algorithm-dark', darkTheme);
                 monaco.editor.defineTheme('algorithm-light', lightTheme);
 
-                // Configurer l'autocomplétion
-                setupCompletionProvider(monaco);
+                // Appliquer le thème approprié
+                const themeName = settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light';
+                monaco.editor.setTheme(themeName);
+                console.log('✅ Thème appliqué:', themeName);
 
                 // Focus sur l'éditeur
                 editor.focus();
 
-                // Marquer Monaco comme chargé (une seule fois dans toute la session)
-                setTimeout(() => setMonacoReady(true), 100);
+                // Marquer Monaco comme chargé
+                if (!isMonacoReady) {
+                  setMonacoReady(true);
+                }
               }}
             />
           </div>
@@ -773,6 +842,15 @@ function CodeEditor() {
             >
               <Wand2 size={16} />
               <span>Formater</span>
+            </button>
+
+            <button
+              onClick={handleDebugTokens}
+              className={`px-4 py-2 text-sm transition-colors flex items-center gap-2 ${buttonClasses}`}
+              title="Debug tokenisation (voir console F12)"
+            >
+              🔍
+              <span>Debug</span>
             </button>
 
             <div className={`h-6 w-px ${dividerClasses}`}></div>
