@@ -10,6 +10,7 @@ export interface EditorFile {
   path: string | null;  // Chemin du fichier (null si pas encore sauvegardé)
   code: string;         // Contenu du fichier
   isDirty: boolean;     // Modifié depuis la dernière sauvegarde
+  modelUri?: string;    // URI du modèle Monaco (pour éviter les collisions)
 }
 
 interface EditorContextType {
@@ -102,10 +103,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
    * Crée un nouveau fichier
    */
   const createNewFile = () => {
+    const newId = generateId();
     const newFile: EditorFile = {
-      id: generateId(),
+      id: newId,
       name: 'Sans titre.algo',
       path: null,
+      modelUri: `file:///untitled-${newId}.algo`,
       code: `Algorithme NouvelAlgorithme
 
 // Définir une structure de données
@@ -145,31 +148,90 @@ Fin`,
   };
 
   /**
-   * Ouvre un fichier existant
+   * Ouvre un fichier existant avec gestion des collisions
    */
   const openFile = (path: string, code: string, name: string) => {
-    // Vérifier si le fichier est déjà ouvert
-    const existingFile = files.find(f => f.path === path);
-    if (existingFile) {
-      setActiveFileId(existingFile.id);
-      return;
-    }
+    try {
+      // Validation du chemin
+      if (!path || path.trim() === '') {
+        console.warn('⚠️ Chemin de fichier vide, création d\'un fichier temporaire');
+        path = `temp-${Date.now()}.algo`;
+      }
 
-    const newFile: EditorFile = {
-      id: generateId(),
-      name,
-      path,
-      code,
-      isDirty: false,
-    };
-    setFiles([...files, newFile]);
-    setActiveFileId(newFile.id);
+      // Vérifier si le fichier est déjà ouvert par chemin
+      const existingFileByPath = files.find(f => f.path === path);
+      if (existingFileByPath) {
+        console.log(`ℹ️ Fichier déjà ouvert: ${name}, activation de l'onglet`);
+        setActiveFileId(existingFileByPath.id);
+
+        // Demander si l'utilisateur veut recharger le contenu
+        if (existingFileByPath.code !== code && existingFileByPath.isDirty) {
+          console.warn(`⚠️ Le fichier ${name} a des modifications non sauvegardées`);
+          // TODO: Implémenter une modal de confirmation pour recharger
+        } else if (existingFileByPath.code !== code) {
+          // Recharger silencieusement si pas de modifications
+          setFiles(files.map(f =>
+            f.id === existingFileByPath.id
+              ? { ...f, code, isDirty: false }
+              : f
+          ));
+        }
+        return;
+      }
+
+      // Vérifier collision de nom (même nom mais chemin différent)
+      const existingFileByName = files.find(f => f.name === name && f.path !== path);
+      if (existingFileByName) {
+        console.log(`⚠️ Fichier avec le même nom déjà ouvert: ${name}, ajout d'un suffixe`);
+        // Ajouter un suffixe pour éviter la confusion
+        const baseName = name.replace(/\.algo$/, '');
+        const newName = `${baseName} (2).algo`;
+        name = newName;
+      }
+
+      // Générer un URI unique pour le modèle Monaco
+      const modelUri = `file:///${path.replace(/\\/g, '/')}`;
+
+      const newFile: EditorFile = {
+        id: generateId(),
+        name,
+        path,
+        code,
+        isDirty: false,
+        modelUri,
+      };
+
+      console.log(`✅ Ouverture du fichier: ${name}`);
+      setFiles([...files, newFile]);
+      setActiveFileId(newFile.id);
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'ouverture du fichier:', error);
+      // En cas d'erreur, on peut quand même essayer de créer un fichier avec le contenu
+      const fallbackFile: EditorFile = {
+        id: generateId(),
+        name: 'Erreur-' + name,
+        path: null,
+        code: code || '',
+        isDirty: true,
+        modelUri: `file:///error-${Date.now()}.algo`,
+      };
+      setFiles([...files, fallbackFile]);
+      setActiveFileId(fallbackFile.id);
+    }
   };
 
   /**
-   * Ferme un fichier
+   * Ferme un fichier et nettoie ses ressources
    */
   const closeFile = (fileId: string) => {
+    const fileToClose = files.find(f => f.id === fileId);
+    if (fileToClose) {
+      console.log(`🗑️ Fermeture du fichier: ${fileToClose.name}`);
+
+      // Note: Le nettoyage du modèle Monaco sera fait par le gestionnaire
+      // quand le composant se démonte ou change de fichier
+    }
+
     const newFiles = files.filter(f => f.id !== fileId);
 
     // Permettre de fermer tous les fichiers

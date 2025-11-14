@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { examples, AlgorithmExample, getExamplesByDifficulty } from '../utils/examples';
 import { useState } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
+import { useEditor } from '../contexts/EditorContext';
 
 /**
  * Composant de carte pour afficher un exemple d'algorithme
@@ -66,6 +67,7 @@ function ExampleCard({ example, onUse, isDarkTheme }: { example: AlgorithmExampl
 function Examples() {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { openFile, files } = useEditor();
   const isDarkTheme = settings.theme === 'dark';
   const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
 
@@ -73,10 +75,31 @@ function Examples() {
    * Charge un exemple dans l'éditeur et redirige vers la page Interpréteur
    */
   const handleUseExample = (example: AlgorithmExample) => {
-    // Sauvegarder l'exemple dans localStorage pour le récupérer dans Interpreter
+    // Générer un nom de fichier unique pour l'exemple
+    let finalFileName = `${example.name}.algo`;
+    let counter = 2;
+
+    // Si un fichier existe déjà avec ce nom, ajouter un suffixe
+    while (files.find(f => f.name === finalFileName)) {
+      const baseName = example.name;
+      finalFileName = `${baseName} (${counter}).algo`;
+      counter++;
+    }
+
+    // Générer un chemin unique pour l'exemple (pas un vrai chemin fichier)
+    const examplePath = `example://${example.id || example.name.toLowerCase().replace(/\s+/g, '-')}`;
+
+    console.log(`📚 Ouverture de l'exemple: ${finalFileName}`);
+
+    // Ouvrir l'exemple comme un nouveau fichier
+    // Le système de gestion des collisions dans EditorContext s'occupera du reste
+    openFile(examplePath, example.code, finalFileName);
+
+    // Sauvegarder aussi dans localStorage pour compatibilité avec l'ancien système
     localStorage.setItem('loadedExample', JSON.stringify({
       code: example.code,
       input: example.input,
+      title: example.name,
     }));
 
     // Rediriger vers l'interpréteur

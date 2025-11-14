@@ -107,6 +107,14 @@ function CodeEditor() {
   const isMonacoLoading = !isMonacoReady;
 
   /**
+   * NOTE: La gestion des modèles est maintenant déléguée au wrapper @monaco-editor/react
+   * via les props `value` et `path`. Le wrapper gère automatiquement la création,
+   * la mise à jour et le switch de modèles.
+   *
+   * On garde juste le nettoyage lors de la fermeture de fichiers via EditorContext.
+   */
+
+  /**
    * Mettre à jour les options de l'éditeur Monaco quand les settings changent
    */
   useEffect(() => {
@@ -412,24 +420,34 @@ function CodeEditor() {
   /**
    * Charge un exemple depuis localStorage si disponible
    * (utilisé quand l'utilisateur clique sur "Utiliser cet exemple" depuis la page Exemples)
+   * DÉPRÉCIÉ: Gardé pour compatibilité, mais openFile() est maintenant appelé directement depuis Examples.tsx
    */
   useEffect(() => {
     const loadedExample = localStorage.getItem('loadedExample');
     if (loadedExample) {
       try {
         const example = JSON.parse(loadedExample);
-        // Créer un nouveau fichier avec le code de l'exemple
+
+        // Vérifier si le fichier n'a pas déjà été ouvert par la nouvelle méthode
         const fileName = example.title ? `${example.title}.algo` : 'Exemple.algo';
-        openFile('', example.code, fileName);
-        setOutput([]);
-        setError(null);
+        const alreadyOpen = files.some(f => f.name.startsWith(fileName.replace('.algo', '')));
+
+        if (!alreadyOpen) {
+          console.log('📚 Chargement d\'exemple via localStorage (ancien système)');
+          // Créer un nouveau fichier avec le code de l'exemple
+          const examplePath = `example://legacy-${Date.now()}`;
+          openFile(examplePath, example.code, fileName);
+          setOutput([]);
+          setError(null);
+        }
+
         // Nettoyer le localStorage après chargement
         localStorage.removeItem('loadedExample');
       } catch (err) {
         console.error('Erreur lors du chargement de l\'exemple:', err);
       }
     }
-  }, []);
+  }, [files]);
 
   /**
    * Écoute les événements du backend pour les requêtes d'entrée et les résultats
@@ -698,23 +716,31 @@ function CodeEditor() {
         )}
 
         {/* Éditeur de code Monaco */}
-        {activeFile && (
-          <div className={`flex-1 ${isMonacoLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+        <div className={`flex-1 ${isMonacoLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+          {!activeFile ? (
+            <div className={`flex items-center justify-center h-full ${isDarkTheme ? 'bg-gray-900' : 'bg-gray-50'}`}>
+              <p className={isDarkTheme ? 'text-gray-500' : 'text-gray-400'}>Aucun fichier ouvert</p>
+            </div>
+          ) : (
             <MonacoEditor
               height="100%"
-              defaultLanguage="algorithmique"
+              language="algorithmique"
+              path={activeFile.modelUri || `file:///${activeFile.id}.algo`}
               value={activeFile.code}
-              onChange={(value) => updateFileCode(activeFile.id, value || '')}
+              onChange={(value) => {
+                if (activeFile) {
+                  updateFileCode(activeFile.id, value || '');
+                }
+              }}
               theme={settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light'}
               options={getMonacoOptions(settings)}
               loading={<div></div>}
-              key={activeFile.id}
               onMount={(editor, monaco) => {
                 // Stocker les références
                 editorRef.current = editor;
                 monacoRef.current = monaco;
 
-                console.log('🔧 onMount - Initialisation de Monaco pour ce fichier');
+                console.log('🔧 onMount - Initialisation UNIQUE de Monaco');
 
                 // Vérifier si le langage est déjà enregistré
                 const languages = monaco.languages.getLanguages();
@@ -728,7 +754,7 @@ function CodeEditor() {
                   console.log('✅ Langage enregistré');
                 }
 
-                // Toujours recréer et appliquer les thèmes (pour supporter les changements de couleurs)
+                // Toujours recréer et appliquer les thèmes
                 console.log('🎨 Définition des thèmes...');
                 const darkTheme = createDynamicTheme(settings, 'dark');
                 const lightTheme = createDynamicTheme(settings, 'light');
@@ -744,13 +770,13 @@ function CodeEditor() {
                 editor.focus();
 
                 // Marquer Monaco comme chargé
-                if (!isMonacoReady) {
-                  setMonacoReady(true);
-                }
+                setMonacoReady(true);
+
+                console.log('✅ Monaco initialisé - les modèles sont gérés automatiquement par @monaco-editor/react');
               }}
             />
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
