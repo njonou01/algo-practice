@@ -31,7 +31,6 @@ export interface AppSettings {
   // Exécution
   autoSave: boolean;
   confirmBeforeRun: boolean;
-  inputMode: 'modal' | 'console';
 }
 
 export const defaultSettings: AppSettings = {
@@ -55,7 +54,6 @@ export const defaultSettings: AppSettings = {
   colorFunctions: '#DCDCAA',      // Jaune doré (mode dark par défaut)
   autoSave: false,
   confirmBeforeRun: false,
-  inputMode: 'console',
 };
 
 interface SettingsContextType {

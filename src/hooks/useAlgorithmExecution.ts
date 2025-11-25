@@ -26,17 +26,15 @@ interface InputRequest {
 }
 
 interface UseAlgorithmExecutionProps {
-  inputMode: 'modal' | 'console';
   activeFile: EditorFile | null;
 }
 
-export function useAlgorithmExecution({ inputMode, activeFile }: UseAlgorithmExecutionProps) {
+export function useAlgorithmExecution({ activeFile }: UseAlgorithmExecutionProps) {
   const [output, setOutput] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [executionTime, setExecutionTime] = useState<number>();
   const [currentInputRequest, setCurrentInputRequest] = useState<InputRequest | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const executingFileIdRef = useRef<string | null>(null);
   const activeFileRef = useRef(activeFile);
@@ -64,10 +62,6 @@ export function useAlgorithmExecution({ inputMode, activeFile }: UseAlgorithmExe
         const request = event.payload;
         setOutput(request.current_output);
         setCurrentInputRequest(request);
-
-        if (inputMode === 'modal') {
-          setIsModalOpen(true);
-        }
       });
       listeners.push(unlistenInputRequest);
 
@@ -108,10 +102,16 @@ export function useAlgorithmExecution({ inputMode, activeFile }: UseAlgorithmExe
     return () => {
       listeners.forEach(fn => fn());
     };
-  }, [inputMode]);
+  }, []);
 
   const executeAlgorithm = async () => {
     if (!activeFile) return;
+
+    // Empêcher le double lancement
+    if (isRunning) {
+      console.warn('[WARN] Exécution déjà en cours, ignoré');
+      return;
+    }
 
     executingFileIdRef.current = activeFile.id;
     setOutput([]);
@@ -130,7 +130,6 @@ export function useAlgorithmExecution({ inputMode, activeFile }: UseAlgorithmExe
   };
 
   const handleInputSubmit = async (values: string[]) => {
-    setIsModalOpen(false);
     setCurrentInputRequest(null);
 
     try {
@@ -142,7 +141,6 @@ export function useAlgorithmExecution({ inputMode, activeFile }: UseAlgorithmExe
   };
 
   const handleInputCancel = () => {
-    setIsModalOpen(false);
     setCurrentInputRequest(null);
     setIsRunning(false);
     setError("Exécution annulée par l'utilisateur");
@@ -154,14 +152,30 @@ export function useAlgorithmExecution({ inputMode, activeFile }: UseAlgorithmExe
     setExecutionTime(undefined);
   };
 
+  const stopExecution = async () => {
+    // Si une requête d'entrée est en cours, envoyer des valeurs vides pour débloquer le backend
+    if (currentInputRequest) {
+      try {
+        await invoke("send_input_values", { values: [] });
+      } catch (err) {
+        console.warn('[WARN] Erreur lors de l\'envoi des valeurs vides:', err);
+      }
+    }
+
+    executingFileIdRef.current = null;
+    setIsRunning(false);
+    setCurrentInputRequest(null);
+    setError("Exécution arrêtée par l'utilisateur");
+  };
+
   return {
     output,
     error,
     isRunning,
     executionTime,
     currentInputRequest,
-    isModalOpen,
     executeAlgorithm,
+    stopExecution,
     handleInputSubmit,
     handleInputCancel,
     clearConsole,

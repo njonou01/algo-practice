@@ -98,7 +98,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   // Sauvegarder automatiquement les fichiers dans le store avec debounce
   useEffect(() => {
-    if (!store || files.length === 0) return;
+    if (!store) return;
 
     const timer = setTimeout(async () => {
       try {
