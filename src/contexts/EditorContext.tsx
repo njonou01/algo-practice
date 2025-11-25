@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Store } from '@tauri-apps/plugin-store';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 /**
  * Représente un fichier dans l'éditeur
@@ -126,7 +126,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 // Définir une procédure
 // Procedure Afficher(message : Chaine)
 // DebutProcedure
-//   Ecrire(message, "\n")
+//   Ecrire(message, "\\n")
 // FinProcedure
 
 Constantes
@@ -138,7 +138,7 @@ Variables
 
 Debut
   // Votre code ici
-  Ecrire("Bonjour !\n")
+  Ecrire("Bonjour !\\n")
 
 Fin`,
       isDirty: false,
