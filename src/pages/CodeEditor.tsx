@@ -5,10 +5,6 @@
  * Il permet d'écrire, éditer, exécuter, sauvegarder et charger des algorithmes.
  */
 
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { Editor as MonacoEditor } from '@monaco-editor/react';
 import { File, FolderOpen, Loader2, Maximize2, Minimize2, Play, Save, Wand2 } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
@@ -27,33 +23,10 @@ import {
   setupCompletionProvider,
   createDynamicTheme
 } from '../config/monacoConfig';
+import { useAlgorithmExecution } from '../hooks/useAlgorithmExecution';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useFileOperations } from '../hooks/useFileOperations';
 
-/**
- * Interface pour le résultat d'exécution d'un algorithme
- */
-interface ExecutionResult {
-  success: boolean;      // Indique si l'exécution s'est bien passée
-  output: string[];      // Lignes de sortie de l'algorithme
-  error: string | null;  // Message d'erreur éventuel
-}
-
-/**
- * Interface pour une requête d'entrée du backend
- */
-interface InputRequest {
-  prompt: string;        // Texte du dernier Ecrire()
-  variables: string[];   // Noms des variables à lire
-  has_prompt: boolean;   // true si un Ecrire() précède
-  current_output: string[];  // Output accumulé jusqu'à ce point
-}
-
-/**
- * Événement de mise à jour de l'output en temps réel
- */
-interface OutputUpdate {
-  output: string[];      // Lignes complètes (avec \n)
-  current_line: string;  // Ligne courante incomplète (sans \n)
-}
 
 /**
  * Composant principal de l'interpréteur AlgoGénie
@@ -82,24 +55,35 @@ function CodeEditor() {
   // Fichier actif
   const activeFile = getActiveFile();
 
-  // Ref pour le fichier actif (pour éviter stale closures)
-  const activeFileRef = useRef(activeFile);
-  activeFileRef.current = activeFile;
-
   // Référence à l'éditeur Monaco
   const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
 
-  // États pour l'exécution
-  const [output, setOutput] = useState<string[]>([]);                // Sorties de l'algorithme
-  const [error, setError] = useState<string | null>(null);           // Message d'erreur éventuel
-  const [isRunning, setIsRunning] = useState(false);                 // Indique si l'exécution est en cours
-  const [executionTime, setExecutionTime] = useState<number>();      // Temps d'exécution
-  const executingFileIdRef = useRef<string | null>(null);            // ID du fichier en cours d'exécution
+  // Hook d'exécution des algorithmes
+  const {
+    output,
+    error,
+    isRunning,
+    executionTime,
+    currentInputRequest,
+    isModalOpen,
+    executeAlgorithm,
+    handleInputSubmit,
+    handleInputCancel,
+    clearConsole,
+  } = useAlgorithmExecution({ inputMode: settings.inputMode, activeFile });
 
-  // États pour la modal d'entrée
-  const [currentInputRequest, setCurrentInputRequest] = useState<InputRequest | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Hook de gestion des fichiers
+  const { saveCurrentFile, openFileDialog } = useFileOperations({
+    activeFile,
+    openFile,
+    markFileSaved,
+    onError: (err) => {
+      // Les erreurs de fichiers s'affichent dans la console via un setter custom
+      // mais on pourrait aussi les afficher dans une notification séparée
+      console.error('[FILE ERROR]', err);
+    },
+  });
 
   // État et référence pour le mode plein écran
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -167,139 +151,13 @@ function CodeEditor() {
     isMonacoReady
   ]);
 
-  /**
-   * Démarre l'exécution asynchrone avec gestion dynamique des entrées
-   */
-  const executeAlgorithm = async () => {
-    if (!activeFile) return;
-
-    // Capturer l'ID du fichier en cours d'exécution
-    executingFileIdRef.current = activeFile.id;
-
-    setOutput([]);
-    setError(null);
-    setIsRunning(true);
-
-    try {
-      // Lancer l'exécution asynchrone avec le code du fichier actif
-      await invoke("execute_algorithm_async", {
-        code: activeFile.code,
-      });
-    } catch (err) {
-      setError(`Erreur lors du lancement: ${err}`);
-      setIsRunning(false);
-      executingFileIdRef.current = null;
-    }
-  };
-
-  /**
-   * Gère la soumission des entrées (modal ou console)
-   */
-  const handleInputSubmit = async (values: string[]) => {
-    setIsModalOpen(false);
-    setCurrentInputRequest(null);
-
-    try {
-      // Envoyer les valeurs au backend
-      await invoke("send_input_values", { values });
-    } catch (err) {
-      setError(`Erreur lors de l'envoi des valeurs: ${err}`);
-      setIsRunning(false);
-    }
-  };
-
-  /**
-   * Annule l'exécution
-   */
-  const handleInputCancel = () => {
-    setIsModalOpen(false);
-    setCurrentInputRequest(null);
-    setIsRunning(false);
-    setError("Exécution annulée par l'utilisateur");
-  };
-
-  /**
-   * Sauvegarde le fichier actif dans un fichier .algo
-   * Extrait automatiquement le nom de l'algorithme pour proposer un nom de fichier par défaut
-   */
-  const saveCurrentFile = async () => {
-    if (!activeFile) return;
-
-    try {
-      // Si le fichier a déjà un chemin, sauvegarder directement
-      if (activeFile.path) {
-        await writeTextFile(activeFile.path, activeFile.code);
-        markFileSaved(activeFile.id, activeFile.path);
-        return;
-      }
-
-      // Sinon, demander où sauvegarder (Save As)
-      // Extraire le nom de l'algorithme du code (après "Algorithme")
-      const algoNameMatch = activeFile.code.match(/Algorithme\s+(\w+)/i);
-      const defaultName = algoNameMatch ? algoNameMatch[1] : activeFile.name.replace('.algo', '');
-
-      // Ouvrir le dialog de sauvegarde
-      const filePath = await save({
-        defaultPath: `${defaultName}.algo`,
-        filters: [{
-          name: 'Algorithme',
-          extensions: ['algo']
-        }]
-      });
-
-      // Écrire le fichier si un chemin a été sélectionné
-      if (filePath) {
-        await writeTextFile(filePath, activeFile.code);
-        markFileSaved(activeFile.id, filePath);
-      }
-    } catch (err) {
-      setError(`Erreur lors de la sauvegarde: ${err}`);
-    }
-  };
-
-  /**
-   * Ouvre un fichier .algo dans un nouvel onglet
-   * Réinitialise les sorties et erreurs précédentes
-   */
-  const openFileDialog = async () => {
-    try {
-      // Ouvrir le dialog de sélection de fichier
-      const selected = await open({
-        filters: [{
-          name: 'Algorithme',
-          extensions: ['algo']
-        }],
-        multiple: false
-      });
-
-      // Charger le contenu du fichier si un fichier a été sélectionné
-      if (selected && typeof selected === 'string') {
-        const fileContent = await readTextFile(selected);
-        const fileName = selected.split('/').pop() || selected.split('\\').pop() || 'fichier.algo';
-        openFile(selected, fileContent, fileName);
-        setOutput([]);
-        setError(null);
-      }
-    } catch (err) {
-      setError(`Erreur lors de l'ouverture: ${err}`);
-    }
-  };
 
   /**
    * Crée un nouvel algorithme vide dans un nouvel onglet
    */
   const handleNewFile = () => {
     createNewFile();
-    setOutput([]);
-    setError(null);
-  };
-
-  /**
-   * Efface la console
-   */
-  const clearConsole = () => {
-    setOutput([]);
-    setError(null);
+    clearConsole();
   };
 
   /**
@@ -409,24 +267,14 @@ function CodeEditor() {
     };
   }, []);
 
-  /**
-   * Gestion des raccourcis clavier
-   */
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+S (ou Cmd+S sur Mac) pour sauvegarder
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        saveCurrentFile();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [activeFile]); // Dépendre de activeFile pour avoir la bonne closure dans saveCurrentFile
+  // Hook de gestion des raccourcis clavier
+  useKeyboardShortcuts({
+    activeFile,
+    onSave: saveCurrentFile,
+    onExecute: executeAlgorithm,
+    onNew: handleNewFile,
+    onOpen: openFileDialog,
+  });
 
   /**
    * Charge un exemple depuis localStorage si disponible
@@ -448,8 +296,7 @@ function CodeEditor() {
           // Créer un nouveau fichier avec le code de l'exemple
           const examplePath = `example://legacy-${Date.now()}`;
           openFile(examplePath, example.code, fileName);
-          setOutput([]);
-          setError(null);
+          clearConsole();
         }
 
         // Nettoyer le localStorage après chargement
@@ -460,88 +307,6 @@ function CodeEditor() {
     }
   }, [files]);
 
-  /**
-   * Écoute les événements du backend pour les requêtes d'entrée et les résultats
-   */
-  useEffect(() => {
-    const startTimeRef = { current: performance.now() };
-    const listeners: (() => void)[] = [];
-
-    // Fonction async pour setup les listeners
-    const setupListeners = async () => {
-      // Écouter les mises à jour d'output en temps réel
-      const unlistenOutputUpdate = await listen<OutputUpdate>('output-update', (event) => {
-        const { output: completeLines, current_line } = event.payload;
-
-        // Construire l'output : lignes complètes + ligne courante si non vide
-        const fullOutput = [...completeLines];
-        if (current_line) {
-          fullOutput.push(current_line);
-        }
-
-        setOutput(fullOutput);
-      });
-      listeners.push(unlistenOutputUpdate);
-
-      // Écouter les requêtes d'entrée
-      const unlistenInputRequest = await listen<InputRequest>('input-request', (event) => {
-        console.log('Requête d\'entrée reçue:', event.payload);
-        const request = event.payload;
-
-        // Afficher l'output accumulé jusqu'à ce point
-        setOutput(request.current_output);
-
-        setCurrentInputRequest(request);
-
-        // Ouvrir la modal seulement si le mode est 'modal'
-        if (settings.inputMode === 'modal') {
-          setIsModalOpen(true);
-        }
-        // En mode 'console', le champ d'entrée s'affichera directement dans la console
-      });
-      listeners.push(unlistenInputRequest);
-
-      // Écouter les résultats d'exécution
-      const unlistenExecutionComplete = await listen<ExecutionResult>('execution-complete', (event) => {
-        console.log('Exécution terminée:', event.payload);
-        const result = event.payload;
-        const endTime = performance.now();
-        setExecutionTime((endTime - startTimeRef.current) / 1000);
-
-        // Vérifier que c'est toujours le même fichier
-        const currentFileId = activeFileRef.current?.id;
-        const executingFileId = executingFileIdRef.current;
-
-        if (executingFileId && currentFileId !== executingFileId) {
-          console.warn('[WARN] Fichier changé pendant exécution, résultats ignorés');
-          setIsRunning(false);
-          executingFileIdRef.current = null;
-          return;
-        }
-
-        if (result.success) {
-          setOutput(result.output);
-          setError(null);
-        } else {
-          setError(result.error || "Erreur inconnue");
-          setOutput([]);
-        }
-
-        setIsRunning(false);
-        executingFileIdRef.current = null;
-        startTimeRef.current = performance.now();
-      });
-      listeners.push(unlistenExecutionComplete);
-
-    };
-
-    setupListeners();
-
-    // Nettoyer les listeners au démontage
-    return () => {
-      listeners.forEach(fn => fn());
-    };
-  }, [settings.inputMode]);
 
 
   // Définir le thème

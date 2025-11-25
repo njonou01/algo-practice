@@ -429,9 +429,30 @@ export function setupCompletionProvider(monaco: Monaco): void {
 }
 
 /**
- * Extrait les variables déclarées du code
+ * Cache pour l'extraction des variables déclarées
+ */
+interface VariableCache {
+  code: string;
+  variables: Array<{ name: string; type: string }>;
+  timestamp: number;
+}
+
+let variableCache: VariableCache | null = null;
+const CACHE_DURATION = 1000; // 1 seconde
+
+/**
+ * Extrait les variables déclarées du code avec mise en cache
  */
 function extractDeclaredVariables(code: string): Array<{ name: string; type: string }> {
+  const now = Date.now();
+
+  // Vérifier le cache
+  if (variableCache &&
+      variableCache.code === code &&
+      (now - variableCache.timestamp) < CACHE_DURATION) {
+    return variableCache.variables;
+  }
+
   const variables: Array<{ name: string; type: string }> = [];
 
   // Regex pour capturer les déclarations de variables
@@ -466,7 +487,40 @@ function extractDeclaredVariables(code: string): Array<{ name: string; type: str
     });
   }
 
+  // Mettre en cache le résultat
+  variableCache = {
+    code,
+    variables,
+    timestamp: now,
+  };
+
   return variables;
+}
+
+/**
+ * Valide une couleur hexadécimale
+ * Retourne une couleur par défaut si invalide
+ */
+function validateHexColor(color: string | undefined, defaultColor: string): string {
+  if (!color) return defaultColor;
+
+  // Supprimer le # si présent
+  const cleanColor = color.replace('#', '');
+
+  // Vérifier le format hexadécimal (3 ou 6 caractères)
+  const hexPattern = /^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$/;
+
+  if (!hexPattern.test(cleanColor)) {
+    console.warn(`[WARN] Couleur invalide: ${color}, utilisation de ${defaultColor}`);
+    return defaultColor;
+  }
+
+  // Convertir format court (abc) en format long (aabbcc)
+  if (cleanColor.length === 3) {
+    return cleanColor.split('').map(c => c + c).join('');
+  }
+
+  return cleanColor;
 }
 
 /**
@@ -488,22 +542,43 @@ export function createDynamicTheme(
 ): monacoEditor.editor.IStandaloneThemeData {
   const isDark = themeName === 'dark';
 
-  // Fonction pour convertir #rrggbb en rrggbb (sans #)
-  const stripHash = (color: string | undefined) => color ? color.replace('#', '') : 'ffffff';
+  // Couleurs par défaut selon le thème
+  const defaults = {
+    keywords: isDark ? 'c792ea' : '9333ea',
+    types: isDark ? '82aaff' : '2563eb',
+    numbers: isDark ? 'f78c6c' : 'ea580c',
+    strings: isDark ? 'c3e88d' : '16a34a',
+    comments: isDark ? '697098' : '6b7280',
+    booleans: isDark ? 'ff5874' : 'dc2626',
+    arrow: isDark ? 'f78c6c' : 'ea580c',
+    functions: isDark ? '82aaff' : '2563eb',
+  };
+
+  // Valider et assainir toutes les couleurs
+  const safeColors = {
+    keywords: validateHexColor(settings.colorKeywords, defaults.keywords),
+    types: validateHexColor(settings.colorTypes, defaults.types),
+    numbers: validateHexColor(settings.colorNumbers, defaults.numbers),
+    strings: validateHexColor(settings.colorStrings, defaults.strings),
+    comments: validateHexColor(settings.colorComments, defaults.comments),
+    booleans: validateHexColor(settings.colorBooleans, defaults.booleans),
+    arrow: validateHexColor(settings.colorArrow, defaults.arrow),
+    functions: validateHexColor(settings.colorFunctions, defaults.functions),
+  };
 
   return {
     base: isDark ? 'vs-dark' : 'vs',
     inherit: true,
     rules: [
-      { token: 'comment', foreground: stripHash(settings.colorComments), fontStyle: 'italic' },
-      { token: 'keyword', foreground: stripHash(settings.colorKeywords), fontStyle: 'bold' },
-      { token: 'type', foreground: stripHash(settings.colorTypes), fontStyle: 'bold' },
-      { token: 'number', foreground: stripHash(settings.colorNumbers) },
-      { token: 'number.float', foreground: stripHash(settings.colorNumbers) },
-      { token: 'string', foreground: stripHash(settings.colorStrings) },
-      { token: 'constant.boolean', foreground: stripHash(settings.colorBooleans), fontStyle: 'bold' },
-      { token: 'function.call', foreground: stripHash(settings.colorFunctions), fontStyle: 'italic' },
-      { token: 'operator.arrow', foreground: stripHash(settings.colorArrow), fontStyle: 'bold' },
+      { token: 'comment', foreground: safeColors.comments, fontStyle: 'italic' },
+      { token: 'keyword', foreground: safeColors.keywords, fontStyle: 'bold' },
+      { token: 'type', foreground: safeColors.types, fontStyle: 'bold' },
+      { token: 'number', foreground: safeColors.numbers },
+      { token: 'number.float', foreground: safeColors.numbers },
+      { token: 'string', foreground: safeColors.strings },
+      { token: 'constant.boolean', foreground: safeColors.booleans, fontStyle: 'bold' },
+      { token: 'function.call', foreground: safeColors.functions, fontStyle: 'italic' },
+      { token: 'operator.arrow', foreground: safeColors.arrow, fontStyle: 'bold' },
       { token: 'operator.special', foreground: 'f472b6' },
       { token: 'operator', foreground: 'f472b6' },
     ],

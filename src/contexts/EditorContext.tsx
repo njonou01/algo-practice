@@ -1,5 +1,6 @@
 import { Store } from '@tauri-apps/plugin-store';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { sanitizeFileName, encodeFileUri, extractFileName } from '../utils/fileValidation';
 
 /**
  * Représente un fichier dans l'éditeur
@@ -9,7 +10,8 @@ export interface EditorFile {
   name: string;         // Nom affiché dans l'onglet
   path: string | null;  // Chemin du fichier (null si pas encore sauvegardé)
   code: string;         // Contenu du fichier
-  isDirty: boolean;     // Modifié depuis la dernière sauvegarde
+  savedCode: string;    // Contenu tel qu'il était à la dernière sauvegarde
+  isDirty: boolean;     // Modifié depuis la dernière sauvegarde (calculé: code !== savedCode)
   modelUri?: string;    // URI du modèle Monaco (pour éviter les collisions)
 }
 
@@ -70,8 +72,14 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         const savedActiveId = await storeInstance.get('activeFileId');
 
         if (savedFiles && Array.isArray(savedFiles) && savedFiles.length > 0) {
-          setFiles(savedFiles);
-          setActiveFileId(savedActiveId as string || savedFiles[0].id);
+          // Migration: ajouter savedCode aux anciens fichiers qui n'en ont pas
+          const migratedFiles = savedFiles.map((file: any) => ({
+            ...file,
+            savedCode: file.savedCode ?? file.code, // Si pas de savedCode, utiliser le code actuel
+            isDirty: file.savedCode ? file.code !== file.savedCode : false,
+          }));
+          setFiles(migratedFiles);
+          setActiveFileId(savedActiveId as string || migratedFiles[0].id);
         } else {
           // Démarrer sans fichier
           setFiles([]);
@@ -110,12 +118,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
    */
   const createNewFile = useCallback(() => {
     const newId = generateId();
-    const newFile: EditorFile = {
-      id: newId,
-      name: 'Sans titre.algo',
-      path: null,
-      modelUri: `file:///untitled-${newId}.algo`,
-      code: `Algorithme NouvelAlgorithme
+    const initialCode = `Algorithme NouvelAlgorithme
 
 // Définir une structure de données
 // Enregistrement Personne
@@ -146,7 +149,14 @@ Debut
   // Votre code ici
   Ecrire("Bonjour !\\n")
 
-Fin`,
+Fin`;
+    const newFile: EditorFile = {
+      id: newId,
+      name: 'Sans titre.algo',
+      path: null,
+      modelUri: `file:///untitled-${newId}.algo`,
+      code: initialCode,
+      savedCode: initialCode, // Nouveau fichier = pas de modifications
       isDirty: false,
     };
     setFiles([...files, newFile]);
@@ -178,12 +188,15 @@ Fin`,
           // Recharger silencieusement si pas de modifications
           setFiles(files.map(f =>
             f.id === existingFileByPath.id
-              ? { ...f, code, isDirty: false }
+              ? { ...f, code, savedCode: code, isDirty: false }
               : f
           ));
         }
         return;
       }
+
+      // Assainir et valider le nom de fichier
+      name = sanitizeFileName(name);
 
       // Vérifier collision de nom (même nom mais chemin différent)
       const existingFileByName = files.find(f => f.name === name && f.path !== path);
@@ -195,14 +208,15 @@ Fin`,
         name = newName;
       }
 
-      // Générer un URI unique pour le modèle Monaco
-      const modelUri = `file:///${path.replace(/\\/g, '/')}`;
+      // Générer un URI unique et correctement encodé pour le modèle Monaco
+      const modelUri = encodeFileUri(path);
 
       const newFile: EditorFile = {
         id: generateId(),
         name,
         path,
         code,
+        savedCode: code, // Fichier fraîchement ouvert = pas de modifications
         isDirty: false,
         modelUri,
       };
@@ -218,6 +232,7 @@ Fin`,
         name: 'Erreur-' + name,
         path: null,
         code: code || '',
+        savedCode: '', // Erreur = considéré comme modifié
         isDirty: true,
         modelUri: `file:///error-${Date.now()}.algo`,
       };
@@ -256,12 +271,12 @@ Fin`,
   }, [files, activeFileId]);
 
   /**
-   * Met à jour le code d'un fichier
+   * Met à jour le code d'un fichier avec calcul intelligent de isDirty
    */
   const updateFileCode = useCallback((fileId: string, code: string) => {
     setFiles(files.map(f =>
       f.id === fileId
-        ? { ...f, code, isDirty: true }
+        ? { ...f, code, isDirty: code !== f.savedCode }
         : f
     ));
   }, [files]);
@@ -270,24 +285,24 @@ Fin`,
    * Marque un fichier comme sauvegardé et met à jour le modelUri
    */
   const markFileSaved = useCallback((fileId: string, path: string) => {
-    const fileName = path.split('/').pop() || path.split('\\').pop() || 'fichier.algo';
-    const normalizedPath = path.replace(/\\/g, '/');
-    const modelUri = `file:///${normalizedPath}`;
+    const fileName = sanitizeFileName(extractFileName(path));
+    const modelUri = encodeFileUri(path);
 
     setFiles(files.map(f =>
       f.id === fileId
-        ? { ...f, path, isDirty: false, name: fileName, modelUri }
+        ? { ...f, path, savedCode: f.code, isDirty: false, name: fileName, modelUri }
         : f
     ));
   }, [files]);
 
   /**
-   * Renomme un fichier
+   * Renomme un fichier avec validation
    */
   const renameFile = useCallback((fileId: string, newName: string) => {
+    const sanitizedName = sanitizeFileName(newName);
     setFiles(files.map(f =>
       f.id === fileId
-        ? { ...f, name: newName, isDirty: true }
+        ? { ...f, name: sanitizedName, isDirty: true }
         : f
     ));
   }, [files]);
