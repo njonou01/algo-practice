@@ -12,6 +12,8 @@ import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { Editor as MonacoEditor } from '@monaco-editor/react';
 import { File, FolderOpen, Loader2, Maximize2, Minimize2, Play, Save, Wand2 } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
+import type * as monacoEditor from 'monaco-editor';
+import type { Monaco } from '../types/monaco';
 import Console from '../components/Console';
 import InputModal from '../components/InputModal';
 import SplitPane from '../components/SplitPane';
@@ -80,15 +82,20 @@ function CodeEditor() {
   // Fichier actif
   const activeFile = getActiveFile();
 
+  // Ref pour le fichier actif (pour éviter stale closures)
+  const activeFileRef = useRef(activeFile);
+  activeFileRef.current = activeFile;
+
   // Référence à l'éditeur Monaco
-  const editorRef = useRef<any>(null);
-  const monacoRef = useRef<any>(null);
+  const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<Monaco | null>(null);
 
   // États pour l'exécution
   const [output, setOutput] = useState<string[]>([]);                // Sorties de l'algorithme
   const [error, setError] = useState<string | null>(null);           // Message d'erreur éventuel
   const [isRunning, setIsRunning] = useState(false);                 // Indique si l'exécution est en cours
   const [executionTime, setExecutionTime] = useState<number>();      // Temps d'exécution
+  const executingFileIdRef = useRef<string | null>(null);            // ID du fichier en cours d'exécution
 
   // États pour la modal d'entrée
   const [currentInputRequest, setCurrentInputRequest] = useState<InputRequest | null>(null);
@@ -166,6 +173,9 @@ function CodeEditor() {
   const executeAlgorithm = async () => {
     if (!activeFile) return;
 
+    // Capturer l'ID du fichier en cours d'exécution
+    executingFileIdRef.current = activeFile.id;
+
     setOutput([]);
     setError(null);
     setIsRunning(true);
@@ -178,6 +188,7 @@ function CodeEditor() {
     } catch (err) {
       setError(`Erreur lors du lancement: ${err}`);
       setIsRunning(false);
+      executingFileIdRef.current = null;
     }
   };
 
@@ -454,7 +465,7 @@ function CodeEditor() {
    */
   useEffect(() => {
     const startTimeRef = { current: performance.now() };
-    let unlistenFunctions: (() => void)[] = [];
+    const listeners: (() => void)[] = [];
 
     // Fonction async pour setup les listeners
     const setupListeners = async () => {
@@ -470,7 +481,7 @@ function CodeEditor() {
 
         setOutput(fullOutput);
       });
-      unlistenFunctions.push(unlistenOutputUpdate);
+      listeners.push(unlistenOutputUpdate);
 
       // Écouter les requêtes d'entrée
       const unlistenInputRequest = await listen<InputRequest>('input-request', (event) => {
@@ -488,7 +499,7 @@ function CodeEditor() {
         }
         // En mode 'console', le champ d'entrée s'affichera directement dans la console
       });
-      unlistenFunctions.push(unlistenInputRequest);
+      listeners.push(unlistenInputRequest);
 
       // Écouter les résultats d'exécution
       const unlistenExecutionComplete = await listen<ExecutionResult>('execution-complete', (event) => {
@@ -496,6 +507,17 @@ function CodeEditor() {
         const result = event.payload;
         const endTime = performance.now();
         setExecutionTime((endTime - startTimeRef.current) / 1000);
+
+        // Vérifier que c'est toujours le même fichier
+        const currentFileId = activeFileRef.current?.id;
+        const executingFileId = executingFileIdRef.current;
+
+        if (executingFileId && currentFileId !== executingFileId) {
+          console.warn('[WARN] Fichier changé pendant exécution, résultats ignorés');
+          setIsRunning(false);
+          executingFileIdRef.current = null;
+          return;
+        }
 
         if (result.success) {
           setOutput(result.output);
@@ -506,9 +528,10 @@ function CodeEditor() {
         }
 
         setIsRunning(false);
+        executingFileIdRef.current = null;
         startTimeRef.current = performance.now();
       });
-      unlistenFunctions.push(unlistenExecutionComplete);
+      listeners.push(unlistenExecutionComplete);
 
     };
 
@@ -516,7 +539,7 @@ function CodeEditor() {
 
     // Nettoyer les listeners au démontage
     return () => {
-      unlistenFunctions.forEach(fn => fn());
+      listeners.forEach(fn => fn());
     };
   }, [settings.inputMode]);
 

@@ -2,10 +2,13 @@
  * Configuration Monaco Editor pour le langage algorithmique français
  */
 
+import type * as monacoEditor from 'monaco-editor';
+import type { Monaco, IMonarchLanguage } from '../types/monaco';
+
 /**
  * Définition du langage algorithmique
  */
-export const algorithmLanguageDefinition: any = {
+export const algorithmLanguageDefinition: IMonarchLanguage = {
   defaultToken: 'identifier',
   tokenPostfix: '.algo',
   ignoreCase: true,
@@ -94,9 +97,9 @@ export const algorithmLanguageDefinition: any = {
 /**
  * Configuration de l'autocomplétion
  */
-export function setupCompletionProvider(monaco: any): void {
+export function setupCompletionProvider(monaco: Monaco): void {
   monaco.languages.registerCompletionItemProvider('algorithmique', {
-    provideCompletionItems: (model: any, position: any) => {
+    provideCompletionItems: (model, position) => {
       // Récupérer le code actuel pour analyser les variables déclarées
       const textUntilPosition = model.getValueInRange({
         startLineNumber: 1,
@@ -482,7 +485,7 @@ export function createDynamicTheme(
     colorFunctions: string;
   },
   themeName: 'dark' | 'light'
-): any {
+): monacoEditor.editor.IStandaloneThemeData {
   const isDark = themeName === 'dark';
 
   // Fonction pour convertir #rrggbb en rrggbb (sans #)

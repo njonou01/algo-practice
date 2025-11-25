@@ -1,5 +1,5 @@
 import { Store } from '@tauri-apps/plugin-store';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 /**
  * Représente un fichier dans l'éditeur
@@ -41,10 +41,15 @@ interface EditorContextType {
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
 /**
- * Génère un UUID simple
+ * Génère un UUID unique
  */
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // Utiliser crypto.randomUUID si disponible (moderne et standard)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback pour environnements plus anciens
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 export function EditorProvider({ children }: { children: ReactNode }) {
@@ -103,7 +108,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   /**
    * Crée un nouveau fichier
    */
-  const createNewFile = () => {
+  const createNewFile = useCallback(() => {
     const newId = generateId();
     const newFile: EditorFile = {
       id: newId,
@@ -146,12 +151,12 @@ Fin`,
     };
     setFiles([...files, newFile]);
     setActiveFileId(newFile.id);
-  };
+  }, [files]);
 
   /**
    * Ouvre un fichier existant avec gestion des collisions
    */
-  const openFile = (path: string, code: string, name: string) => {
+  const openFile = useCallback((path: string, code: string, name: string) => {
     try {
       // Validation du chemin
       if (!path || path.trim() === '') {
@@ -219,12 +224,12 @@ Fin`,
       setFiles([...files, fallbackFile]);
       setActiveFileId(fallbackFile.id);
     }
-  };
+  }, [files]);
 
   /**
    * Ferme un fichier et nettoie ses ressources
    */
-  const closeFile = (fileId: string) => {
+  const closeFile = useCallback((fileId: string) => {
     const fileToClose = files.find(f => f.id === fileId);
     if (fileToClose) {
       console.log(`[CLOSE] Fermeture du fichier: ${fileToClose.name}`);
@@ -248,63 +253,80 @@ Fin`,
         setActiveFileId(null);
       }
     }
-  };
+  }, [files, activeFileId]);
 
   /**
    * Met à jour le code d'un fichier
    */
-  const updateFileCode = (fileId: string, code: string) => {
+  const updateFileCode = useCallback((fileId: string, code: string) => {
     setFiles(files.map(f =>
       f.id === fileId
         ? { ...f, code, isDirty: true }
         : f
     ));
-  };
+  }, [files]);
 
   /**
-   * Marque un fichier comme sauvegardé
+   * Marque un fichier comme sauvegardé et met à jour le modelUri
    */
-  const markFileSaved = (fileId: string, path: string) => {
+  const markFileSaved = useCallback((fileId: string, path: string) => {
+    const fileName = path.split('/').pop() || path.split('\\').pop() || 'fichier.algo';
+    const normalizedPath = path.replace(/\\/g, '/');
+    const modelUri = `file:///${normalizedPath}`;
+
     setFiles(files.map(f =>
       f.id === fileId
-        ? { ...f, path, isDirty: false, name: path.split('/').pop() || path.split('\\').pop() || f.name }
+        ? { ...f, path, isDirty: false, name: fileName, modelUri }
         : f
     ));
-  };
+  }, [files]);
 
   /**
    * Renomme un fichier
    */
-  const renameFile = (fileId: string, newName: string) => {
+  const renameFile = useCallback((fileId: string, newName: string) => {
     setFiles(files.map(f =>
       f.id === fileId
         ? { ...f, name: newName, isDirty: true }
         : f
     ));
-  };
+  }, [files]);
 
   /**
    * Obtient le fichier actif
    */
-  const getActiveFile = (): EditorFile | null => {
+  const getActiveFile = useCallback((): EditorFile | null => {
     return files.find(f => f.id === activeFileId) || null;
-  };
+  }, [files, activeFileId]);
+
+  const contextValue = useMemo(() => ({
+    files,
+    activeFileId,
+    createNewFile,
+    openFile,
+    closeFile,
+    setActiveFile: setActiveFileId,
+    renameFile,
+    updateFileCode,
+    markFileSaved,
+    isMonacoReady,
+    setMonacoReady,
+    getActiveFile,
+  }), [
+    files,
+    activeFileId,
+    createNewFile,
+    openFile,
+    closeFile,
+    renameFile,
+    updateFileCode,
+    markFileSaved,
+    isMonacoReady,
+    getActiveFile
+  ]);
 
   return (
-    <EditorContext.Provider value={{
-      files,
-      activeFileId,
-      createNewFile,
-      openFile,
-      closeFile,
-      setActiveFile: setActiveFileId,
-      renameFile,
-      updateFileCode,
-      markFileSaved,
-      isMonacoReady,
-      setMonacoReady,
-      getActiveFile,
-    }}>
+    <EditorContext.Provider value={contextValue}>
       {children}
     </EditorContext.Provider>
   );
