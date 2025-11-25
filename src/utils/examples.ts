@@ -595,7 +595,7 @@ DebutAlgorithme
       Cas 0:  // Quitter
         continuer <- 0
       Defaut:
-        Ecrire("❌ Direction invalide!\\n")
+        Ecrire("[ERROR] Direction invalide!\\n")
     FinSelon
 
     // Vérifier si déplacement valide
@@ -619,9 +619,9 @@ DebutAlgorithme
             Ecrire("👣 Vous avancez...\\n")
 
           Cas 2:  // Trésor
-            Ecrire("\\n✨ ════════════════════ ✨\\n")
+            Ecrire("\\n[CREATE] ════════════════════ [CREATE]\\n")
             Ecrire("   TRÉSOR TROUVÉ!\\n")
-            Ecrire("✨ ════════════════════ ✨\\n")
+            Ecrire("[CREATE] ════════════════════ [CREATE]\\n")
             hero.tresor <- hero.tresor + 10
             Ecrire("💰 +10 points! Total: ", hero.tresor, "\\n")
             // Vider la case
@@ -802,7 +802,7 @@ DebutAlgorithme
       Ecrire("     COMBAT FINAL!\\n")
       Ecrire("🐉 ════════════════════════════════ 🐉\\n\\n")
     Sinon
-      Ecrire("⚠️  Un ", enemyNom, " apparaît!\\n\\n")
+      Ecrire("[WARN]  Un ", enemyNom, " apparaît!\\n\\n")
     FinSi
 
     // ═══════════════════════════════════
@@ -846,7 +846,7 @@ DebutAlgorithme
             enemyVie <- enemyVie - degats
             Ecrire("🔥 ATTAQUE MAGIQUE! -", degats, " PV\\n")
           Sinon
-            Ecrire("❌ Pas assez de mana!\\n")
+            Ecrire("[ERROR] Pas assez de mana!\\n")
           FinSi
 
         Cas 3:
@@ -864,7 +864,7 @@ DebutAlgorithme
             FinSi
             Ecrire("🧪 Potion utilisée! +30 PV\\n")
           Sinon
-            Ecrire("❌ Plus de potions!\\n")
+            Ecrire("[ERROR] Plus de potions!\\n")
           FinSi
 
         Cas 5:
@@ -881,11 +881,11 @@ DebutAlgorithme
             FinSi
             Ecrire("⭐ SUPER POTION! +60 PV, +30 Mana\\n")
           Sinon
-            Ecrire("❌ Plus de super potions!\\n")
+            Ecrire("[ERROR] Plus de super potions!\\n")
           FinSi
 
         Defaut:
-          Ecrire("❌ Action invalide!\\n")
+          Ecrire("[ERROR] Action invalide!\\n")
       FinSelon
 
       // Tour de l'ennemi (s'il est vivant)
@@ -923,9 +923,9 @@ DebutAlgorithme
     // FIN DU COMBAT
     // ═══════════════════════════════════
     Si vie > 0 Alors
-      Ecrire("\\n✨ ══════════════════════════════ ✨\\n")
+      Ecrire("\\n[CREATE] ══════════════════════════════ [CREATE]\\n")
       Ecrire("      VICTOIRE!\\n")
-      Ecrire("✨ ══════════════════════════════ ✨\\n\\n")
+      Ecrire("[CREATE] ══════════════════════════════ [CREATE]\\n\\n")
 
       // Récompenses
       gold <- gold + enemyGold
@@ -1070,7 +1070,7 @@ DebutAlgorithme
         Si score >= 70 Alors
           Ecrire("⭐ Très bien joué! ⭐\\n")
         Sinon
-          Ecrire("✅ Bon travail! ✅\\n")
+          Ecrire("[SUCCESS] Bon travail! [SUCCESS]\\n")
         FinSi
       FinSi
 

@@ -22,47 +22,47 @@ export function useMonacoSetup(settings: AppSettings, monaco: any) {
       return;
     }
 
-    console.log('🚀 Initialisation GLOBALE de Monaco Editor...');
+    console.log('[INIT] Initialisation GLOBALE de Monaco Editor...');
 
     try {
       // 1. Enregistrer le langage algorithmique (UNE SEULE FOIS)
-      console.log('📝 Enregistrement du langage algorithmique...');
+      console.log('[LANG] Enregistrement du langage algorithmique...');
       const languages = monaco.languages.getLanguages();
       const algoLangExists = languages.some((lang: any) => lang.id === 'algorithmique');
 
       if (!algoLangExists) {
         monaco.languages.register({ id: 'algorithmique' });
         monaco.languages.setMonarchTokensProvider('algorithmique', algorithmLanguageDefinition);
-        console.log('✅ Langage enregistré');
+        console.log('[SUCCESS] Langage enregistré');
       } else {
-        console.log('ℹ️ Langage déjà enregistré');
+        console.log('[INFO] Langage déjà enregistré');
       }
 
       // 2. Créer les thèmes (peuvent être recréés si les settings changent)
-      console.log('🎨 Création des thèmes...');
+      console.log('[THEME] Création des thèmes...');
       const darkTheme = createDynamicTheme(settings, 'dark');
       const lightTheme = createDynamicTheme(settings, 'light');
       monaco.editor.defineTheme('algorithm-dark', darkTheme);
       monaco.editor.defineTheme('algorithm-light', lightTheme);
-      console.log('✅ Thèmes créés');
+      console.log('[SUCCESS] Thèmes créés');
 
       // 3. Appliquer le thème approprié
       const themeName = settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light';
       monaco.editor.setTheme(themeName);
-      console.log('✅ Thème appliqué:', themeName);
+      console.log('[SUCCESS] Thème appliqué:', themeName);
 
       // 4. Configurer l'autocomplétion (UNE SEULE FOIS)
       if (!algoLangExists) {
         setupCompletionProvider(monaco);
-        console.log('✅ Autocomplétion configurée');
+        console.log('[SUCCESS] Autocomplétion configurée');
       }
 
       hasInitialized.current = true;
       isMonacoInitialized = true;
-      console.log('✅ Monaco Editor initialisé avec succès !');
+      console.log('[SUCCESS] Monaco Editor initialisé avec succès !');
 
     } catch (error) {
-      console.error('❌ Erreur lors de l\'initialisation de Monaco:', error);
+      console.error('[ERROR] Erreur lors de l\'initialisation de Monaco:', error);
     }
   }, [monaco, settings]);
 
@@ -72,7 +72,7 @@ export function useMonacoSetup(settings: AppSettings, monaco: any) {
       return;
     }
 
-    console.log('🎨 Mise à jour des thèmes...');
+    console.log('[THEME] Mise à jour des thèmes...');
     const darkTheme = createDynamicTheme(settings, 'dark');
     const lightTheme = createDynamicTheme(settings, 'light');
     monaco.editor.defineTheme('algorithm-dark', darkTheme);
@@ -80,7 +80,7 @@ export function useMonacoSetup(settings: AppSettings, monaco: any) {
 
     const themeName = settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light';
     monaco.editor.setTheme(themeName);
-    console.log('✅ Thèmes mis à jour');
+    console.log('[SUCCESS] Thèmes mis à jour');
 
   }, [
     monaco,

@@ -90,7 +90,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             await storeInstance.save();
             // Supprimer de localStorage après migration
             localStorage.removeItem('appSettings');
-            console.log('✅ Migration de localStorage vers tauri-plugin-store terminée');
+            console.log('[SUCCESS] Migration de localStorage vers tauri-plugin-store terminée');
           } catch (e) {
             console.error('Erreur lors de la migration:', e);
           }

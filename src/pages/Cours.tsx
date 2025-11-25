@@ -129,19 +129,19 @@ function Cours() {
           >
             <div className="space-y-3">
               <div className="bg-orange-50 border-l-4 border-orange-400 p-4">
-                <h5 className="font-semibold text-orange-900 mb-2">❌ Erreur courante #1</h5>
+                <h5 className="font-semibold text-orange-900 mb-2">[ERROR] Erreur courante #1</h5>
                 <p className="text-sm text-orange-800">
                   Oublier le mot-clé <code className="bg-orange-100 px-2 py-1">Debut</code> ou <code className="bg-orange-100 px-2 py-1">Fin</code>
                 </p>
               </div>
               <div className="bg-orange-50 border-l-4 border-orange-400 p-4">
-                <h5 className="font-semibold text-orange-900 mb-2">❌ Erreur courante #2</h5>
+                <h5 className="font-semibold text-orange-900 mb-2">[ERROR] Erreur courante #2</h5>
                 <p className="text-sm text-orange-800">
                   Mettre des instructions avant <code className="bg-orange-100 px-2 py-1">Debut</code>
                 </p>
               </div>
               <div className="bg-orange-50 border-l-4 border-orange-400 p-4">
-                <h5 className="font-semibold text-orange-900 mb-2">❌ Erreur courante #3</h5>
+                <h5 className="font-semibold text-orange-900 mb-2">[ERROR] Erreur courante #3</h5>
                 <p className="text-sm text-orange-800">
                   Donner un nom d'algorithme avec des espaces (utilisez MonAlgo, pas "Mon Algo")
                 </p>
@@ -220,17 +220,17 @@ Fin`,
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white border-2 border-purple-200 p-4">
-                  <div className="font-bold text-purple-700 mb-2">📦 Boîte "age"</div>
+                  <div className="font-bold text-purple-700 mb-2">[INIT] Boîte "age"</div>
                   <div className="text-gray-600 text-sm">Type : Nombre entier</div>
                   <div className="mt-2 bg-purple-50 p-2 text-center font-mono text-lg">25</div>
                 </div>
                 <div className="bg-white border-2 border-blue-200 p-4">
-                  <div className="font-bold text-blue-700 mb-2">📦 Boîte "prenom"</div>
+                  <div className="font-bold text-blue-700 mb-2">[INIT] Boîte "prenom"</div>
                   <div className="text-gray-600 text-sm">Type : Texte (Chaine)</div>
                   <div className="mt-2 bg-blue-50 p-2 text-center font-mono">"Alice"</div>
                 </div>
                 <div className="bg-white border-2 border-green-200 p-4">
-                  <div className="font-bold text-green-700 mb-2">📦 Boîte "taille"</div>
+                  <div className="font-bold text-green-700 mb-2">[INIT] Boîte "taille"</div>
                   <div className="text-gray-600 text-sm">Type : Nombre décimal</div>
                   <div className="mt-2 bg-green-50 p-2 text-center font-mono">1.65</div>
                 </div>
@@ -367,11 +367,11 @@ Fin`,
                   <strong>💡 Règles pour nommer une variable :</strong>
                 </p>
                 <ul className="mt-2 ml-4 space-y-1 text-sm text-blue-800">
-                  <li>✅ Commence par une lettre (pas un chiffre)</li>
-                  <li>✅ Pas d'espaces (utilisez noteEtudiant ou note_etudiant)</li>
-                  <li>✅ Pas d'accents (évitez prénom, utilisez prenom)</li>
-                  <li>✅ Nom clair et compréhensible (age plutôt que a)</li>
-                  <li>❌ Pas de mots réservés (Entier, Debut, Fin...)</li>
+                  <li>[SUCCESS] Commence par une lettre (pas un chiffre)</li>
+                  <li>[SUCCESS] Pas d'espaces (utilisez noteEtudiant ou note_etudiant)</li>
+                  <li>[SUCCESS] Pas d'accents (évitez prénom, utilisez prenom)</li>
+                  <li>[SUCCESS] Nom clair et compréhensible (age plutôt que a)</li>
+                  <li>[ERROR] Pas de mots réservés (Entier, Debut, Fin...)</li>
                 </ul>
               </div>
             </div>
@@ -383,18 +383,18 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Utiliser une variable sans la déclarer</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Utiliser une variable sans la déclarer</h5>
                 <pre className="text-sm text-red-800 bg-red-100 p-2 mt-2">
 {`age ← 25  // ERREUR ! age n'existe pas encore`}
                 </pre>
                 <pre className="text-sm text-green-800 bg-green-100 p-2 mt-2">
-{`Variables age : Entier  // ✅ D'abord déclarer
+{`Variables age : Entier  // [SUCCESS] D'abord déclarer
 Debut
-  age ← 25  // ✅ Ensuite utiliser`}
+  age ← 25  // [SUCCESS] Ensuite utiliser`}
                 </pre>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Mettre du texte dans une variable Entier</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Mettre du texte dans une variable Entier</h5>
                 <pre className="text-sm text-red-800 bg-red-100 p-2 mt-2">
 {`Variables age : Entier
 Debut
@@ -481,14 +481,14 @@ Fin`,
                 <div className="bg-white border-2 border-gray-300 p-4">
                   <div className="text-center text-gray-500 mb-2">AVANT l'affectation</div>
                   <div className="border-2 border-dashed border-gray-300 p-4 text-center">
-                    <div className="font-bold text-gray-700 mb-2">📦 age</div>
+                    <div className="font-bold text-gray-700 mb-2">[INIT] age</div>
                     <div className="text-gray-400 italic">vide</div>
                   </div>
                 </div>
                 <div className="bg-white border-2 border-indigo-300 p-4">
                   <div className="text-center text-indigo-700 mb-2">APRÈS : age ← 20</div>
                   <div className="border-2 border-indigo-500 bg-indigo-50 p-4 text-center">
-                    <div className="font-bold text-indigo-700 mb-2">📦 age</div>
+                    <div className="font-bold text-indigo-700 mb-2">[INIT] age</div>
                     <div className="text-2xl font-mono font-bold text-indigo-900">20</div>
                   </div>
                 </div>
@@ -574,23 +574,23 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Confondre = et ←</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Confondre = et ←</h5>
                 <p className="text-sm text-red-800">
                   En algorithmique français, on utilise <code className="bg-red-100 px-2 py-1">←</code> et PAS <code className="bg-red-100 px-2 py-1">=</code>
                 </p>
-                <pre className="text-sm bg-red-100 p-2 mt-2">age = 20  // ❌ FAUX en algo français</pre>
-                <pre className="text-sm bg-green-100 p-2 mt-1">age ← 20  // ✅ CORRECT</pre>
+                <pre className="text-sm bg-red-100 p-2 mt-2">age = 20  // [ERROR] FAUX en algo français</pre>
+                <pre className="text-sm bg-green-100 p-2 mt-1">age ← 20  // [SUCCESS] CORRECT</pre>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier de déclarer la variable d'abord</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier de déclarer la variable d'abord</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
 {`Debut
-  age ← 20  // ❌ age n'existe pas encore !`}
+  age ← 20  // [ERROR] age n'existe pas encore !`}
                 </pre>
                 <pre className="text-sm bg-green-100 p-2 mt-1">
 {`Variables age : Entier
 Debut
-  age ← 20  // ✅ OK`}
+  age ← 20  // [SUCCESS] OK`}
                 </pre>
               </div>
             </div>
@@ -692,7 +692,7 @@ Fin`,
               </div>
 
               <div className="bg-yellow-50 border border-yellow-200 p-4">
-                <p className="text-sm font-semibold text-yellow-900 mb-2">⚠️ Le caractère spécial \n</p>
+                <p className="text-sm font-semibold text-yellow-900 mb-2">[WARN] Le caractère spécial \n</p>
                 <p className="text-sm text-yellow-800">
                   <code className="bg-yellow-100 px-2 py-1">\n</code> signifie "aller à la ligne".
                   C'est comme appuyer sur Entrée.
@@ -742,12 +742,12 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier les guillemets pour le texte</h5>
-                <pre className="text-sm bg-red-100 p-2 mt-2">Ecrire(Bonjour)  // ❌ Bonjour n'est pas une variable</pre>
-                <pre className="text-sm bg-green-100 p-2 mt-1">Ecrire("Bonjour")  // ✅ CORRECT</pre>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier les guillemets pour le texte</h5>
+                <pre className="text-sm bg-red-100 p-2 mt-2">Ecrire(Bonjour)  // [ERROR] Bonjour n'est pas une variable</pre>
+                <pre className="text-sm bg-green-100 p-2 mt-1">Ecrire("Bonjour")  // [SUCCESS] CORRECT</pre>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier \n pour aller à la ligne</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier \n pour aller à la ligne</h5>
                 <p className="text-sm text-red-800">
                   Sans \n, tout s'affiche sur la même ligne. N'oubliez pas d'ajouter \n à la fin !
                 </p>
@@ -910,23 +910,23 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Utiliser une variable non déclarée</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Utiliser une variable non déclarée</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
 {`Debut
-  Lire(age)  // ❌ age n'est pas déclaré !`}
+  Lire(age)  // [ERROR] age n'est pas déclaré !`}
                 </pre>
                 <pre className="text-sm bg-green-100 p-2 mt-1">
 {`Variables age : Entier
 Debut
-  Lire(age)  // ✅ OK`}
+  Lire(age)  // [SUCCESS] OK`}
                 </pre>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier d'afficher une question</h5>
-                <pre className="text-sm bg-red-100 p-2 mt-2">Lire(nom)  // ❌ L'utilisateur ne sait pas quoi entrer</pre>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier d'afficher une question</h5>
+                <pre className="text-sm bg-red-100 p-2 mt-2">Lire(nom)  // [ERROR] L'utilisateur ne sait pas quoi entrer</pre>
                 <pre className="text-sm bg-green-100 p-2 mt-1">
 {`Ecrire("Votre nom ?\n")
-Lire(nom)  // ✅ MIEUX`}
+Lire(nom)  // [SUCCESS] MIEUX`}
                 </pre>
               </div>
             </div>
@@ -1126,14 +1126,14 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Division par zéro</h5>
-                <pre className="text-sm bg-red-100 p-2 mt-2">resultat ← 10 / 0  // ❌ ERREUR !</pre>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Division par zéro</h5>
+                <pre className="text-sm bg-red-100 p-2 mt-2">resultat ← 10 / 0  // [ERROR] ERREUR !</pre>
                 <p className="text-sm text-red-800 mt-2">Vérifiez toujours que le diviseur n'est pas zéro</p>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier les parenthèses</h5>
-                <pre className="text-sm bg-red-100 p-2 mt-2">moyenne ← note1 + note2 + note3 / 3  // ❌ FAUX !</pre>
-                <pre className="text-sm bg-green-100 p-2 mt-1">moyenne ← (note1 + note2 + note3) / 3  // ✅ CORRECT</pre>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier les parenthèses</h5>
+                <pre className="text-sm bg-red-100 p-2 mt-2">moyenne ← note1 + note2 + note3 / 3  // [ERROR] FAUX !</pre>
+                <pre className="text-sm bg-green-100 p-2 mt-1">moyenne ← (note1 + note2 + note3) / 3  // [SUCCESS] CORRECT</pre>
               </div>
             </div>
           </CollapsibleSection>
@@ -1315,17 +1315,17 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier le FinSi</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier le FinSi</h5>
                 <p className="text-sm text-red-800">
                   Chaque <code className="bg-red-100 px-2 py-1">Si</code> doit avoir son <code className="bg-red-100 px-2 py-1">FinSi</code> correspondant !
                 </p>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Mettre des instructions entre Sinon et FinSi sans bloc</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Mettre des instructions entre Sinon et FinSi sans bloc</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
 {`Si (age >= 18) Alors
   Ecrire("Majeur\\n")
-instruction_erreur  // ❌ Pas à cet endroit !
+instruction_erreur  // [ERROR] Pas à cet endroit !
 Sinon
   Ecrire("Mineur\\n")
 FinSi`}
@@ -1578,18 +1578,18 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Confondre ET et OU</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Confondre ET et OU</h5>
                 <p className="text-sm text-red-800">
                   ET est plus restrictif (les deux doivent être vrais), OU est plus permissif (un seul suffit).
                 </p>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier les parenthèses</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier les parenthèses</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
-Si age {'>'} 18 ET note {'>'} 10 Alors  {`// ❌ Ambigu !`}
+Si age {'>'} 18 ET note {'>'} 10 Alors  {`// [ERROR] Ambigu !`}
                 </pre>
                 <pre className="text-sm bg-green-100 p-2 mt-1">
-Si (age {'>'} 18) ET (note {'>'} 10) Alors  {`// ✅ Clair`}
+Si (age {'>'} 18) ET (note {'>'} 10) Alors  {`// [SUCCESS] Clair`}
                 </pre>
               </div>
             </div>
@@ -1719,7 +1719,7 @@ Fin`,
 
               <div className="bg-yellow-50 border border-yellow-200 p-4">
                 <p className="text-sm text-yellow-900">
-                  <strong>⚠️ Astuce indentation :</strong> Décalez chaque niveau vers la droite pour mieux voir la structure !
+                  <strong>[WARN] Astuce indentation :</strong> Décalez chaque niveau vers la droite pour mieux voir la structure !
                   Chaque <code className="bg-yellow-100 px-2 py-1">FinSi</code> correspond au <code className="bg-yellow-100 px-2 py-1">Si</code> du même niveau d'indentation.
                 </p>
               </div>
@@ -1762,21 +1762,21 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Perdre le compte des FinSi</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Perdre le compte des FinSi</h5>
                 <p className="text-sm text-red-800">
                   Chaque <code className="bg-red-100 px-2 py-1">Si</code> doit avoir SON <code className="bg-red-100 px-2 py-1">FinSi</code>.
                   Si vous en oubliez un, l'algorithme ne compilera pas.
                 </p>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Mauvaise indentation</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Mauvaise indentation</h5>
                 <p className="text-sm text-red-800">
                   Sans indentation claire, impossible de savoir quel FinSi correspond à quel Si.
                   Décalez TOUJOURS vos blocs !
                 </p>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Trop d'imbrications (plus de 3 niveaux)</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Trop d'imbrications (plus de 3 niveaux)</h5>
                 <p className="text-sm text-red-800">
                   Au-delà de 3 niveaux, envisagez d'utiliser des opérateurs logiques (ET/OU) ou un Selon.
                 </p>
@@ -1837,7 +1837,7 @@ Debut
       FinSi
     FinSi
   Sinon
-    Ecrire("❌ RECALÉ (note < 10)\\n")
+    Ecrire("[ERROR] RECALÉ (note < 10)\\n")
   FinSi
 Fin`,
         input: ["15"],
@@ -1876,7 +1876,7 @@ Fin`,
               </p>
 
               <div className="bg-red-50 border border-red-200 p-4">
-                <h4 className="font-semibold text-red-700 mb-2">❌ Avec Si imbriqués (long et répétitif)</h4>
+                <h4 className="font-semibold text-red-700 mb-2">[ERROR] Avec Si imbriqués (long et répétitif)</h4>
                 <div className="bg-gray-900 text-gray-100 p-3 font-mono text-xs space-y-1">
                   <div><span className="text-purple-400">Si</span> (jour = <span className="text-green-400">"Lundi"</span>) <span className="text-purple-400">Alors</span></div>
                   <div className="ml-4">Ecrire(<span className="text-green-400">"Début de semaine"</span>)</div>
@@ -1889,7 +1889,7 @@ Fin`,
               </div>
 
               <div className="bg-green-50 border border-green-200 p-4">
-                <h4 className="font-semibold text-green-700 mb-2">✅ Avec Selon (clair et concis)</h4>
+                <h4 className="font-semibold text-green-700 mb-2">[SUCCESS] Avec Selon (clair et concis)</h4>
                 <div className="bg-gray-900 text-gray-100 p-3 font-mono text-xs space-y-1">
                   <div><span className="text-purple-400">Selon</span> jour <span className="text-purple-400">Faire</span></div>
                   <div className="ml-4"><span className="text-green-400">"Lundi"</span> : Ecrire(<span className="text-green-400">"Début de semaine"</span>)</div>
@@ -1971,20 +1971,20 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier le FinSelon</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier le FinSelon</h5>
                 <p className="text-sm text-red-800">
                   Comme pour Si, il faut toujours fermer avec <code className="bg-red-100 px-2 py-1">FinSelon</code>.
                 </p>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Utiliser Selon avec des intervalles</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Utiliser Selon avec des intervalles</h5>
                 <p className="text-sm text-red-800">
                   <strong>Selon</strong> ne fonctionne qu'avec des valeurs <strong>exactes</strong> (pas de {'>='}, {'<'}, etc.).
                   Pour des intervalles, utilisez des Si imbriqués.
                 </p>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
 {`Selon note Faire
-  >= 16 : Ecrire("Très bien")  // ❌ IMPOSSIBLE`}
+  >= 16 : Ecrire("Très bien")  // [ERROR] IMPOSSIBLE`}
                 </pre>
               </div>
             </div>
@@ -2183,16 +2183,16 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Modifier le compteur dans la boucle</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Modifier le compteur dans la boucle</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
 {`Pour i De 1 À 10 Faire
-  i ← i + 5  // ❌ NE JAMAIS FAIRE ÇA !
+  i ← i + 5  // [ERROR] NE JAMAIS FAIRE ÇA !
 FinPour`}
                 </pre>
                 <p className="text-sm text-red-800 mt-2">Le compteur est géré automatiquement par la boucle.</p>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier FinPour</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier FinPour</h5>
                 <p className="text-sm text-red-800">
                   Chaque <code className="bg-red-100 px-2 py-1">Pour</code> doit avoir son <code className="bg-red-100 px-2 py-1">FinPour</code> !
                 </p>
@@ -2319,7 +2319,7 @@ Fin`,
 
               <div className="bg-yellow-50 border border-yellow-200 p-4">
                 <p className="text-sm text-yellow-900">
-                  <strong>⚠️ TRÈS IMPORTANT :</strong> Il faut <strong>modifier la condition</strong> dans la boucle,
+                  <strong>[WARN] TRÈS IMPORTANT :</strong> Il faut <strong>modifier la condition</strong> dans la boucle,
                   sinon elle ne s'arrêtera JAMAIS (boucle infinie) !
                 </p>
               </div>
@@ -2345,7 +2345,7 @@ Fin`,
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 p-4">
-                  <h4 className="font-semibold text-blue-700 mb-2">🔄 TantQue</h4>
+                  <h4 className="font-semibold text-blue-700 mb-2">[UPDATE] TantQue</h4>
                   <p className="text-sm text-gray-700">Nombre d'itérations <strong>inconnu</strong>, dépend d'une condition</p>
                   <div className="bg-gray-900 text-gray-100 p-2 font-mono text-xs mt-2">
                     <div>TantQue (x {'<'} 100) Faire</div>
@@ -2390,21 +2390,21 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Boucle infinie</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Boucle infinie</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
 {`x ← 0
 TantQue (x < 10) Faire
   Ecrire(x)
-  // ❌ OUPS ! On n'augmente jamais x !
+  // [ERROR] OUPS ! On n'augmente jamais x !
 FinTantQue  // Boucle INFINIE`}
                 </pre>
                 <p className="text-sm text-red-800 mt-2">Toujours modifier la variable de la condition !</p>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Condition toujours fausse</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Condition toujours fausse</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
 {`x ← 10
-TantQue (x < 5) Faire  // ❌ Faux dès le début !
+TantQue (x < 5) Faire  // [ERROR] Faux dès le début !
   ...
 FinTantQue  // Ne s'exécute JAMAIS`}
                 </pre>
@@ -2521,7 +2521,7 @@ Fin`,
 
               <div className="bg-yellow-50 border border-yellow-200 p-4">
                 <p className="text-sm text-yellow-900">
-                  <strong>⚠️ Attention :</strong> La condition dans <code className="bg-yellow-100 px-2 py-1">JusquA</code> est <strong>inversée</strong> :
+                  <strong>[WARN] Attention :</strong> La condition dans <code className="bg-yellow-100 px-2 py-1">JusquA</code> est <strong>inversée</strong> :
                   on répète <strong>jusqu'à ce que</strong> la condition devienne Vraie (alors on s'arrête).
                 </p>
               </div>
@@ -2593,7 +2593,7 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Confondre la logique de la condition</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Confondre la logique de la condition</h5>
                 <p className="text-sm text-red-800 mb-2">
                   JusquA s'arrête QUAND la condition devient Vraie (inverse de TantQue).
                 </p>
@@ -2645,11 +2645,11 @@ Debut
     Lire(age)
 
     Si (age < 0) OU (age > 120) Alors
-      Ecrire("❌ Âge invalide ! Réessayez.\\n\\n")
+      Ecrire("[ERROR] Âge invalide ! Réessayez.\\n\\n")
     FinSi
   JusquA (age >= 0) ET (age <= 120)
 
-  Ecrire("\\n✅ Âge valide: ", age, " ans\\n")
+  Ecrire("\\n[SUCCESS] Âge valide: ", age, " ans\\n")
 Fin`,
         input: ["-5", "150", "25"],
       },
@@ -2731,7 +2731,7 @@ Fin`,
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 mt-3">
-                  ⚠️ <strong>Important :</strong> Les indices commencent à <strong>0</strong>, pas à 1 !
+                  [WARN] <strong>Important :</strong> Les indices commencent à <strong>0</strong>, pas à 1 !
                 </p>
               </div>
             </div>
@@ -2796,7 +2796,7 @@ Fin`,
 
               <div className="bg-yellow-50 border border-yellow-200 p-4">
                 <p className="text-sm text-yellow-900">
-                  <strong>⚠️ IMPORTANT :</strong> Si le tableau a 10 cases, les indices vont de <strong>0 à 9</strong> (pas de 0 à 10) !
+                  <strong>[WARN] IMPORTANT :</strong> Si le tableau a 10 cases, les indices vont de <strong>0 à 9</strong> (pas de 0 à 10) !
                   Accéder à notes[10] provoquera une erreur.
                 </p>
               </div>
@@ -2839,21 +2839,21 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Dépasser les limites du tableau</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Dépasser les limites du tableau</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
 {`notes : Tableau[5] de Entier
-notes[5] ← 20  // ❌ ERREUR ! Indice 5 n'existe pas (max: 4)`}
+notes[5] ← 20  // [ERROR] ERREUR ! Indice 5 n'existe pas (max: 4)`}
                 </pre>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier que les indices commencent à 0</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier que les indices commencent à 0</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
-{`Pour i De 1 À 10 Faire  // ❌ On saute notes[0] !
+{`Pour i De 1 À 10 Faire  // [ERROR] On saute notes[0] !
   Ecrire(notes[i])
 FinPour`}
                 </pre>
                 <pre className="text-sm bg-green-100 p-2 mt-1">
-{`Pour i De 0 À 9 Faire  // ✅ CORRECT
+{`Pour i De 0 À 9 Faire  // [SUCCESS] CORRECT
   Ecrire(notes[i])
 FinPour`}
                 </pre>
@@ -3068,20 +3068,20 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier de gérer le cas du tableau vide</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier de gérer le cas du tableau vide</h5>
                 <p className="text-sm text-red-800">
                   Avant de chercher le maximum, vérifiez que le tableau n'est pas vide !
                 </p>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Mauvais calcul d'indices dans les boucles</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Mauvais calcul d'indices dans les boucles</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
-{`Pour i De 0 À taille Faire  // ❌ Dépassement !
+{`Pour i De 0 À taille Faire  // [ERROR] Dépassement !
   tableau[i]...
 FinPour`}
                 </pre>
                 <pre className="text-sm bg-green-100 p-2 mt-1">
-{`Pour i De 0 À taille - 1 Faire  // ✅ CORRECT
+{`Pour i De 0 À taille - 1 Faire  // [SUCCESS] CORRECT
   tableau[i]...
 FinPour`}
                 </pre>
@@ -3288,17 +3288,17 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier le Retourner</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier le Retourner</h5>
                 <p className="text-sm text-red-800">
                   Une fonction DOIT retourner une valeur du type indiqué !
                 </p>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Type de retour incorrect</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Type de retour incorrect</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
 {`Fonction Carre(n : Entier) : Entier
 Debut
-  Retourner "résultat"  // ❌ On retourne une Chaine, pas un Entier !
+  Retourner "résultat"  // [ERROR] On retourne une Chaine, pas un Entier !
 Fin`}
                 </pre>
               </div>
@@ -3492,12 +3492,12 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Essayer d'utiliser une procédure comme une fonction</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Essayer d'utiliser une procédure comme une fonction</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
-{`resultat ← AfficherMenu()  // ❌ Une procédure ne retourne rien !`}
+{`resultat ← AfficherMenu()  // [ERROR] Une procédure ne retourne rien !`}
                 </pre>
                 <pre className="text-sm bg-green-100 p-2 mt-1">
-{`AfficherMenu()  // ✅ Appel simple`}
+{`AfficherMenu()  // [SUCCESS] Appel simple`}
                 </pre>
               </div>
             </div>
@@ -3599,7 +3599,7 @@ Fin`,
                   <div className="ml-4"><span className="text-purple-400">Fin</span></div>
                   <div className="mt-3"><span className="text-purple-400">Algorithme</span> Principal</div>
                   <div className="ml-4"><span className="text-purple-400">Debut</span></div>
-                  <div className="ml-8">Ecrire(x)  <span className="text-red-400">// ❌ ERREUR ! x n'existe pas ici</span></div>
+                  <div className="ml-8">Ecrire(x)  <span className="text-red-400">// [ERROR] ERREUR ! x n'existe pas ici</span></div>
                   <div className="ml-4"><span className="text-purple-400">Fin</span></div>
                 </div>
               </div>
@@ -3661,7 +3661,7 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Confondre le nom du paramètre et de la variable</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Confondre le nom du paramètre et de la variable</h5>
                 <p className="text-sm text-red-800">
                   Les noms peuvent être différents ! Ce qui compte, c'est l'ordre.
                 </p>
@@ -3673,7 +3673,7 @@ resultat ← Double(x)  // x est copié dans n`}
                 </pre>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Utiliser une variable locale en dehors de sa portée</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Utiliser une variable locale en dehors de sa portée</h5>
                 <p className="text-sm text-red-800">
                   Une variable déclarée dans une fonction n'existe PAS en dehors.
                 </p>
@@ -3792,7 +3792,7 @@ Fin`,
             <div className="space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 p-4">
                 <p className="text-sm text-yellow-900">
-                  <strong>⚠️ Deux éléments OBLIGATOIRES :</strong>
+                  <strong>[WARN] Deux éléments OBLIGATOIRES :</strong>
                 </p>
                 <ul className="text-sm text-yellow-800 mt-2 ml-4 space-y-1">
                   <li>1. <strong>Cas de base</strong> : condition d'arrêt (sinon boucle infinie !)</li>
@@ -3860,16 +3860,16 @@ Fin`,
           >
             <div className="space-y-3">
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Oublier le cas de base → Boucle infinie !</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Oublier le cas de base → Boucle infinie !</h5>
                 <pre className="text-sm bg-red-100 p-2 mt-2">
 {`Fonction Factorielle(n : Entier) : Entier
 Debut
-  Retourner n * Factorielle(n - 1)  // ❌ Jamais d'arrêt !
+  Retourner n * Factorielle(n - 1)  // [ERROR] Jamais d'arrêt !
 Fin`}
                 </pre>
               </div>
               <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <h5 className="font-semibold text-red-900 mb-2">❌ Cas de base mal défini</h5>
+                <h5 className="font-semibold text-red-900 mb-2">[ERROR] Cas de base mal défini</h5>
                 <p className="text-sm text-red-800">
                   Vérifiez que le cas de base est bien atteignable !
                 </p>

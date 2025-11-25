@@ -83,20 +83,21 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     initStore();
   }, []);
 
-  // Sauvegarder automatiquement les fichiers dans le store
+  // Sauvegarder automatiquement les fichiers dans le store avec debounce
   useEffect(() => {
-    if (store && files.length > 0) {
-      const saveFiles = async () => {
-        try {
-          await store.set('editorFiles', files);
-          await store.set('activeFileId', activeFileId);
-          await store.save();
-        } catch (e) {
-          console.error('Erreur lors de la sauvegarde des fichiers:', e);
-        }
-      };
-      saveFiles();
-    }
+    if (!store || files.length === 0) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        await store.set('editorFiles', files);
+        await store.set('activeFileId', activeFileId);
+        await store.save();
+      } catch (e) {
+        console.error('Erreur lors de la sauvegarde des fichiers:', e);
+      }
+    }, 1000); // Debounce de 1 seconde
+
+    return () => clearTimeout(timer);
   }, [files, activeFileId, store]);
 
   /**
@@ -154,19 +155,19 @@ Fin`,
     try {
       // Validation du chemin
       if (!path || path.trim() === '') {
-        console.warn('⚠️ Chemin de fichier vide, création d\'un fichier temporaire');
+        console.warn('[WARN] Chemin de fichier vide, création d\'un fichier temporaire');
         path = `temp-${Date.now()}.algo`;
       }
 
       // Vérifier si le fichier est déjà ouvert par chemin
       const existingFileByPath = files.find(f => f.path === path);
       if (existingFileByPath) {
-        console.log(`ℹ️ Fichier déjà ouvert: ${name}, activation de l'onglet`);
+        console.log(`[INFO] Fichier déjà ouvert: ${name}, activation de l'onglet`);
         setActiveFileId(existingFileByPath.id);
 
         // Demander si l'utilisateur veut recharger le contenu
         if (existingFileByPath.code !== code && existingFileByPath.isDirty) {
-          console.warn(`⚠️ Le fichier ${name} a des modifications non sauvegardées`);
+          console.warn(`[WARN] Le fichier ${name} a des modifications non sauvegardées`);
           // TODO: Implémenter une modal de confirmation pour recharger
         } else if (existingFileByPath.code !== code) {
           // Recharger silencieusement si pas de modifications
@@ -182,7 +183,7 @@ Fin`,
       // Vérifier collision de nom (même nom mais chemin différent)
       const existingFileByName = files.find(f => f.name === name && f.path !== path);
       if (existingFileByName) {
-        console.log(`⚠️ Fichier avec le même nom déjà ouvert: ${name}, ajout d'un suffixe`);
+        console.log(`[WARN] Fichier avec le même nom déjà ouvert: ${name}, ajout d'un suffixe`);
         // Ajouter un suffixe pour éviter la confusion
         const baseName = name.replace(/\.algo$/, '');
         const newName = `${baseName} (2).algo`;
@@ -201,11 +202,11 @@ Fin`,
         modelUri,
       };
 
-      console.log(`✅ Ouverture du fichier: ${name}`);
+      console.log(`[SUCCESS] Ouverture du fichier: ${name}`);
       setFiles([...files, newFile]);
       setActiveFileId(newFile.id);
     } catch (error) {
-      console.error('❌ Erreur lors de l\'ouverture du fichier:', error);
+      console.error('[ERROR] Erreur lors de l\'ouverture du fichier:', error);
       // En cas d'erreur, on peut quand même essayer de créer un fichier avec le contenu
       const fallbackFile: EditorFile = {
         id: generateId(),
@@ -226,7 +227,7 @@ Fin`,
   const closeFile = (fileId: string) => {
     const fileToClose = files.find(f => f.id === fileId);
     if (fileToClose) {
-      console.log(`🗑️ Fermeture du fichier: ${fileToClose.name}`);
+      console.log(`[CLOSE] Fermeture du fichier: ${fileToClose.name}`);
 
       // Note: Le nettoyage du modèle Monaco sera fait par le gestionnaire
       // quand le composant se démonte ou change de fichier

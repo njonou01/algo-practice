@@ -101,7 +101,8 @@ struct AppState {
 /// Retourne un Result indiquant si l'envoi a réussi
 #[tauri::command]
 fn send_input_values(values: Vec<String>, state: tauri::State<AppState>) -> Result<(), String> {
-    let sender_lock = state.input_sender.lock().unwrap();
+    let sender_lock = state.input_sender.lock()
+        .map_err(|e| format!("Erreur: mutex empoisonne: {}", e))?;
     if let Some(sender) = sender_lock.as_ref() {
         sender.send(values).map_err(|e| format!("Erreur lors de l'envoi des valeurs: {}", e))?;
         Ok(())
@@ -135,7 +136,8 @@ async fn execute_algorithm_async(
 
     // Stocker le sender dans l'état partagé
     {
-        let mut sender_lock = state.input_sender.lock().unwrap();
+        let mut sender_lock = state.input_sender.lock()
+            .map_err(|e| format!("Erreur: mutex empoisonne: {}", e))?;
         *sender_lock = Some(tx);
     }
 

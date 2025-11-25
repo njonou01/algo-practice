@@ -89,7 +89,7 @@ function Examples() {
     // Générer un chemin unique pour l'exemple (pas un vrai chemin fichier)
     const examplePath = `example://${example.id || example.name.toLowerCase().replace(/\s+/g, '-')}`;
 
-    console.log(`📚 Ouverture de l'exemple: ${finalFileName}`);
+    console.log(`[EXAMPLE] Ouverture de l'exemple: ${finalFileName}`);
 
     // Ouvrir l'exemple comme un nouveau fichier
     // Le système de gestion des collisions dans EditorContext s'occupera du reste
@@ -121,7 +121,7 @@ function Examples() {
         {/* Header */}
         <div className="mb-8">
           <h1 className={`text-3xl font-bold mb-3 ${isDarkTheme ? 'text-white' : 'text-gray-900'}`}>
-            📚 Bibliothèque d'Exemples
+            [EXAMPLE] Bibliothèque d'Exemples
           </h1>
           <p className={isDarkTheme ? 'text-gray-300' : 'text-gray-600'}>
             Explorez notre collection d'algorithmes d'exemple pour apprendre et vous inspirer.

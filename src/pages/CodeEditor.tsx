@@ -132,12 +132,12 @@ function CodeEditor() {
   useEffect(() => {
     // NE PAS mettre à jour si les couleurs ne sont pas encore chargées
     if (!settings.colorKeywords || !settings.colorTypes) {
-      console.log('⏳ Settings pas encore chargés, skip mise à jour du thème');
+      console.log('[WAIT] Settings pas encore chargés, skip mise à jour du thème');
       return;
     }
 
     if (monacoRef.current && isMonacoReady) {
-      console.log('🎨 Mise à jour du thème suite au changement de settings...');
+      console.log('[THEME] Mise à jour du thème suite au changement de settings...');
       const darkTheme = createDynamicTheme(settings, 'dark');
       const lightTheme = createDynamicTheme(settings, 'light');
       monacoRef.current.editor.defineTheme('algorithm-dark', darkTheme);
@@ -145,7 +145,7 @@ function CodeEditor() {
 
       const themeName = settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light';
       monacoRef.current.editor.setTheme(themeName);
-      console.log('✅ Thème mis à jour:', themeName);
+      console.log('[SUCCESS] Thème mis à jour:', themeName);
     }
   }, [
     settings.theme,
@@ -296,17 +296,17 @@ function CodeEditor() {
    */
   const handleDebugTokens = () => {
     if (!monacoRef.current || !editorRef.current) {
-      console.error('❌ Monaco ou Editor non disponible');
+      console.error('[ERROR] Monaco ou Editor non disponible');
       return;
     }
 
     const model = editorRef.current.getModel();
     if (!model) {
-      console.error('❌ Pas de modèle disponible');
+      console.error('[ERROR] Pas de modèle disponible');
       return;
     }
 
-    console.log('🔍 === DEBUG TOKENISATION ===');
+    console.log('[DEBUG] === DEBUG TOKENISATION ===');
     console.log('Langage du modèle:', model.getLanguageId());
 
     const lineCount = Math.min(model.getLineCount(), 10);
@@ -324,7 +324,7 @@ function CodeEditor() {
     // Vérifier le thème actuel
     console.log('Thème actuel:', settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light');
 
-    console.log('🔍 === FIN DEBUG ===');
+    console.log('[DEBUG] === FIN DEBUG ===');
   };
 
   /**
@@ -433,7 +433,7 @@ function CodeEditor() {
         const alreadyOpen = files.some(f => f.name.startsWith(fileName.replace('.algo', '')));
 
         if (!alreadyOpen) {
-          console.log('📚 Chargement d\'exemple via localStorage (ancien système)');
+          console.log('[LEGACY] Chargement d\'exemple via localStorage (ancien système)');
           // Créer un nouveau fichier avec le code de l'exemple
           const examplePath = `example://legacy-${Date.now()}`;
           openFile(examplePath, example.code, fileName);
@@ -453,7 +453,7 @@ function CodeEditor() {
    * Écoute les événements du backend pour les requêtes d'entrée et les résultats
    */
   useEffect(() => {
-    let startTime = performance.now();
+    const startTimeRef = { current: performance.now() };
     let unlistenFunctions: (() => void)[] = [];
 
     // Fonction async pour setup les listeners
@@ -495,7 +495,7 @@ function CodeEditor() {
         console.log('Exécution terminée:', event.payload);
         const result = event.payload;
         const endTime = performance.now();
-        setExecutionTime((endTime - startTime) / 1000);
+        setExecutionTime((endTime - startTimeRef.current) / 1000);
 
         if (result.success) {
           setOutput(result.output);
@@ -506,7 +506,7 @@ function CodeEditor() {
         }
 
         setIsRunning(false);
-        startTime = performance.now(); // Réinitialiser pour la prochaine exécution
+        startTimeRef.current = performance.now();
       });
       unlistenFunctions.push(unlistenExecutionComplete);
 
@@ -518,7 +518,7 @@ function CodeEditor() {
     return () => {
       unlistenFunctions.forEach(fn => fn());
     };
-  }, []);
+  }, [settings.inputMode]);
 
 
   // Définir le thème
@@ -740,22 +740,22 @@ function CodeEditor() {
                 editorRef.current = editor;
                 monacoRef.current = monaco;
 
-                console.log('🔧 onMount - Initialisation UNIQUE de Monaco');
+                console.log('[INIT] onMount - Initialisation UNIQUE de Monaco');
 
                 // Vérifier si le langage est déjà enregistré
                 const languages = monaco.languages.getLanguages();
                 const algoLangExists = languages.some((lang: any) => lang.id === 'algorithmique');
 
                 if (!algoLangExists) {
-                  console.log('📝 Enregistrement du langage algorithmique...');
+                  console.log('[LANG] Enregistrement du langage algorithmique...');
                   monaco.languages.register({ id: 'algorithmique' });
                   monaco.languages.setMonarchTokensProvider('algorithmique', algorithmLanguageDefinition);
                   setupCompletionProvider(monaco);
-                  console.log('✅ Langage enregistré');
+                  console.log('[SUCCESS] Langage enregistré');
                 }
 
                 // Toujours recréer et appliquer les thèmes
-                console.log('🎨 Définition des thèmes...');
+                console.log('[THEME] Définition des thèmes...');
                 const darkTheme = createDynamicTheme(settings, 'dark');
                 const lightTheme = createDynamicTheme(settings, 'light');
                 monaco.editor.defineTheme('algorithm-dark', darkTheme);
@@ -764,7 +764,7 @@ function CodeEditor() {
                 // Appliquer le thème approprié
                 const themeName = settings.theme === 'dark' ? 'algorithm-dark' : 'algorithm-light';
                 monaco.editor.setTheme(themeName);
-                console.log('✅ Thème appliqué:', themeName);
+                console.log('[SUCCESS] Thème appliqué:', themeName);
 
                 // Focus sur l'éditeur
                 editor.focus();
@@ -772,7 +772,7 @@ function CodeEditor() {
                 // Marquer Monaco comme chargé
                 setMonacoReady(true);
 
-                console.log('✅ Monaco initialisé - les modèles sont gérés automatiquement par @monaco-editor/react');
+                console.log('[SUCCESS] Monaco initialisé - les modèles sont gérés automatiquement par @monaco-editor/react');
               }}
             />
           )}
@@ -875,7 +875,6 @@ function CodeEditor() {
               className={`px-4 py-2 text-sm transition-colors flex items-center gap-2 ${buttonClasses}`}
               title="Debug tokenisation (voir console F12)"
             >
-              🔍
               <span>Debug</span>
             </button>
 

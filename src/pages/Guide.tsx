@@ -106,7 +106,7 @@ function Guide() {
             </div>
 
             <div className={`${isDarkTheme ? 'bg-green-900 border-green-500' : 'bg-green-50 border-green-500'} border-l-4 p-4 mb-4`}>
-              <p className={`font-semibold mb-2 ${isDarkTheme ? 'text-green-200' : 'text-gray-900'}`}>✨ Nouvelle syntaxe simplifiée !</p>
+              <p className={`font-semibold mb-2 ${isDarkTheme ? 'text-green-200' : 'text-gray-900'}`}>[CREATE] Nouvelle syntaxe simplifiée !</p>
               <p className={isDarkTheme ? 'text-green-200' : 'text-gray-700'}>
                 Vous pouvez maintenant <strong>initialiser directement</strong> les constantes avec <strong>inférence de type automatique</strong> !
               </p>
@@ -155,7 +155,7 @@ function Guide() {
             </div>
 
             <div className={`${isDarkTheme ? 'bg-yellow-900 border-yellow-500' : 'bg-yellow-50 border-yellow-500'} border-l-4 p-4 mb-4`}>
-              <p className={`font-semibold mb-2 ${isDarkTheme ? 'text-yellow-200' : 'text-gray-900'}`}>⚠️ Restrictions :</p>
+              <p className={`font-semibold mb-2 ${isDarkTheme ? 'text-yellow-200' : 'text-gray-900'}`}>[WARN] Restrictions :</p>
               <ul className={`list-disc list-inside space-y-1 ${isDarkTheme ? 'text-yellow-200' : 'text-gray-700'}`}>
                 <li>L'initialisation directe fonctionne uniquement avec des <strong>valeurs littérales</strong> (nombres, chaînes, booléens)</li>
                 <li>Pour des expressions complexes (ex: <code className={`${isDarkTheme ? 'bg-gray-900 text-gray-300' : 'bg-white text-gray-700'} px-2 py-1`}>2 + 2</code>), utilisez l'ancienne syntaxe avec type explicite</li>
@@ -168,7 +168,7 @@ function Guide() {
             <div className={`${isDarkTheme ? 'bg-red-900 border-red-700' : 'bg-red-50 border-red-200'} border p-6 font-mono text-sm mb-2`}>
               <div className={isDarkTheme ? 'text-red-200' : 'text-gray-700'}>
                 <div>PI <span className="text-pink-600">←</span> 3.14159</div>
-                <div className={isDarkTheme ? 'text-red-400' : 'text-red-600'}>PI <span className="text-pink-600">←</span> 3.14 <span className="ml-2">// ❌ Erreur !</span></div>
+                <div className={isDarkTheme ? 'text-red-400' : 'text-red-600'}>PI <span className="text-pink-600">←</span> 3.14 <span className="ml-2">// [ERROR] Erreur !</span></div>
               </div>
             </div>
             <p className={`${isDarkTheme ? 'text-gray-400' : 'text-gray-700'} text-sm italic`}>
@@ -690,7 +690,7 @@ function Guide() {
               13. Mots-clés réservés
             </h2>
             <div className={`${isDarkTheme ? 'bg-yellow-900 border-yellow-500' : 'bg-yellow-50 border-yellow-500'} border-l-4 p-4 mb-4`}>
-              <p className={`font-semibold mb-2 ${isDarkTheme ? 'text-yellow-200' : 'text-gray-900'}`}>⚠️ Attention !</p>
+              <p className={`font-semibold mb-2 ${isDarkTheme ? 'text-yellow-200' : 'text-gray-900'}`}>[WARN] Attention !</p>
               <p className={isDarkTheme ? 'text-yellow-200' : 'text-gray-700'}>
                 Les mots suivants sont <strong>réservés par le langage</strong> et ne peuvent pas être utilisés comme noms de variables.
               </p>
@@ -782,7 +782,7 @@ function Guide() {
             </div>
 
             <div className={`${isDarkTheme ? 'bg-red-900 border-red-500' : 'bg-red-50 border-red-500'} border-l-4 p-4`}>
-              <p className={`font-semibold mb-2 ${isDarkTheme ? 'text-red-200' : 'text-gray-900'}`}>⚠️ Cas particulier : le mot "À"</p>
+              <p className={`font-semibold mb-2 ${isDarkTheme ? 'text-red-200' : 'text-gray-900'}`}>[WARN] Cas particulier : le mot "À"</p>
               <p className={`mb-2 ${isDarkTheme ? 'text-red-200' : 'text-gray-700'}`}>
                 Seul le mot <code className={`${isDarkTheme ? 'bg-red-800 text-red-200' : 'bg-red-100 text-red-700'} px-2 py-1 font-bold`}>À</code> (avec accent)
                 est réservé car utilisé dans les boucles <code className={`${isDarkTheme ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-700'} px-2 py-1`}>Pour</code>.

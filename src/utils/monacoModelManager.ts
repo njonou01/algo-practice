@@ -20,7 +20,7 @@ class MonacoModelManager {
    */
   init(monaco: Monaco) {
     this.monaco = monaco;
-    console.log('📦 MonacoModelManager initialisé');
+    console.log('[INIT] MonacoModelManager initialisé');
   }
 
   /**
@@ -28,19 +28,19 @@ class MonacoModelManager {
    */
   getOrCreateModel(fileId: string, content: string, uri: string): any {
     if (!this.monaco) {
-      console.error('❌ Monaco non initialisé');
+      console.error('[ERROR] Monaco non initialisé');
       return null;
     }
 
-    console.log(`📝 getOrCreateModel appelé pour ${fileId}, content length: ${content.length}`);
+    console.log(`[MODEL] getOrCreateModel appelé pour ${fileId}, content length: ${content.length}`);
 
     // Vérifier si le modèle existe déjà
     const existingModel = this.models.get(fileId);
     if (existingModel) {
-      console.log(`♻️ Réutilisation du modèle existant pour: ${fileId}`);
+      console.log(`[REUSE] Réutilisation du modèle existant pour: ${fileId}`);
       // TOUJOURS mettre à jour le contenu (important pour les exemples)
       if (existingModel.model.getValue() !== content) {
-        console.log(`🔄 Mise à jour du contenu du modèle (${existingModel.model.getValue().length} -> ${content.length} chars)`);
+        console.log(`[UPDATE] Mise à jour du contenu du modèle (${existingModel.model.getValue().length} -> ${content.length} chars)`);
         existingModel.model.setValue(content);
       }
       return existingModel.model;
@@ -54,15 +54,15 @@ class MonacoModelManager {
 
     if (!model) {
       // Créer un nouveau modèle
-      console.log(`✨ Création d'un nouveau modèle pour: ${fileId} (${uri}) avec ${content.length} caractères`);
+      console.log(`[CREATE] Création d'un nouveau modèle pour: ${fileId} (${uri}) avec ${content.length} caractères`);
       model = this.monaco.editor.createModel(
         content,
         'algorithmique',
         monacoUri
       );
-      console.log(`✅ Modèle créé, value length: ${model.getValue().length}`);
+      console.log(`[SUCCESS] Modèle créé, value length: ${model.getValue().length}`);
     } else {
-      console.log(`♻️ Modèle existant trouvé par URI: ${uri}`);
+      console.log(`[REUSE] Modèle existant trouvé par URI: ${uri}`);
       model.setValue(content);
     }
 
@@ -82,7 +82,7 @@ class MonacoModelManager {
   disposeModel(fileId: string) {
     const modelInfo = this.models.get(fileId);
     if (modelInfo) {
-      console.log(`🗑️ Suppression du modèle: ${fileId}`);
+      console.log(`[DISPOSE] Suppression du modèle: ${fileId}`);
       modelInfo.model.dispose();
       this.models.delete(fileId);
     }
@@ -100,7 +100,7 @@ class MonacoModelManager {
    * Nettoie tous les modèles
    */
   disposeAll() {
-    console.log(`🗑️ Nettoyage de ${this.models.size} modèles`);
+    console.log(`[CLEANUP] Nettoyage de ${this.models.size} modèles`);
     this.models.forEach((modelInfo) => {
       modelInfo.model.dispose();
     });
