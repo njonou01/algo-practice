@@ -101,6 +101,9 @@ jobs:
       run: pnpm install
 
     - name: Build app
+      env:
+        TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       run: pnpm tauri build --target ${{ matrix.target }}
 
     - name: Upload Linux DEB
@@ -157,6 +160,73 @@ jobs:
         asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/AlgoGénie_${{ needs.create-release.outputs.version }}_x64-setup.exe
         asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64-setup.exe
         asset_content_type: application/x-msdownload
+
+    - name: Upload MSI Signature
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/msi/AlgoGénie_${{ needs.create-release.outputs.version }}_x64_en-US.msi.sig
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64.msi.sig
+        asset_content_type: text/plain
+
+    - name: Upload NSIS Signature
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/AlgoGénie_${{ needs.create-release.outputs.version }}_x64-setup.nsis.zip.sig
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64-setup.nsis.zip.sig
+        asset_content_type: text/plain
+
+  create-update-manifest:
+    needs: [create-release, build-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Read MSI signature
+        id: msi_sig
+        run: |
+          curl -s https://github.com/njonou01/algo-practice/releases/download/v${{ steps.get_version.outputs.version }}/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64.msi.sig -o msi.sig
+          echo "signature=$(cat msi.sig)" >> $GITHUB_OUTPUT
+
+      - name: Create latest.json
+        run: |
+          cat > latest.json << EOF
+          {
+            "version": "${{ steps.get_version.outputs.version }}",
+            "notes": "Nouvelle version d'AlgoGénie",
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "platforms": {
+              "windows-x86_64": {
+                "url": "https://github.com/njonou01/algo-practice/releases/download/v${{ steps.get_version.outputs.version }}/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64.msi",
+                "signature": "${{ steps.msi_sig.outputs.signature }}"
+              }
+            }
+          }
+          EOF
+
+      - name: Upload latest.json to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./latest.json
+          asset_name: latest.json
+          asset_content_type: application/json
 
   update-latest-tag:
     needs: build-release

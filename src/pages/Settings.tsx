@@ -1,7 +1,8 @@
-import { CheckCircle, Code2, Palette, Play, RotateCw, Save, Settings as SettingsIcon, Sun, Moon } from 'lucide-react';
+import { CheckCircle, Code2, Palette, Play, RotateCw, Save, Settings as SettingsIcon, Sun, Moon, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { AppSettings } from '../contexts/SettingsContext';
 import { defaultSettings, useSettings } from '../contexts/SettingsContext';
+import { UpdateChecker } from '../components/UpdateChecker';
 
 const SettingRow = ({ label, description, children }: { label: string, description: string, children: React.ReactNode }) => {
   const { settings } = useSettings();
@@ -131,6 +132,10 @@ function Settings() {
             <SettingRow label="Sauvegarde automatique" description="Sauvegarder le fichier actif avant chaque exécution.">
                 <ToggleSwitch checked={localSettings.autoSave} onChange={() => handleUpdateLocalSetting('autoSave', !localSettings.autoSave)} />
             </SettingRow>
+          </Section>
+
+          <Section title="Mises à jour" icon={<Download size={20} className="text-indigo-500" />}>
+            <UpdateChecker isDarkTheme={isDarkTheme} />
           </Section>
 
           {hasChanges && (
