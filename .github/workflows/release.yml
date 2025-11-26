@@ -103,7 +103,7 @@ jobs:
     - name: Build app
       run: pnpm tauri build --target ${{ matrix.target }}
 
-    - name: Upload Linux Release Asset
+    - name: Upload Linux DEB
       if: matrix.os == 'ubuntu-22.04'
       uses: actions/upload-release-asset@v1
       env:
@@ -114,7 +114,29 @@ jobs:
         asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-linux-amd64.deb
         asset_content_type: application/vnd.debian.binary-package
 
-    - name: Upload Windows Release Asset
+    - name: Upload Linux RPM
+      if: matrix.os == 'ubuntu-22.04'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/rpm/AlgoGénie-${{ needs.create-release.outputs.version }}-1.x86_64.rpm
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-linux-x86_64.rpm
+        asset_content_type: application/x-rpm
+
+    - name: Upload Linux AppImage
+      if: matrix.os == 'ubuntu-22.04'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/appimage/AlgoGénie_${{ needs.create-release.outputs.version }}_amd64.AppImage
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-linux-amd64.AppImage
+        asset_content_type: application/x-executable
+
+    - name: Upload Windows MSI
       if: matrix.os == 'windows-latest'
       uses: actions/upload-release-asset@v1
       env:
@@ -124,6 +146,17 @@ jobs:
         asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/msi/AlgoGénie_${{ needs.create-release.outputs.version }}_x64_en-US.msi
         asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64.msi
         asset_content_type: application/x-msi
+
+    - name: Upload Windows NSIS
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/AlgoGénie_${{ needs.create-release.outputs.version }}_x64-setup.exe
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64-setup.exe
+        asset_content_type: application/x-msdownload
 
   update-latest-tag:
     needs: build-release
