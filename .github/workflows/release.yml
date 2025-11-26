@@ -179,8 +179,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/AlgoGénie_${{ needs.create-release.outputs.version }}_x64-setup.nsis.zip.sig
-        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64-setup.nsis.zip.sig
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/AlgoGénie_${{ needs.create-release.outputs.version }}_x64-setup.exe.sig
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64-setup.exe.sig
         asset_content_type: text/plain
 
   create-update-manifest:
