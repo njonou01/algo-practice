@@ -1,0 +1,150 @@
+name: Release AlgoGenie
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create release branch
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git checkout --orphan release
+          git rm -rf .
+          echo "# AlgoGenie Release" > README.md
+          echo "" >> README.md
+          echo "Version: ${{ steps.get_version.outputs.version }}" >> README.md
+          echo "Tag: ${GITHUB_REF#refs/tags/}" >> README.md
+          echo "" >> README.md
+          echo "Binaries disponibles ci-dessous" >> README.md
+          git add README.md
+          git commit -m "Release ${{ steps.get_version.outputs.version }}"
+          git push -f origin release
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: AlgoGenie ${{ github.ref }}
+          body: |
+            Nouvelle version d'AlgoGenie
+
+            Telechargement:
+            - Linux: Fichier .deb ci-dessous
+            - Windows: Fichier .msi ci-dessous
+
+            Installation:
+
+            Linux (Debian/Ubuntu):
+            sudo dpkg -i algogenie_*_amd64.deb
+
+            Windows:
+            Double-cliquez sur le fichier .msi
+
+            Changements:
+            Voir les commits depuis la derniere version
+          draft: false
+          prerelease: false
+          target_commitish: release
+
+  build-release:
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            bundle: deb
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundle: msi
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 8
+
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+
+    - name: Install Linux dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Build app
+      run: pnpm tauri build --target ${{ matrix.target }}
+
+    - name: Upload Linux Release Asset
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/deb/algogenie_${{ needs.create-release.outputs.version }}_amd64.deb
+        asset_name: algogenie-${{ needs.create-release.outputs.version }}-linux-amd64.deb
+        asset_content_type: application/vnd.debian.binary-package
+
+    - name: Upload Windows Release Asset
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/msi/AlgoGenie_${{ needs.create-release.outputs.version }}_x64_en-US.msi
+        asset_name: algogenie-${{ needs.create-release.outputs.version }}-windows-x64.msi
+        asset_content_type: application/x-msi
+
+  update-latest-tag:
+    needs: build-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          ref: release
+
+      - name: Update latest tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -f latest
+          git push -f origin latest
