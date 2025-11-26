@@ -1,40 +1,41 @@
-name: Build AlgoGénie
+name: Build AlgoGenie
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
-  release:
-    types: [ created ]
 
 env:
   CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
 
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - os: ubuntu-latest
-            rust_target: x86_64-unknown-linux-gnu
+        include:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
             artifact_name: algogenie-linux-x64
-            artifact_path: src-tauri/target/release/bundle/deb/*.deb
+            artifact_path: src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb
 
           - os: windows-latest
-            rust_target: x86_64-pc-windows-msvc
+            target: x86_64-pc-windows-msvc
             artifact_name: algogenie-windows-x64
-            artifact_path: src-tauri/target/release/bundle/msi/*.msi
+            artifact_path: src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
 
-    runs-on: ${{ matrix.platform.os }}
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Install pnpm
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@v4
       with:
         version: 10
 
@@ -47,78 +48,40 @@ jobs:
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
       with:
-        targets: ${{ matrix.platform.rust_target }}
+        targets: ${{ matrix.target }}
 
     - name: Install Linux dependencies
-      if: matrix.platform.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-22.04'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+        sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
 
     - name: Cache Rust dependencies
       uses: Swatinem/rust-cache@v2
       with:
         workspaces: src-tauri
 
-    - name: Cache pnpm dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.pnpm-store
-        key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-
-
     - name: Install frontend dependencies
-      run: pnpm install --frozen-lockfile
-
-    - name: Build frontend
-      run: pnpm run build
+      run: pnpm install
 
     - name: Build Tauri app
-      uses: tauri-apps/tauri-action@v0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tagName: v__VERSION__
-        releaseName: 'AlgoGénie v__VERSION__'
-        releaseBody: |
-          ## 🎉 Nouvelle version d'AlgoGénie
+      run: pnpm tauri build --target ${{ matrix.target }}
 
-          ### Changements
-          - Voir le changelog complet dans les notes de version
-
-          ### Installation
-          - **Linux**: Téléchargez le fichier `.deb` et installez avec `sudo dpkg -i algogenie_*.deb`
-          - **Windows**: Téléchargez le fichier `.msi` et exécutez-le
-        releaseDraft: true
-        prerelease: false
-        args: --target ${{ matrix.platform.rust_target }}
-
-    - name: Upload artifacts (Linux .deb)
-      if: matrix.platform.os == 'ubuntu-latest'
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.platform.artifact_name }}
-        path: src-tauri/target/release/bundle/deb/*.deb
+        name: ${{ matrix.artifact_name }}
+        path: ${{ matrix.artifact_path }}
         if-no-files-found: error
 
-    - name: Upload artifacts (Windows .msi)
-      if: matrix.platform.os == 'windows-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.platform.artifact_name }}
-        path: src-tauri/target/release/bundle/msi/*.msi
-        if-no-files-found: error
-
-  # Job séparé pour les tests
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Install pnpm
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@v4
       with:
         version: 10
 
@@ -126,12 +89,13 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
+        cache: 'pnpm'
 
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
 
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: pnpm install
 
     - name: Run frontend tests
       run: pnpm test --if-present
