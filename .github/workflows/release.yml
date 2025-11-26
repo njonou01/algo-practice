@@ -8,6 +8,8 @@ on:
 jobs:
   create-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       version: ${{ steps.get_version.outputs.version }}
@@ -18,22 +20,6 @@ jobs:
       - name: Get version from tag
         id: get_version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Create release branch
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git checkout --orphan release
-          git rm -rf .
-          echo "# AlgoGenie Release" > README.md
-          echo "" >> README.md
-          echo "Version: ${{ steps.get_version.outputs.version }}" >> README.md
-          echo "Tag: ${GITHUB_REF#refs/tags/}" >> README.md
-          echo "" >> README.md
-          echo "Binaries disponibles ci-dessous" >> README.md
-          git add README.md
-          git commit -m "Release ${{ steps.get_version.outputs.version }}"
-          git push -f origin release
 
       - name: Create Release
         id: create_release
@@ -62,7 +48,6 @@ jobs:
             Voir les commits depuis la derniere version
           draft: false
           prerelease: false
-          target_commitish: release
 
   build-release:
     needs: create-release
@@ -136,6 +121,8 @@ jobs:
   update-latest-tag:
     needs: build-release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout release branch
         uses: actions/checkout@v4
