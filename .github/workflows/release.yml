@@ -113,7 +113,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/deb/algogenie_${{ needs.create-release.outputs.version }}_amd64.deb
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/deb/AlgoGenie_${{ needs.create-release.outputs.version }}_amd64.deb
         asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-linux-amd64.deb
         asset_content_type: application/vnd.debian.binary-package
 
@@ -124,7 +124,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/rpm/algogenie-${{ needs.create-release.outputs.version }}-1.x86_64.rpm
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/rpm/AlgoGenie-${{ needs.create-release.outputs.version }}-1.x86_64.rpm
         asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-linux-x86_64.rpm
         asset_content_type: application/x-rpm
 
@@ -135,7 +135,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/appimage/algogenie_${{ needs.create-release.outputs.version }}_amd64.AppImage
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/appimage/AlgoGenie_${{ needs.create-release.outputs.version }}_amd64.AppImage
         asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-linux-amd64.AppImage
         asset_content_type: application/x-executable
 
