@@ -74,7 +74,7 @@ impl Value {
             Value::Entier(n) => Ok(*n),
             Value::Reel(f) => Ok(*f as i64),
             Value::Chaine(s) => s.parse::<i64>().map_err(|_| format!("Impossible de convertir '{}' en entier", s)),
-            _ => Err(format!("Impossible de convertir {:?} en entier", self)),
+            _ => Err(format!("Impossible de convertir {} en entier", self.type_name())),
         }
     }
 
@@ -89,7 +89,7 @@ impl Value {
             Value::Entier(n) => Ok(*n as f64),
             Value::Reel(f) => Ok(*f),
             Value::Chaine(s) => s.parse::<f64>().map_err(|_| format!("Impossible de convertir '{}' en réel", s)),
-            _ => Err(format!("Impossible de convertir {:?} en réel", self)),
+            _ => Err(format!("Impossible de convertir {} en réel", self.type_name())),
         }
     }
 
@@ -103,7 +103,23 @@ impl Value {
         match self {
             Value::Booleen(b) => Ok(*b),
             Value::Entier(n) => Ok(*n != 0),
-            _ => Err(format!("Impossible de convertir {:?} en booléen", self)),
+            _ => Err(format!("Impossible de convertir {} en booléen", self.type_name())),
+        }
+    }
+
+    /// Retourne le nom du type de la valeur
+    pub fn type_name(&self) -> &str {
+        match self {
+            Value::Entier(_) => "Entier",
+            Value::Reel(_) => "Réel",
+            Value::Chaine(_) => "Chaîne",
+            Value::Caractere(_) => "Caractère",
+            Value::Booleen(_) => "Booléen",
+            Value::Tableau(_) => "Tableau",
+            Value::Struct(name, _) => name,
+            Value::Pointeur(_) => "Pointeur",
+            Value::Nil => "Nil",
+            Value::Null => "Null",
         }
     }
 
@@ -941,10 +957,12 @@ impl Interpreter {
                 let left_val = self.evaluate_expression(left)?;
                 let right_val = self.evaluate_expression(right)?;
                 self.apply_binary_op(&left_val, op, &right_val)
+                    .map_err(|e| self.error(&e))
             }
             Expression::UnaryOp { op, operand } => {
                 let operand_val = self.evaluate_expression(operand)?;
                 self.apply_unary_op(op, &operand_val)
+                    .map_err(|e| self.error(&e))
             }
             Expression::ArrayAccess { name, indices } => {
                 // Calculer l'index plat à partir des indices multidimensionnels
@@ -1035,7 +1053,7 @@ impl Interpreter {
                 (Value::Entier(a), Value::Reel(b)) => Ok(Value::Reel(*a as f64 + b)),
                 (Value::Reel(a), Value::Entier(b)) => Ok(Value::Reel(a + *b as f64)),
                 (Value::Chaine(a), Value::Chaine(b)) => Ok(Value::Chaine(format!("{}{}", a, b))),
-                _ => Err(format!("Addition invalide entre {:?} et {:?}", left, right)),
+                _ => Err(format!("Addition invalide entre {} et {}", left.type_name(), right.type_name())),
             },
             BinaryOperator::Subtract => match (left, right) {
                 (Value::Entier(a), Value::Entier(b)) => Ok(Value::Entier(a - b)),
@@ -1043,8 +1061,8 @@ impl Interpreter {
                 (Value::Entier(a), Value::Reel(b)) => Ok(Value::Reel(*a as f64 - b)),
                 (Value::Reel(a), Value::Entier(b)) => Ok(Value::Reel(a - *b as f64)),
                 _ => Err(format!(
-                    "Soustraction invalide entre {:?} et {:?}",
-                    left, right
+                    "Soustraction invalide entre {} et {}",
+                    left.type_name(), right.type_name()
                 )),
             },
             BinaryOperator::Multiply => match (left, right) {
@@ -1053,8 +1071,8 @@ impl Interpreter {
                 (Value::Entier(a), Value::Reel(b)) => Ok(Value::Reel(*a as f64 * b)),
                 (Value::Reel(a), Value::Entier(b)) => Ok(Value::Reel(a * *b as f64)),
                 _ => Err(format!(
-                    "Multiplication invalide entre {:?} et {:?}",
-                    left, right
+                    "Multiplication invalide entre {} et {}",
+                    left.type_name(), right.type_name()
                 )),
             },
             BinaryOperator::Divide => {
@@ -1073,12 +1091,12 @@ impl Interpreter {
                 let a = match left {
                     Value::Entier(n) => *n,
                     Value::Reel(f) => *f as i64,
-                    _ => return Err(format!("Modulo invalide: l'opérande gauche doit être un nombre, reçu {:?}", left)),
+                    _ => return Err(format!("Modulo invalide: l'opérande gauche doit être un nombre, reçu {}", left.type_name())),
                 };
                 let b = match right {
                     Value::Entier(n) => *n,
                     Value::Reel(f) => *f as i64,
-                    _ => return Err(format!("Modulo invalide: l'opérande droit doit être un nombre, reçu {:?}", right)),
+                    _ => return Err(format!("Modulo invalide: l'opérande droit doit être un nombre, reçu {}", right.type_name())),
                 };
 
                 if b == 0 {
@@ -1127,7 +1145,7 @@ impl Interpreter {
             UnaryOperator::Minus => match operand {
                 Value::Entier(n) => Ok(Value::Entier(-n)),
                 Value::Reel(f) => Ok(Value::Reel(-f)),
-                _ => Err(format!("Négation invalide de {:?}", operand)),
+                _ => Err(format!("Négation invalide de {}", operand.type_name())),
             },
         }
     }
