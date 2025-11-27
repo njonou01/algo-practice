@@ -234,10 +234,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout release branch
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: release
 
       - name: Update latest tag
         run: |
