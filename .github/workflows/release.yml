@@ -9,7 +9,62 @@ permissions:
   contents: write
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: AlgoGenie ${{ github.ref }}
+          body: |
+            Nouvelle version d'AlgoGenie
+
+            Telechargement:
+            - Linux: Fichiers .deb, .rpm ou .AppImage ci-dessous
+            - Windows: Fichiers .msi ou .exe ci-dessous
+
+            Installation:
+
+            Linux (Debian/Ubuntu):
+            ```bash
+            sudo dpkg -i AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.deb
+            ```
+
+            Linux (Fedora/RHEL):
+            ```bash
+            sudo rpm -i AlgoGenie-${{ steps.get_version.outputs.version }}-linux-x86_64.rpm
+            ```
+
+            Linux (AppImage):
+            ```bash
+            chmod +x AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
+            ./AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
+            ```
+
+            Windows:
+            Double-cliquez sur le fichier .msi ou .exe
+
+            Changements:
+            Voir les commits depuis la derniere version
+          draft: false
+          prerelease: false
+
   build-release:
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
@@ -25,11 +80,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Get version from tag
-      id: get_version
-      shell: bash
-      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
     - name: Install pnpm
       uses: pnpm/action-setup@v4
@@ -67,52 +117,85 @@ jobs:
         TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
       run: pnpm tauri build --target ${{ matrix.target }}
 
-    - name: Prepare Linux artifacts
+    - name: Upload Linux DEB
       if: matrix.os == 'ubuntu-22.04'
-      run: |
-        mkdir -p release-artifacts
-        cp "./src-tauri/target/${{ matrix.target }}/release/bundle/deb/AlgoGenie_${{ steps.get_version.outputs.version }}_amd64.deb" "release-artifacts/AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.deb"
-        cp "./src-tauri/target/${{ matrix.target }}/release/bundle/rpm/AlgoGenie-${{ steps.get_version.outputs.version }}-1.x86_64.rpm" "release-artifacts/AlgoGenie-${{ steps.get_version.outputs.version }}-linux-x86_64.rpm"
-        cp "./src-tauri/target/${{ matrix.target }}/release/bundle/appimage/AlgoGenie_${{ steps.get_version.outputs.version }}_amd64.AppImage" "release-artifacts/AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage"
-
-    - name: Prepare Windows artifacts
-      if: matrix.os == 'windows-latest'
-      shell: bash
-      run: |
-        mkdir -p release-artifacts
-        cp "./src-tauri/target/${{ matrix.target }}/release/bundle/msi/AlgoGenie_${{ steps.get_version.outputs.version }}_x64_en-US.msi" "release-artifacts/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64.msi"
-        cp "./src-tauri/target/${{ matrix.target }}/release/bundle/msi/AlgoGenie_${{ steps.get_version.outputs.version }}_x64_en-US.msi.sig" "release-artifacts/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64.msi.sig"
-        cp "./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/AlgoGenie_${{ steps.get_version.outputs.version }}_x64-setup.exe" "release-artifacts/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64-setup.exe"
-        cp "./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/AlgoGenie_${{ steps.get_version.outputs.version }}_x64-setup.exe.sig" "release-artifacts/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64-setup.exe.sig"
-
-    - name: Create latest.json manifest
-      if: matrix.os == 'windows-latest'
-      shell: bash
-      run: |
-        SIGNATURE=$(cat "release-artifacts/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64.msi.sig")
-        cat > release-artifacts/latest.json << EOF
-        {
-          "version": "${{ steps.get_version.outputs.version }}",
-          "notes": "Nouvelle version d'AlgoGénie",
-          "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-          "platforms": {
-            "windows-x86_64": {
-              "url": "https://github.com/njonou01/algo-practice/releases/download/v${{ steps.get_version.outputs.version }}/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64.msi",
-              "signature": "$SIGNATURE"
-            }
-          }
-        }
-        EOF
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: release-${{ matrix.os }}
-        path: release-artifacts/*
-        retention-days: 1
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/deb/AlgoGenie_${{ needs.create-release.outputs.version }}_amd64.deb
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-linux-amd64.deb
+        asset_content_type: application/vnd.debian.binary-package
 
-  create-release:
-    needs: build-release
+    - name: Upload Linux RPM
+      if: matrix.os == 'ubuntu-22.04'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/rpm/AlgoGenie-${{ needs.create-release.outputs.version }}-1.x86_64.rpm
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-linux-x86_64.rpm
+        asset_content_type: application/x-rpm
+
+    - name: Upload Linux AppImage
+      if: matrix.os == 'ubuntu-22.04'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/appimage/AlgoGenie_${{ needs.create-release.outputs.version }}_amd64.AppImage
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-linux-amd64.AppImage
+        asset_content_type: application/x-executable
+
+    - name: Upload Windows MSI
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/msi/AlgoGenie_${{ needs.create-release.outputs.version }}_x64_en-US.msi
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64.msi
+        asset_content_type: application/x-msi
+
+    - name: Upload Windows NSIS
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/AlgoGenie_${{ needs.create-release.outputs.version }}_x64-setup.exe
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64-setup.exe
+        asset_content_type: application/x-msdownload
+
+    - name: Upload MSI Signature
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/msi/AlgoGenie_${{ needs.create-release.outputs.version }}_x64_en-US.msi.sig
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64.msi.sig
+        asset_content_type: text/plain
+
+    - name: Upload NSIS Signature
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/AlgoGenie_${{ needs.create-release.outputs.version }}_x64-setup.exe.sig
+        asset_name: AlgoGenie-${{ needs.create-release.outputs.version }}-windows-x64-setup.exe.sig
+        asset_content_type: text/plain
+
+  create-update-manifest:
+    needs: [create-release, build-release]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -124,51 +207,40 @@ jobs:
         id: get_version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: all-artifacts
-
-      - name: Prepare release directory
+      - name: Read MSI signature
+        id: msi_sig
         run: |
-          mkdir -p release-files
-          find all-artifacts -type f -exec cp {} release-files/ \;
-          ls -lah release-files/
+          curl -s https://github.com/njonou01/algo-practice/releases/download/v${{ steps.get_version.outputs.version }}/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64.msi.sig -o msi.sig
+          echo "signature=$(cat msi.sig)" >> $GITHUB_OUTPUT
 
-      - name: Create Release and Upload Assets
-        uses: softprops/action-gh-release@v2
+      - name: Create latest.json
+        run: |
+          cat > latest.json << EOF
+          {
+            "version": "${{ steps.get_version.outputs.version }}",
+            "notes": "Nouvelle version d'AlgoGénie",
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "platforms": {
+              "windows-x86_64": {
+                "url": "https://github.com/njonou01/algo-practice/releases/download/v${{ steps.get_version.outputs.version }}/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64.msi",
+                "signature": "${{ steps.msi_sig.outputs.signature }}"
+              }
+            }
+          }
+          EOF
+
+      - name: Upload latest.json to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: release-files/*
-          body: |
-            Nouvelle version d'AlgoGenie
-
-            Telechargement:
-            - Linux: Fichiers .deb, .rpm ou .AppImage ci-dessous
-            - Windows: Fichiers .msi ou .exe ci-dessous
-
-            Installation:
-
-            Linux (Debian/Ubuntu):
-            ```bash
-            sudo dpkg -i AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.deb
-            ```
-
-            Linux (Fedora/RHEL):
-            ```bash
-            sudo rpm -i AlgoGenie-${{ steps.get_version.outputs.version }}-linux-x86_64.rpm
-            ```
-
-            Linux (AppImage):
-            ```bash
-            chmod +x AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
-            ./AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
-            ```
-
-            Windows:
-            Double-cliquez sur le fichier .msi ou .exe
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./latest.json
+          asset_name: latest.json
+          asset_content_type: application/json
 
   update-latest-tag:
-    needs: create-release
+    needs: [create-release, build-release, create-update-manifest]
     runs-on: ubuntu-latest
     permissions:
       contents: write
