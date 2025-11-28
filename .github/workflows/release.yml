@@ -104,40 +104,71 @@ jobs:
         }
         EOF
 
-    - name: Upload Release Assets
-      uses: softprops/action-gh-release@v2
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
       with:
-        files: release-artifacts/*
-        body: |
-          Nouvelle version d'AlgoGenie
+        name: release-${{ matrix.os }}
+        path: release-artifacts/*
+        retention-days: 1
 
-          Telechargement:
-          - Linux: Fichiers .deb, .rpm ou .AppImage ci-dessous
-          - Windows: Fichiers .msi ou .exe ci-dessous
+  create-release:
+    needs: build-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-          Installation:
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-          Linux (Debian/Ubuntu):
-          ```bash
-          sudo dpkg -i AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.deb
-          ```
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
 
-          Linux (Fedora/RHEL):
-          ```bash
-          sudo rpm -i AlgoGenie-${{ steps.get_version.outputs.version }}-linux-x86_64.rpm
-          ```
+      - name: Prepare release directory
+        run: |
+          mkdir -p release-files
+          find all-artifacts -type f -exec cp {} release-files/ \;
+          ls -lah release-files/
 
-          Linux (AppImage):
-          ```bash
-          chmod +x AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
-          ./AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
-          ```
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-files/*
+          body: |
+            Nouvelle version d'AlgoGenie
 
-          Windows:
-          Double-cliquez sur le fichier .msi ou .exe
+            Telechargement:
+            - Linux: Fichiers .deb, .rpm ou .AppImage ci-dessous
+            - Windows: Fichiers .msi ou .exe ci-dessous
+
+            Installation:
+
+            Linux (Debian/Ubuntu):
+            ```bash
+            sudo dpkg -i AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.deb
+            ```
+
+            Linux (Fedora/RHEL):
+            ```bash
+            sudo rpm -i AlgoGenie-${{ steps.get_version.outputs.version }}-linux-x86_64.rpm
+            ```
+
+            Linux (AppImage):
+            ```bash
+            chmod +x AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
+            ./AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
+            ```
+
+            Windows:
+            Double-cliquez sur le fichier .msi ou .exe
 
   update-latest-tag:
-    needs: build-release
+    needs: create-release
     runs-on: ubuntu-latest
     permissions:
       contents: write
