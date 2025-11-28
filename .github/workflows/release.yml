@@ -223,9 +223,71 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-binaries
+          path: latest-files
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-binaries
+          path: latest-files
+
       - name: Update latest tag
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git tag -f latest
           git push -f origin latest
+
+      - name: Create/Update latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Release
+          prerelease: false
+          files: |
+            latest-files/AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.deb
+            latest-files/AlgoGenie-${{ steps.get_version.outputs.version }}-linux-x86_64.rpm
+            latest-files/AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
+            latest-files/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64.msi
+            latest-files/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64.msi.sig
+            latest-files/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64-setup.exe
+            latest-files/AlgoGenie-${{ steps.get_version.outputs.version }}-windows-x64-setup.exe.sig
+            latest-files/latest.json
+          body: |
+            **Dernière version stable d'AlgoGenie**
+
+            Cette release pointe toujours vers la dernière version publiée.
+            Version actuelle : ${{ steps.get_version.outputs.version }}
+
+            Telechargement:
+            - Linux: Fichiers .deb, .rpm ou .AppImage ci-dessous
+            - Windows: Fichiers .msi ou .exe ci-dessous
+
+            Installation:
+
+            Linux (Debian/Ubuntu):
+            ```bash
+            sudo dpkg -i AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.deb
+            ```
+
+            Linux (Fedora/RHEL):
+            ```bash
+            sudo rpm -i AlgoGenie-${{ steps.get_version.outputs.version }}-linux-x86_64.rpm
+            ```
+
+            Linux (AppImage):
+            ```bash
+            chmod +x AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
+            ./AlgoGenie-${{ steps.get_version.outputs.version }}-linux-amd64.AppImage
+            ```
+
+            Windows:
+            Double-cliquez sur le fichier .msi ou .exe
