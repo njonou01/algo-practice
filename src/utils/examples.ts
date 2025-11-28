@@ -283,10 +283,10 @@ FinAlgorithme`,
 
 Fonction Carre(n : Entier) : Entier
 Variables resultat : Entier
-DebutAlgorithme
+DebutFonction
   resultat <- n * n
   Retourner resultat
-Fin
+FinFonction
 
 Variables x, y : Entier
 
@@ -309,11 +309,11 @@ FinAlgorithme`,
 
 Procedure Saluer(nom : Chaine, fois : Entier)
 Variables i : Entier
-DebutAlgorithme
+DebutProcedure
   Pour i De 1 À fois Faire
     Ecrire("Bonjour ", nom, "!\\n")
   FinPour
-Fin
+FinProcedure
 
 Variables
   prenom : Chaine

@@ -13,7 +13,7 @@ Variables
   etudiant1, etudiant2 : Etudiant
   meilleur : Chaine
 
-Debut
+DebutAlgorithme
   // Initialisation du premier étudiant
   Ecrire("Premier étudiant\n")
   Ecrire("Nom:\n")
@@ -45,7 +45,7 @@ Debut
   FinSi
 
   Ecrire("\nMeilleure moyenne: ", meilleur, "\n")
-Fin
+FinAlgorithme
 "#;
 
     let input_values = vec![

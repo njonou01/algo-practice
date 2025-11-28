@@ -12,7 +12,7 @@ Variables
   p1, p2 : Point
   somme : Entier
 
-Debut
+DebutAlgorithme
   // Test lecture des champs
   Ecrire("Point 1 - x:\n")
   Lire(p1.x)
@@ -30,7 +30,7 @@ Debut
   // Test calcul avec champs
   somme <- p1.x + p2.x
   Ecrire("Somme des x: ", somme, "\n")
-Fin
+FinAlgorithme
 "#;
 
     let input_values = vec!["5".to_string(), "3".to_string()];

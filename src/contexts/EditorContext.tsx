@@ -145,11 +145,11 @@ Variables
   // x, y : Entier
   // resultat : Reel
 
-Debut
+DebutAlgorithme
   // Votre code ici
   Ecrire("Bonjour !\\n")
 
-Fin`;
+FinAlgorithme`;
     const newFile: EditorFile = {
       id: newId,
       name: 'Sans titre.algo',

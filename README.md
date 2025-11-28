@@ -19,7 +19,7 @@
 
 ### Syntaxe 100% Française
 Apprenez l'algorithmique avec une syntaxe entièrement en français :
-- `Algorithme`, `Variables`, `Début`, `Fin`
+- `Algorithme`, `Variables`, `DebutAlgorithme`, `FinAlgorithme`
 - `Lire()`, `Ecrire()`
 - `Si...Alors...Sinon`, `Pour...De...À`, `TantQue...Faire`
 - `Fonction`, `Procédure`, `Structure`
@@ -102,9 +102,9 @@ Téléchargez l'installateur **MSI** ou **NSIS** depuis les [releases](https://g
 
 ```
 Algorithme Bonjour
-Début
+DebutAlgorithme
     Ecrire("Bonjour le monde !")
-Fin
+FinAlgorithme
 ```
 
 ### Avec Variables et Entrées
@@ -113,7 +113,7 @@ Fin
 Algorithme CalculMoyenne
 Variables
     note1, note2, moyenne : Réel
-Début
+DebutAlgorithme
     Ecrire("Entrez la première note : ")
     Lire(note1)
     Ecrire("Entrez la deuxième note : ")
@@ -122,7 +122,7 @@ Début
     moyenne ← (note1 + note2) / 2
 
     Ecrire("La moyenne est : ", moyenne)
-Fin
+FinAlgorithme
 ```
 
 ### Avec Conditions
@@ -131,7 +131,7 @@ Fin
 Algorithme Admission
 Variables
     moyenne : Réel
-Début
+DebutAlgorithme
     Ecrire("Entrez votre moyenne : ")
     Lire(moyenne)
 
@@ -140,7 +140,7 @@ Début
     Sinon
         Ecrire("Refusé")
     FinSi
-Fin
+FinAlgorithme
 ```
 
 ### Avec Boucles
@@ -149,14 +149,14 @@ Fin
 Algorithme TableMultiplication
 Variables
     i, nombre : Entier
-Début
+DebutAlgorithme
     Ecrire("Table de multiplication de : ")
     Lire(nombre)
 
     Pour i De 1 À 10 Faire
         Ecrire(nombre, " x ", i, " = ", nombre * i)
     FinPour
-Fin
+FinAlgorithme
 ```
 
 ### Avec Tableaux
@@ -167,7 +167,7 @@ Variables
     notes : Tableau[5] de Réel
     i : Entier
     somme, moyenne : Réel
-Début
+DebutAlgorithme
     somme ← 0
 
     Pour i De 0 À 4 Faire
@@ -178,7 +178,7 @@ Début
 
     moyenne ← somme / 5
     Ecrire("Moyenne : ", moyenne)
-Fin
+FinAlgorithme
 ```
 
 ### Avec Fonctions
@@ -191,31 +191,32 @@ Variables
 Fonction Carre(n : Entier) : Entier
 Variables
     res : Entier
-Début
+DebutFonction
     res ← n * n
     Retourner res
-Fin
+FinFonction
 
-Début
+DebutAlgorithme
     resultat ← Carre(5)
     Ecrire("Le carré de 5 est : ", resultat)
-Fin
+FinAlgorithme
 ```
 
 ### Avec Structures
 
 ```
 Algorithme GestionEtudiant
-Variables
-    Structure Etudiant
-        nom : Chaîne
-        age : Entier
-        moyenne : Réel
-    FinStructure
 
+Structure Etudiant
+    nom : Chaîne
+    age : Entier
+    moyenne : Réel
+FinStructure
+
+Variables
     etud : Etudiant
 
-Début
+DebutAlgorithme
     Ecrire("Nom : ")
     Lire(etud.nom)
     Ecrire("Âge : ")
@@ -226,7 +227,7 @@ Début
     Ecrire("Étudiant : ", etud.nom)
     Ecrire("Âge : ", etud.age, " ans")
     Ecrire("Moyenne : ", etud.moyenne, "/20")
-Fin
+FinAlgorithme
 ```
 
 ---
